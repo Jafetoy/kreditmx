@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Información del cliente</title>
+
+    <link
+        rel="stylesheet"
+        href="/css/admin.css"
+    >
+
+</head>
+
+<body>
+
+
+<header class="admin-header">
+
+    <div>
+
+        <div class="admin-logo">
+            FINANCIERA
+        </div>
+
+        <span>
+            Información del cliente
+        </span>
+
+    </div>
+
+
+    <a
+                                href="/admin"
+        class="btn-salir"
+    >
+        ← Regresar
+    </a>
+
+</header>
+
+
+<main class="admin-container">
+
+
+    <section class="panel">
+
+        <div class="cliente-titulo">
+
+            <div class="avatar">
+                {{ cliente.nombre[:2]|upper }}
+            </div>
+
+            <div>
+
+                <h1>
+                    {{ cliente.nombre }}
+                </h1>
+
+                <p>
+                    Registro #{{ cliente_id }}
+                </p>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- DATOS PERSONALES -->
+
+    <section class="panel">
+
+        <h2>
+            Datos personales
+        </h2>
+
+
+        <div class="datos-grid">
+
+            <div class="dato">
+
+                <span>
+                    Nombre completo
+                </span>
+
+                <strong>
+                    {{ cliente.nombre }}
+                </strong>
+
+            </div>
+
+
+            <div class="dato">
+
+                <span>
+                    Teléfono
+                </span>
+
+                <strong>
+                    {{ cliente.telefono }}
+                </strong>
+
+            </div>
+
+
+            <div class="dato dato-completo">
+
+                <span>
+                    Dirección
+                </span>
+
+                <strong>
+                    {{ cliente.direccion }}
+                </strong>
+
+            </div>
+
+
+        </div>
+
+    </section>
+
+
+    <!-- DATOS BANCARIOS -->
+
+    <section class="panel">
+
+        <h2>
+            Datos bancarios
+        </h2>
+
+
+        <div class="datos-grid">
+
+
+            <div class="dato">
+
+                <span>
+                    Banco
+                </span>
+
+                <strong>
+                    {{ cliente.banco }}
+                </strong>
+
+            </div>
+
+
+            <div class="dato">
+
+                <span>
+                    Número de cuenta
+                </span>
+
+                <strong>
+                    {{ cliente.cuenta }}
+                </strong>
+
+            </div>
+
+
+        </div>
+
+    </section>
+
+
+    <!-- DOCUMENTOS -->
+
+    <section class="panel">
+
+        <h2>
+            Identificación
+        </h2>
+
+
+        <div class="documentos-admin">
+
+
+            <div>
+
+                <h3>
+                    Frente
+                </h3>
+
+                {% if cliente.foto_frente_url %}
+                    <img class="documento-imagen" src="{{ cliente.foto_frente_url }}" alt="Frente de identificación">
+                {% else %}
+                    <div class="documento-placeholder">📄<span>Imagen del frente</span></div>
+                {% endif %}
+
+            </div>
+
+
+            <div>
+
+                <h3>
+                    Reverso
+                </h3>
+
+                {% if cliente.foto_reverso_url %}
+                    <img class="documento-imagen" src="{{ cliente.foto_reverso_url }}" alt="Reverso de identificación">
+                {% else %}
+                    <div class="documento-placeholder">📄<span>Imagen del reverso</span></div>
+                {% endif %}
+
+            </div>
+
+
+        </div>
+
+    </section>
+
+
+    <!-- ESTADO -->
+
+    <section class="panel">
+
+        <h2>
+            Estado del registro
+        </h2>
+
+
+        <div class="estado-control">
+
+            <select id="estadoCliente">
+
+                <option value="PENDIENTE" {% if cliente.estado == "PENDIENTE" %}selected{% endif %}>
+                    Pendiente
+                </option>
+
+                <option value="EN_REVISION" {% if cliente.estado == "EN_REVISION" %}selected{% endif %}>
+                    En revisión
+                </option>
+
+                <option value="APROBADO" {% if cliente.estado == "APROBADO" %}selected{% endif %}>
+                    Aprobado
+                </option>
+
+                <option value="RECHAZADO" {% if cliente.estado == "RECHAZADO" %}selected{% endif %}>
+                    Rechazado
+                </option>
+
+            </select>
+
+
+            <button
+                onclick="guardarEstado()"
+                class="btn-generar"
+            >
+                Guardar estado
+            </button>
+
+        </div>
+
+    </section>
+
+
+</main>
+
+
+<script>
+
+function guardarEstado() {
+
+    const estado =
+        document.getElementById(
+            "estadoCliente"
+        ).value;
+
+    alert(
+        "Estado cambiado a: " + estado
+    );
+
+}
+
+
+</script>
+
+</body>
+
+</html>

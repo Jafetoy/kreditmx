@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Administrador</title>
+
+    <link
+        rel="stylesheet"
+        href="/css/admin.css"
+    >
+
+</head>
+
+<body>
+
+<div class="login-pagina">
+
+    <div class="login-card">
+
+        <img
+            class="login-logo-imagen"
+            src="/img/logo-transparente.png"
+            alt="Kreditmx"
+        >
+
+        <h1>
+            Administrador
+        </h1>
+
+        <p>
+            Ingresa a tu cuenta para continuar.
+        </p>
+
+
+        <form id="loginForm">
+
+            <div class="campo-admin">
+
+                <label>
+                    Usuario
+                </label>
+
+                <input
+                    type="text"
+                    id="usuario"
+                    placeholder="Usuario"
+                    required
+                >
+
+            </div>
+
+
+            <div class="campo-admin">
+
+                <label>
+                    Contraseña
+                </label>
+
+                <input
+                    type="password"
+                    id="password"
+                    placeholder="Contraseña"
+                    required
+                >
+
+            </div>
+
+
+            <button
+                type="submit"
+                class="btn-admin"
+            >
+                Iniciar sesión
+            </button>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+<script>
+
+document
+    .getElementById("loginForm")
+    .addEventListener(
+        "submit",
+        function(event) {
+
+            event.preventDefault();
+
+            /*
+                TEMPORALMENTE entramos
+                directamente al panel.
+            */
+
+            window.location.href =
+                "/admin";
+
+        }
+    );
+
+</script>
+
+</body>
+
+</html> 

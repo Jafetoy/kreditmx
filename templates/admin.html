@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Panel administrador</title>
+
+    <link
+        rel="stylesheet"
+        href="/css/admin.css"
+    >
+
+</head>
+
+<body>
+
+
+<header class="admin-header">
+
+    <div>
+
+        <img
+            class="admin-logo-imagen"
+            src="/img/logo-transparente.png"
+            alt="Kreditmx"
+        >
+
+        <span>
+            Panel administrador
+        </span>
+
+    </div>
+
+
+    <button
+        class="btn-salir"
+        onclick="cerrarSesion()"
+    >
+        Cerrar sesión
+    </button>
+
+</header>
+
+
+<main class="admin-container">
+
+
+    <!-- ESTADÍSTICAS -->
+
+    <section class="estadisticas">
+
+
+        <div class="stat-card">
+
+            <span>
+                Total registros
+            </span>
+
+            <strong id="totalRegistrosCount">
+                24
+            </strong>
+
+        </div>
+
+
+        <div class="stat-card">
+
+            <span>
+                Pendientes
+            </span>
+
+            <strong id="pendientesCount">
+                8
+            </strong>
+
+        </div>
+
+
+        <div class="stat-card">
+
+            <span>
+                En revisión
+            </span>
+
+            <strong id="revisionCount">
+                5
+            </strong>
+
+        </div>
+
+
+        <div class="stat-card">
+
+            <span>
+                Aprobados
+            </span>
+
+            <strong id="aprobadosCount">
+                11
+            </strong>
+
+        </div>
+
+
+        <div class="stat-card stat-colocados">
+
+            <span>
+                Clientes activos
+            </span>
+
+            <strong id="clientesActivosCount">
+                0
+            </strong>
+
+            <small>
+                Con préstamo activo
+            </small>
+
+        </div>
+
+
+    </section>
+
+
+    <!-- MODULOS -->
+
+    <section class="modulos-panel">
+
+        <div class="modulos-encabezado">
+            <div>
+                <p class="eyebrow">Administración</p>
+                <h2>Módulos del sistema</h2>
+                <p>Selecciona una herramienta para trabajar sin salir del panel.</p>
+            </div>
+        </div>
+
+        <div class="modulos-grid">
+
+            <button class="modulo-card" type="button" onclick="mostrarModulo('prestamos')">
+                <span class="modulo-icono">$</span>
+                <strong>Nuevo préstamo</strong>
+                <span>Calcula pagos y genera recibos.</span>
+            </button>
+
+            <button class="modulo-card" type="button" onclick="mostrarModulo('enlace')">
+                <span class="modulo-icono">&#128279;</span>
+                <strong>Enlace de registro</strong>
+                <span>Genera enlaces para nuevos clientes.</span>
+            </button>
+
+            <button class="modulo-card" type="button" onclick="mostrarModulo('clientes')">
+                <span class="modulo-icono">&#9998;</span>
+                <strong>Modificar clientes</strong>
+                <span>Edita la información registrada.</span>
+            </button>
+
+            <button class="modulo-card" type="button" onclick="mostrarModulo('clientes')">
+                <span class="modulo-icono">&#10005;</span>
+                <strong>Eliminar clientes</strong>
+                <span>Administra y elimina registros.</span>
+            </button>
+
+            <button class="modulo-card modulo-card-destacado" type="button" onclick="mostrarModulo('colocados')">
+                <span class="modulo-icono">&#9670;</span>
+                <strong>Clientes activos</strong>
+                <span>Consulta quién tiene un préstamo activo.</span>
+            </button>
+
+        </div>
+
+    </section>
+
+
+    <!-- GENERAR LINK -->
+
+    <section id="modulo-enlace" class="panel modulo-panel">
+
+        <div class="panel-header">
+
+            <div>
+
+                <h2>
+                    Enlace de registro
+                </h2>
+
+                <p>
+                    Genera un enlace para enviárselo
+                    a un cliente.
+                </p>
+
+            </div>
+
+
+            <button
+                class="btn-generar"
+                onclick="generarLink()"
+            >
+                + Generar enlace
+            </button>
+
+        </div>
+
+
+        <div
+            id="linkResultado"
+            class="link-resultado oculto"
+        >
+
+            <label>
+                Enlace generado
+            </label>
+
+            <div class="link-input">
+
+                <input
+                    type="text"
+                    id="linkGenerado"
+                    readonly
+                >
+
+                <button
+                    onclick="copiarLink()"
+                >
+                    Copiar
+                </button>
+
+            </div>
+
+
+            <button
+                class="btn-whatsapp"
+                onclick="enviarWhatsApp()"
+            >
+                Enviar por WhatsApp
+            </button>
+
+        </div>
+
+    </section>
+<!-- =========================================
+     NUEVO PRÉSTAMO
+========================================= -->
+
+<section id="modulo-prestamos" class="panel modulo-panel">
+
+    <div class="panel-header">
+
+        <div>
+
+            <h2>
+                Nuevo préstamo
+            </h2>
+
+            <p>
+                Calcula las condiciones del préstamo
+                y genera el recibo para el cliente.
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <div class="prestamo-form">
+
+
+        <!-- CLIENTE -->
+
+        <div class="campo-prestamo">
+
+            <label for="clientePrestamo">
+                Cliente
+            </label>
+
+            <select id="clientePrestamo">
+
+                <option value="">
+                    Seleccionar cliente
+                </option>
+
+                <option value="Juan Pérez">
+                    Juan Pérez
+                </option>
+
+                <option value="María López">
+                    María López
+                </option>
+
+                <option value="Carlos García">
+                    Carlos García
+                </option>
+
+            </select>
+
+        </div>
+
+
+        <!-- MONTO -->
+
+        <div class="campo-prestamo">
+
+            <label for="montoPrestamo">
+                Dinero prestado
+            </label>
+
+            <div class="input-moneda">
+
+                <span>
+                    $
+                </span>
+
+                <input
+                    type="number"
+                    id="montoPrestamo"
+                    placeholder="0.00"
+                    min="0"
+                    step="0.01"
+                >
+
+            </div>
+
+        </div>
+
+
+        <!-- PORCENTAJE -->
+
+        <div class="campo-prestamo">
+
+            <label for="porcentaje">
+                    Interés por quincena (%)
+            </label>
+
+            <div class="input-porcentaje">
+
+                <input
+                    type="number"
+                    id="porcentaje"
+                    placeholder="5"
+                    min="0"
+                    step="0.01"
+                >
+
+                <span>
+                    %
+                </span>
+
+            </div>
+
+        </div>
+
+
+        <!-- PERIODICIDAD -->
+
+        <div class="campo-prestamo">
+
+            <label for="periodicidad">
+                Periodicidad de pago
+            </label>
+
+            <select id="periodicidad">
+
+                <option value="quincenal">
+                    Quincenal
+                </option>
+
+                <option value="mensual">
+                    Mensual
+                </option>
+
+            </select>
+
+        </div>
+
+
+        <!-- NUMERO DE PAGOS -->
+
+        <div class="campo-prestamo">
+
+            <label for="numeroPagos">
+                Número de pagos
+            </label>
+
+            <input
+                type="number"
+                id="numeroPagos"
+                placeholder="Ej. 10"
+                min="1"
+                step="1"
+            >
+
+        </div>
+
+
+        <!-- FECHA INICIO -->
+
+        <div class="campo-prestamo">
+
+            <label for="fechaInicio">
+                Fecha de inicio
+            </label>
+
+            <input
+                type="date"
+                id="fechaInicio"
+            >
+
+        </div>
+
+
+    </div>
+
+
+    <!-- BOTÓN CALCULAR -->
+
+    <div class="prestamo-acciones">
+
+        <button
+            type="button"
+            class="btn-calcular"
+            onclick="calcularPrestamo()"
+        >
+            Calcular préstamo
+        </button>
+
+    </div>
+
+
+    <!-- RESULTADO -->
+
+    <div
+        id="resultadoPrestamo"
+        class="resultado-prestamo oculto"
+    >
+
+        <h3>
+            Resumen del préstamo
+        </h3>
+
+
+        <div class="resumen-grid">
+
+
+            <div class="resumen-item">
+
+                <span>
+                    Dinero prestado
+                </span>
+
+                <strong id="resumenMonto">
+                    $0.00
+                </strong>
+
+            </div>
+
+
+            <div class="resumen-item">
+
+                <span>
+                    Incremento acumulado
+                </span>
+
+                <strong id="resumenInteres">
+                    $0.00
+                </strong>
+
+            </div>
+
+
+            <div class="resumen-item">
+
+                <span>
+                    Total a pagar
+                </span>
+
+                <strong id="resumenTotal">
+                    $0.00
+                </strong>
+
+            </div>
+
+
+            <div class="resumen-item">
+
+                <span>
+                    Número de pagos
+                </span>
+
+                <strong id="resumenPagos">
+                    0
+                </strong>
+
+            </div>
+
+
+            <div class="resumen-item">
+
+                <span>
+                    Pago por quincena
+                </span>
+
+                <strong id="resumenPeriodo">
+                    $0.00
+                </strong>
+
+            </div>
+
+
+            <div class="resumen-item">
+
+                <span>
+                    Periodicidad
+                </span>
+
+                <strong id="resumenPeriodicidad">
+                    -
+                </strong>
+
+            </div>
+
+
+            <div class="resumen-item">
+
+                <span>
+                    Fecha de inicio
+                </span>
+
+                <strong id="resumenInicio">
+                    -
+                </strong>
+
+            </div>
+
+
+            <div class="resumen-item">
+
+                <span>
+                    Fecha de término
+                </span>
+
+                <strong id="resumenTermino">
+                    -
+                </strong>
+
+            </div>
+
+
+        </div>
+
+
+        <!-- TABLA DE PAGOS -->
+
+        <div class="tabla-pagos">
+
+            <h3>
+                Calendario de pagos
+            </h3>
+
+
+            <div class="tabla-wrapper">
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+
+                            <th>
+                                Pago
+                            </th>
+
+                            <th>
+                                Fecha
+                            </th>
+
+                            <th>
+                                Importe
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody
+                        id="tablaPagos"
+                    >
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+
+        <!-- REGISTRO DE PAGOS -->
+
+        <section class="panel-seccion">
+
+            <div class="titulo-seccion">
+                <h2>💳 Registrar pago</h2>
+                <p>Registra los pagos realizados por el cliente.</p>
+            </div>
+
+            <div class="formulario-pago">
+
+                <div class="campo">
+                    <label for="pagoNumero">
+                        Número de pago
+                    </label>
+
+                    <select id="pagoNumero">
+                        <option value="">Selecciona el pago</option>
+                    </select>
+                </div>
+
+                <div class="campo">
+                    <label for="fechaPago">
+                        Fecha del pago
+                    </label>
+
+                    <input
+                        type="date"
+                        id="fechaPago"
+                    >
+                </div>
+
+                <div class="campo">
+                    <label for="montoPago">
+                        Monto del pago
+                    </label>
+
+                    <input
+                        type="number"
+                        id="montoPago"
+                        step="0.01"
+                        min="0"
+                        placeholder="$0.00"
+                    >
+                </div>
+
+            </div>
+
+            <div class="resumen-pago">
+
+                <div class="dato-pago">
+                    <span>Saldo anterior</span>
+                    <strong id="saldoAnterior">$0.00</strong>
+                </div>
+
+                <div class="dato-pago">
+                    <span>Pago realizado</span>
+                    <strong id="pagoRealizado">$0.00</strong>
+                </div>
+
+                <div class="dato-pago principal">
+                    <span>Nuevo saldo</span>
+                    <strong id="nuevoSaldo">$0.00</strong>
+                </div>
+
+            </div>
+
+            <button
+                type="button"
+                id="btnRegistrarPago"
+                class="btn-principal"
+            >
+                Registrar pago
+            </button>
+
+            <div id="mensajePago" class="mensaje-pago"></div>
+
+        </section>
+
+
+        <!-- HISTORIAL DE PAGOS -->
+
+        <section class="panel-seccion">
+
+            <div class="titulo-seccion">
+                <h2>📋 Historial de pagos</h2>
+                <p>Pagos registrados del préstamo.</p>
+            </div>
+
+            <div class="tabla-contenedor">
+
+                <table class="tabla-pagos">
+
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Fecha</th>
+                            <th>Pago base</th>
+                            <th>Incremento</th>
+                            <th>Total</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="historialPagos">
+                        <tr>
+                            <td colspan="6">
+                                No hay pagos registrados.
+                            </td>
+                        </tr>
+                    </tbody>
+
+                </table>
+
+            </div>
+
+            <div class="acciones-pago">
+                <button
+                    type="button"
+                    id="btnReciboPago"
+                    class="btn-pdf"
+                >
+                    📄 Generar estado de cuenta PDF
+                </button>
+            </div>
+
+        </section>
+
+
+        <!-- PDF -->
+
+        <div class="acciones-recibo">
+
+            <button
+                type="button"
+                class="btn-pdf"
+                onclick="generarReciboPDF()"
+            >
+                🧾 Generar recibo PDF
+            </button>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+    <!-- CLIENTES COLOCADOS -->
+
+    <section id="modulo-colocados" class="panel modulo-panel">
+
+        <div class="panel-header">
+
+            <div>
+                <h2>Clientes colocados</h2>
+                <p>Clientes con un préstamo activo actualmente.</p>
+            </div>
+
+            <div class="contador-modulo">
+                <strong id="clientesColocadosTotal">0</strong>
+                <span>activos</span>
+            </div>
+
+        </div>
+
+        <div class="tabla-wrapper">
+
+            <table id="tablaColocados">
+
+                <thead>
+                    <tr>
+                        <th>Cliente</th>
+                        <th>Préstamo original</th>
+                        <th>Saldo pendiente</th>
+                        <th>Periodicidad</th>
+                        <th>Estado</th>
+                        <th>Acción</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    <tr>
+                        <td colspan="6">No hay clientes activos.</td>
+                    </tr>
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </section>
+
+    <!-- CLIENTES -->
+
+    <section id="modulo-clientes" class="panel modulo-panel">
+
+        <div class="panel-header">
+
+            <div>
+
+                <h2>
+                    Registros de clientes
+                </h2>
+
+                <p>
+                    Consulta la información enviada
+                    por los clientes.
+                </p>
+
+            </div>
+
+
+            <input
+                type="search"
+                id="buscar"
+                class="buscar"
+                placeholder="Buscar cliente..."
+            >
+
+        </div>
+
+
+        <form id="formularioCliente" class="formulario-cliente">
+
+            <input type="hidden" id="clienteId">
+
+            <div class="campo-cliente">
+                <label for="nombreCliente">Nombre completo</label>
+                <input type="text" id="nombreCliente" required>
+            </div>
+
+            <div class="campo-cliente">
+                <label for="telefonoCliente">Teléfono</label>
+                <input type="tel" id="telefonoCliente" required>
+            </div>
+
+            <div class="campo-cliente">
+                <label for="bancoCliente">Banco</label>
+                <input type="text" id="bancoCliente" required>
+            </div>
+
+            <div class="acciones-cliente">
+                <button type="submit" class="btn-principal">Guardar cliente</button>
+                <button type="button" class="btn-secundario" onclick="limpiarFormularioCliente()">Cancelar</button>
+            </div>
+
+        </form>
+
+
+        <div class="tabla-wrapper">
+
+            <table id="tablaClientes">
+
+                <thead>
+
+                    <tr>
+
+                        <th>
+                            ID
+                        </th>
+
+                        <th>
+                            Cliente
+                        </th>
+
+                        <th>
+                            Teléfono
+                        </th>
+
+                        <th>
+                            Banco
+                        </th>
+
+                        <th>
+                            Estado
+                        </th>
+
+                        <th>
+                            Fecha
+                        </th>
+
+                        <th>
+                            Acción
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody id="clientesRegistrados">
+                    <tr>
+                        <td colspan="7">Cargando clientes...</td>
+                    </tr>
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </section>
+
+
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="/js/admin.js"></script>
+
+</body>
+
+</html>
