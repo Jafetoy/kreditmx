@@ -436,6 +436,24 @@ body {
     color: #b91c1c;
 }
 
+.btn-tabla.btn-editar {
+    border-color: #166534;
+    background: #166534;
+    color: white;
+}
+
+.btn-tabla.btn-editar:hover {
+    background: #15803d;
+}
+
+.btn-guardar-edicion {
+    background: #166534;
+}
+
+.btn-guardar-edicion:hover {
+    background: #15803d;
+}
+
 
 /* PANEL */
 
@@ -2963,4 +2981,41 @@ label {
     .tabla-movil .btn-tabla {
         padding: 8px 14px;
     }
+}
+/* ============================================================
+   NUEVO PRÉSTAMO: cancelar y selección de fila
+   ============================================================ */
+
+.prestamo-acciones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.btn-cancelar-prestamo {
+    padding: 12px 18px;
+}
+
+.btn-cancelar-prestamo:disabled,
+.btn-tabla:disabled {
+    opacity: .55;
+    cursor: not-allowed;
+}
+
+#prestamosActivosCancelar tr.fila-seleccionada {
+    background: #eef4fc;
+}
+
+#prestamosActivosCancelar tr.fila-seleccionada td {
+    background: #eef4fc;
+}
+
+/* Botón secundario dentro de la fila del formulario de inversión */
+
+.campo-prestamo .btn-secundario {
+    width: 100%;
+}
+
+.oculto {
+    display: none;
 }

@@ -83,6 +83,17 @@ CREATE TABLE IF NOT EXISTS inversiones (
 );
 
 -- ------------------------------------------------------------
+-- RETIROS DE INVERSIONES (capital retirado del fondo)
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS retiros_inversiones (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    creado_por BIGINT REFERENCES usuarios (id) ON DELETE SET NULL,
+    inversionista VARCHAR(150) NOT NULL DEFAULT 'Inversionista',
+    monto NUMERIC(12, 2) NOT NULL,
+    creado_en TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- ------------------------------------------------------------
 -- CONFIGURACION (porcentajes de reparto)
 -- ------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS configuracion (

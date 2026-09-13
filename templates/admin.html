@@ -38,6 +38,9 @@
 
     </div>
 
+    <div class="bienvenida-usuario" id="bienvenidaUsuario">
+        <span id="saludoUsuario">Bienvenido</span>
+    </div>
 
     <button
         class="btn-salir"
@@ -433,6 +436,59 @@
             Generar préstamo
         </button>
 
+        <button
+            type="button"
+            id="btnGuardarEdicionPrestamo"
+            class="btn-calcular btn-guardar-edicion oculto"
+            onclick="guardarEdicionPrestamo()"
+        >
+            Guardar cambios
+        </button>
+
+        <button
+            type="button"
+            id="btnCancelarPrestamo"
+            class="btn-secundario btn-cancelar-prestamo"
+            onclick="cancelarPrestamo()"
+            disabled
+        >
+            Cancelar préstamo
+        </button>
+
+    </div>
+
+    <!-- PRÉSTAMOS ACTIVOS (para cancelar) -->
+
+    <div class="panel-seccion">
+
+        <div class="titulo-seccion">
+            <h2>⛔ Préstamos activos</h2>
+            <p>Selecciona un préstamo activo para editar sus datos o cancelarlo sin borrar su historial.</p>
+        </div>
+
+        <div class="tabla-wrapper">
+
+            <table class="tabla-movil">
+
+                <thead>
+                    <tr>
+                        <th>Cliente</th>
+                        <th>Préstamo</th>
+                        <th>Saldo</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+
+                <tbody id="prestamosActivosCancelar">
+                    <tr>
+                        <td colspan="4">No hay préstamos activos.</td>
+                    </tr>
+                </tbody>
+
+            </table>
+
+        </div>
+
     </div>
 
 
@@ -599,6 +655,19 @@
                     </tbody>
 
                 </table>
+
+            </div>
+
+
+            <div class="acciones-calendario" style="margin-top: 15px; text-align: right;">
+
+                <button
+                    type="button"
+                    class="btn-primario"
+                    onclick="generarCalendarioPDF()"
+                >
+                    Generar PDF del calendario
+                </button>
 
             </div>
 
@@ -962,13 +1031,37 @@
 
             </div>
 
+            <div class="stat-card stat-colocados">
+
+                <span>
+                    Ganancia admin disponible
+                </span>
+
+                <strong id="fondoAdminDisponible">
+                    $0.00
+                </strong>
+
+                <small>
+                    Ganancia acumulada menos retiros
+                </small>
+
+                <button
+                    type="button"
+                    id="btnRetirarGanancia"
+                    class="btn-calcular"
+                    onclick="retirarGananciaAdmin()"
+                >
+                    Retirar ganancia
+                </button>
+
+            </div>
+
         </div>
 
 
         <div class="prestamo-form">
 
-
-            <!-- REGISTRAR INVERSION -->
+            <!-- REGISTRAR / MODIFICAR INVERSION -->
 
             <div class="campo-prestamo">
 
@@ -983,7 +1076,6 @@
                 >
 
             </div>
-
 
             <div class="campo-prestamo">
 
@@ -1009,15 +1101,85 @@
 
             </div>
 
+            <div class="campo-prestamo">
+
+                <input
+                    type="hidden"
+                    id="inversionId"
+                >
+
+                <button
+                    type="button"
+                    id="btnRegistrarInversion"
+                    class="btn-calcular"
+                    onclick="registrarInversion()"
+                >
+                    Registrar inversión
+                </button>
+
+                <button
+                    type="button"
+                    id="btnCancelarEdicionInversion"
+                    class="btn-secundario oculto"
+                    onclick="cancelarEdicionInversion()"
+                >
+                    Cancelar edición
+                </button>
+
+            </div>
+
+        </div>
+
+        <!-- RETIRAR INVERSION -->
+
+        <div class="prestamo-form">
+
+            <div class="campo-prestamo">
+
+                <label for="retiroMonto">
+                    Retirar del fondo
+                </label>
+
+                <div class="input-moneda">
+
+                    <span>
+                        $
+                    </span>
+
+                    <input
+                        type="number"
+                        id="retiroMonto"
+                        placeholder="0.00"
+                        min="0"
+                        step="0.01"
+                    >
+
+                </div>
+
+            </div>
+
+            <div class="campo-prestamo">
+
+                <label for="retiroInversionista">
+                    Retirar a nombre de
+                </label>
+
+                <input
+                    type="text"
+                    id="retiroInversionista"
+                    placeholder="Nombre del inversionista"
+                >
+
+            </div>
 
             <div class="campo-prestamo">
 
                 <button
                     type="button"
-                    class="btn-calcular"
-                    onclick="registrarInversion()"
+                    class="btn-secundario"
+                    onclick="retirarInversion()"
                 >
-                    Registrar inversión
+                    Retirar inversión
                 </button>
 
             </div>
@@ -1124,12 +1286,46 @@
                             <th>Inversionista</th>
                             <th>Monto</th>
                             <th>Fecha</th>
+                            <th>Acción</th>
                         </tr>
                     </thead>
 
                     <tbody>
                         <tr>
-                            <td colspan="3">No hay inversiones registradas.</td>
+                            <td colspan="4">No hay inversiones registradas.</td>
+                        </tr>
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+        <!-- RETIROS REGISTRADOS -->
+
+        <div class="panel-seccion">
+
+            <div class="titulo-seccion">
+                <h2>📤 Retiros de inversión</h2>
+                <p>Capital retirado del fondo.</p>
+            </div>
+
+            <div class="tabla-wrapper">
+
+                <table id="tablaRetiros" class="tabla-movil">
+
+                    <thead>
+                        <tr>
+                            <th>Inversionista</th>
+                            <th>Monto</th>
+                            <th>Fecha</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        <tr>
+                            <td colspan="3">No hay retiros registrados.</td>
                         </tr>
                     </tbody>
 

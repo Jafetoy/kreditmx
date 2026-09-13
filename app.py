@@ -30,6 +30,33 @@ try:
 		"""
 	)
 	conexion.commit()
+
+	# Tabla de retiros de inversión (para que la inversión sea editable:
+	# agregar, modificar y retirar capital del fondo).
+	retiros_sql = (
+	"CREATE TABLE IF NOT EXISTS retiros_inversiones ("
+	"id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY, "
+	"creado_por BIGINT REFERENCES usuarios (id) ON DELETE SET NULL, "
+	"inversionista VARCHAR(150) NOT NULL DEFAULT 'Inversionista', "
+	"monto NUMERIC(12, 2) NOT NULL, "
+	"creado_en TIMESTAMPTZ NOT NULL DEFAULT NOW()"
+	")"
+	)
+	cursor.execute(retiros_sql)
+	conexion.commit()
+
+	# Tabla de retiros de la ganancia del admin (para que pueda retirar
+	# lo acumulado en "Para el admin" sin perder el historial).
+	ganancias_sql = (
+		"CREATE TABLE IF NOT EXISTS retiros_ganancias_admin ("
+		"id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY, "
+		"creado_por BIGINT REFERENCES usuarios (id) ON DELETE SET NULL, "
+		"monto NUMERIC(12, 2) NOT NULL, "
+		"creado_en TIMESTAMPTZ NOT NULL DEFAULT NOW()"
+		")"
+	)
+	cursor.execute(ganancias_sql)
+	conexion.commit()
 	conexion.close()
 	DB_DISPONIBLE = True
 except Exception as error:
@@ -68,8 +95,9 @@ def foto_cliente(cliente_id, lado):
 	try:
 		cursor = conexion.cursor()
 		cursor.execute(
-			f"SELECT {columna}_data, {columna}_tipo, {columna} FROM clientes WHERE id = %s",
-			(cliente_id,),
+		f"SELECT {columna}_data, {columna}_tipo, {columna} FROM clientes "
+		"WHERE id = %s AND creado_por = %s",
+		(cliente_id, session.get("usuario_id")),
 		)
 		fila = cursor.fetchone()
 	finally:
@@ -318,16 +346,18 @@ def resumen_admin():
 	conexion = conectar()
 	try:
 		cursor = conexion.cursor()
-		cursor.execute("SELECT COUNT(*) FROM clientes")
+		usuario_id = session.get("usuario_id")
+		cursor.execute("SELECT COUNT(*) FROM clientes WHERE creado_por = %s", (usuario_id,))
 		total_clientes = cursor.fetchone()[0]
-		cursor.execute("SELECT COUNT(*) FROM clientes WHERE estado = 'PENDIENTE'")
+		cursor.execute("SELECT COUNT(*) FROM clientes WHERE creado_por = %s AND estado = 'PENDIENTE'", (usuario_id,))
 		pendientes = cursor.fetchone()[0]
-		cursor.execute("SELECT COUNT(*) FROM clientes WHERE estado = 'EN_REVISION'")
+		cursor.execute("SELECT COUNT(*) FROM clientes WHERE creado_por = %s AND estado = 'EN_REVISION'", (usuario_id,))
 		en_revision = cursor.fetchone()[0]
-		cursor.execute("SELECT COUNT(*) FROM clientes WHERE estado = 'APROBADO'")
+		cursor.execute("SELECT COUNT(*) FROM clientes WHERE creado_por = %s AND estado = 'APROBADO'", (usuario_id,))
 		aprobados = cursor.fetchone()[0]
 		cursor.execute(
-			"SELECT COUNT(DISTINCT cliente_id) FROM prestamos WHERE estado = 'ACTIVO'"
+		"SELECT COUNT(DISTINCT cliente_id) FROM prestamos WHERE creado_por = %s AND estado = 'ACTIVO'",
+		(usuario_id,),
 		)
 		clientes_activos = cursor.fetchone()[0]
 	finally:
@@ -352,10 +382,11 @@ def listar_clientes():
 	try:
 		cursor = conexion.cursor()
 		cursor.execute(
-		    "SELECT id, nombre, direccion, telefono, banco, cuenta, "
-		    "foto_frente, foto_reverso, estado, creado_en "
-		    "FROM clientes ORDER BY creado_en DESC"
-		)
+		        "SELECT id, nombre, direccion, telefono, banco, cuenta, "
+		        "foto_frente, foto_reverso, estado, creado_en "
+		        "FROM clientes WHERE creado_por = %s ORDER BY creado_en DESC",
+		        (session.get("usuario_id"),),
+		    )
 		columnas = (
 			"id", "nombre", "direccion", "telefono", "banco", "cuenta",
 			"foto_frente", "foto_reverso", "estado", "creado_en",
@@ -386,14 +417,14 @@ def actualizar_cliente(cliente_id):
 		return jsonify({"error": "No hay datos para actualizar."}), 400
 
 	set_sql = ", ".join(f"{clave} = %s" for clave in actualizaciones)
-	valores = list(actualizaciones.values()) + [cliente_id]
+	valores = list(actualizaciones.values()) + [cliente_id, session.get("usuario_id")]
 
 	conexion = conectar()
 	try:
 		cursor = conexion.cursor()
 		cursor.execute(
-			f"UPDATE clientes SET {set_sql} WHERE id = %s RETURNING id",
-			valores,
+		f"UPDATE clientes SET {set_sql} WHERE id = %s AND creado_por = %s RETURNING id",
+		valores,
 		)
 		fila = cursor.fetchone()
 		if not fila:
@@ -418,13 +449,20 @@ def eliminar_cliente_api(cliente_id):
 	try:
 		cursor = conexion.cursor()
 		cursor.execute(
-			"SELECT foto_frente, foto_reverso FROM clientes WHERE id = %s",
-			(cliente_id,),
+		"SELECT foto_frente, foto_reverso FROM clientes WHERE id = %s AND creado_por = %s",
+		(cliente_id, session.get("usuario_id")),
 		)
 		fila = cursor.fetchone()
 		if not fila:
 			return jsonify({"error": "El cliente no existe."}), 404
-
+		# Un cliente con préstamo vigente (ACTIVO) no se puede eliminar.
+		cursor.execute(
+			"SELECT COUNT(*) FROM prestamos WHERE cliente_id = %s AND estado = 'ACTIVO'",
+			(cliente_id,),
+		)
+		if cursor.fetchone()[0] > 0:
+			return jsonify({
+			}), 409
 		cursor.execute("DELETE FROM clientes WHERE id = %s", (cliente_id,))
 		conexion.commit()
 	except Exception as error:
@@ -460,8 +498,8 @@ def crear_prestamo():
 
 		# Un cliente no puede tener mas de un prestamo activo a la vez.
 		cursor.execute(
-			"SELECT 1 FROM prestamos WHERE cliente_id = %s AND estado = 'ACTIVO' LIMIT 1",
-			(int(datos["cliente_id"]),)
+		"SELECT 1 FROM prestamos WHERE cliente_id = %s AND creado_por = %s AND estado = 'ACTIVO' LIMIT 1",
+		(int(datos["cliente_id"]), session.get("usuario_id"))
 		)
 		if cursor.fetchone():
 			conexion.close()
@@ -493,6 +531,157 @@ def crear_prestamo():
 	}), 201
 
 
+@app.post("/api/prestamos/<int:prestamo_id>/cancelar")
+@login_requerido
+def cancelar_prestamo(prestamo_id):
+	# Cancela un prestamo activo. Se conserva el historial de pagos.
+	if not DB_DISPONIBLE:
+		return respuesta_base_no_disponible()
+
+	conexion = conectar()
+	try:
+		cursor = conexion.cursor()
+		cursor.execute(
+		"SELECT estado FROM prestamos WHERE id = %s AND creado_por = %s",
+		(prestamo_id, session.get("usuario_id")),
+		)
+		fila = cursor.fetchone()
+		if not fila:
+			return jsonify({"error": "El préstamo no existe."}), 404
+		if fila[0] != "ACTIVO":
+			return jsonify({"error": "El préstamo ya no está activo."}), 409
+		cursor.execute(
+			"UPDATE prestamos SET estado = 'CANCELADO' WHERE id = %s",
+			(prestamo_id,),
+		)
+		conexion.commit()
+	except Exception as error:
+		conexion.rollback()
+		return jsonify({"error": str(error)}), 500
+	finally:
+		conexion.close()
+
+	return jsonify({"success": True, "estado": "CANCELADO"})
+
+
+@app.get("/api/prestamos/<int:prestamo_id>")
+@login_requerido
+def obtener_prestamo(prestamo_id):
+	"""Devuelve los datos editables de un préstamo."""
+	if not DB_DISPONIBLE:
+		return respuesta_base_no_disponible()
+
+	conexion = conectar()
+	try:
+		cursor = conexion.cursor()
+		cursor.execute(
+		"SELECT id, cliente_id, monto, porcentaje, periodicidad, numero_pagos, fecha_inicio, estado "
+		"FROM prestamos WHERE id = %s AND creado_por = %s",
+		(prestamo_id, session.get("usuario_id")),
+		)
+		fila = cursor.fetchone()
+	finally:
+		conexion.close()
+
+	if not fila:
+		return jsonify({"error": "El préstamo no existe."}), 404
+
+	return jsonify({
+		"id": fila[0],
+		"cliente_id": fila[1],
+		"monto": float(fila[2]),
+		"porcentaje": float(fila[3]),
+		"periodicidad": fila[4],
+		"numero_pagos": fila[5],
+		"fecha_inicio": fila[6].isoformat(),
+		"estado": fila[7],
+	})
+
+
+@app.route("/api/prestamos/<int:prestamo_id>", methods=["PUT", "PATCH"])
+@login_requerido
+def actualizar_prestamo(prestamo_id):
+	"""Modifica monto, interés, número de pagos y fecha de un préstamo ACTIVO.
+	El total se recalcula igual que al crear el préstamo."""
+	if not DB_DISPONIBLE:
+		return respuesta_base_no_disponible()
+
+	datos = request.get_json(silent=True) or {}
+
+	conexion = conectar()
+	try:
+		cursor = conexion.cursor()
+		cursor.execute(
+		"SELECT estado FROM prestamos WHERE id = %s AND creado_por = %s",
+		(prestamo_id, session.get("usuario_id")),
+		)
+		fila = cursor.fetchone()
+		if not fila:
+			return jsonify({"error": "El préstamo no existe."}), 404
+		if fila[0] != "ACTIVO":
+			return jsonify({"error": "Solo se pueden editar préstamos activos."}), 409
+
+		# Valores actuales como base (solo se cambian los campos enviados).
+		cursor.execute(
+		"SELECT monto, porcentaje, periodicidad, numero_pagos, fecha_inicio "
+		"FROM prestamos WHERE id = %s AND creado_por = %s",
+		(prestamo_id, session.get("usuario_id")),
+		)
+		actual = cursor.fetchone()
+
+		try:
+			monto = float(datos.get("monto", actual[0]))
+			porcentaje = float(datos.get("porcentaje", actual[1]))
+			periodicidad = str(datos.get("periodicidad") or actual[2])
+			numero_pagos = int(datos.get("numero_pagos", actual[3]))
+			fecha_inicio = str(datos.get("fecha_inicio") or actual[4].isoformat())
+		except (TypeError, ValueError):
+			return jsonify({"error": "Datos del préstamo no válidos."}), 400
+
+		if monto <= 0 or numero_pagos < 1:
+			return jsonify({"error": "El monto debe ser mayor a cero y los pagos al menos uno."}), 400
+		if periodicidad not in ("quincenal", "mensual"):
+			return jsonify({"error": "Periodicidad no válida."}), 400
+
+		# Mismo cálculo que al crear el préstamo.
+		incremento = (porcentaje / 100) * numero_pagos / 2 * monto
+		total = round(monto + incremento)
+
+		# Si ya hay pagos registrados, el nuevo total no puede ser menor a lo ya pagado.
+		cursor.execute(
+			"SELECT COALESCE(SUM(monto), 0) FROM pagos WHERE prestamo_id = %s",
+			(prestamo_id,),
+		)
+		total_pagado = float(cursor.fetchone()[0])
+		if total < total_pagado:
+			return jsonify({"error": f"El nuevo total ({total}) es menor a lo ya pagado ({total_pagado:.2f})."}), 400
+
+		cursor.execute(
+			"""
+			UPDATE prestamos
+			SET monto = %s, porcentaje = %s, total = %s,
+			    periodicidad = %s, numero_pagos = %s, fecha_inicio = %s
+			WHERE id = %s
+			RETURNING id
+			""",
+			(monto, porcentaje, total, periodicidad, numero_pagos, fecha_inicio, prestamo_id),
+		)
+		cursor.fetchone()
+		conexion.commit()
+	except Exception as error:
+		conexion.rollback()
+		return jsonify({"error": str(error)}), 500
+	finally:
+		conexion.close()
+
+	return jsonify({
+		"success": True,
+		"prestamo_id": prestamo_id,
+		"total": total,
+		"pago_por_periodo": math.ceil(total / numero_pagos),
+	})
+
+
 @app.get("/api/prestamos/activos")
 @login_requerido
 def listar_prestamos_activos():
@@ -509,10 +698,11 @@ def listar_prestamos_activos():
 			       COALESCE((SELECT SUM(pg.monto) FROM pagos pg WHERE pg.prestamo_id = p.id), 0) AS pagado
 			FROM prestamos p
 			JOIN clientes c ON c.id = p.cliente_id
-			WHERE p.estado = 'ACTIVO'
+			WHERE p.estado = 'ACTIVO' AND p.creado_por = %s
 			ORDER BY p.creado_en DESC
-			"""
-		)
+			""",
+			(session.get("usuario_id"),),
+			)
 		columnas = ("id", "cliente_id", "nombre", "monto", "total", "periodicidad", "numero_pagos", "fecha_inicio", "pagado")
 		prestamos = [dict(zip(columnas, fila)) for fila in cursor.fetchall()]
 	finally:
@@ -540,8 +730,8 @@ def listar_pagos_prestamo(prestamo_id):
 		cursor.execute(
 			"SELECT c.nombre, p.total, p.numero_pagos, p.fecha_inicio "
 			"FROM prestamos p JOIN clientes c ON c.id = p.cliente_id "
-			"WHERE p.id = %s",
-			(prestamo_id,),
+			"WHERE p.id = %s AND p.creado_por = %s",
+			(prestamo_id, session.get("usuario_id")),
 		)
 		prestamo = cursor.fetchone()
 		if not prestamo:
@@ -589,8 +779,8 @@ def crear_pago():
 	try:
 		cursor = conexion.cursor()
 		cursor.execute(
-			"SELECT total FROM prestamos WHERE id = %s AND estado = 'ACTIVO'",
-			(int(datos["prestamo_id"]),),
+		"SELECT total FROM prestamos WHERE id = %s AND creado_por = %s AND estado = 'ACTIVO'",
+		(int(datos["prestamo_id"]), session.get("usuario_id")),
 		)
 		prestamo = cursor.fetchone()
 		if not prestamo:
@@ -669,6 +859,30 @@ def obtener_porcentajes(cursor):
 	return porcentajes
 
 
+@app.get("/api/usuarios/me")
+@login_requerido
+def usuario_actual():
+	"""Datos del usuario en sesión, para el mensaje de bienvenida."""
+	if not DB_DISPONIBLE:
+		return respuesta_base_no_disponible()
+
+	conexion = conectar()
+	try:
+		cursor = conexion.cursor()
+		cursor.execute(
+			"SELECT nombre_completo, usuario FROM usuarios WHERE id = %s",
+			(session.get("usuario_id"),),
+		)
+		fila = cursor.fetchone()
+	finally:
+		conexion.close()
+
+	if not fila:
+		return jsonify({"error": "Usuario no encontrado."}), 404
+
+	return jsonify({"nombre_completo": fila[0], "usuario": fila[1]})
+
+
 @app.get("/api/fondo")
 @login_requerido
 def estado_fondo():
@@ -682,23 +896,41 @@ def estado_fondo():
 		usuario_id = session.get("usuario_id")
 
 		cursor.execute("SELECT COALESCE(SUM(monto), 0) FROM inversiones WHERE creado_por = %s", (usuario_id,))
-		total_invertido = float(cursor.fetchone()[0])
+		total_invertido_bruto = float(cursor.fetchone()[0])
 
-		cursor.execute("SELECT COALESCE(SUM(monto), 0) FROM prestamos WHERE creado_por = %s", (usuario_id,))
+		cursor.execute("SELECT COALESCE(SUM(monto), 0) FROM retiros_inversiones WHERE creado_por = %s", (usuario_id,))
+		total_retirado = float(cursor.fetchone()[0])
+
+		# El capital invertido es lo aportado menos lo retirado.
+		total_invertido = total_invertido_bruto - total_retirado
+		# Solo cuenta el dinero prestado actualmente vigente (préstamos ACTIVO).
+		# Los préstamos cancelados o liquidados no se descuentan del fondo.
+		cursor.execute(
+			"SELECT COALESCE(SUM(monto), 0) FROM prestamos WHERE creado_por = %s AND estado = 'ACTIVO'",
+			(usuario_id,),
+		)
 		prestado = float(cursor.fetchone()[0])
 
 		cursor.execute(
-			"SELECT COALESCE(SUM(d.inversionista), 0), COALESCE(SUM(d.fondo), 0), "
-			"COALESCE(SUM(d.admin), 0) FROM distribucion_pagos d "
-			"JOIN pagos pg ON pg.id = d.pago_id "
-			"JOIN prestamos p ON p.id = pg.prestamo_id "
-			"WHERE p.creado_por = %s",
-			(usuario_id,),
+		"SELECT COALESCE(SUM(d.inversionista), 0), COALESCE(SUM(d.fondo), 0), "
+		"COALESCE(SUM(d.admin), 0) FROM distribucion_pagos d "
+		"JOIN pagos pg ON pg.id = d.pago_id "
+		"JOIN prestamos p ON p.id = pg.prestamo_id "
+		"WHERE p.creado_por = %s AND p.estado = 'ACTIVO'",
+		(usuario_id,),
 		)
 		fila = cursor.fetchone()
 		para_inversionista = float(fila[0])
 		para_fondo = float(fila[1])
 		para_admin = float(fila[2])
+
+		# Lo que el admin ya retiró no cuenta como acumulado pendiente.
+		cursor.execute(
+		"SELECT COALESCE(SUM(monto), 0) FROM retiros_ganancias_admin WHERE creado_por = %s",
+		(usuario_id,),
+		)
+		ganancia_ya_retirada = float(cursor.fetchone()[0])
+		para_admin = max(para_admin - ganancia_ya_retirada, 0)
 
 		porcentajes = obtener_porcentajes(cursor)
 	finally:
@@ -706,15 +938,19 @@ def estado_fondo():
 
 	# El fondo disponible crece con la parte del pago asignada al fondo.
 	fondo_disponible = total_invertido - prestado + para_fondo
+	ganancia_admin_disponible = para_admin
 
 	return jsonify({
-		"total_invertido": total_invertido,
-		"prestado": prestado,
-		"fondo_disponible": fondo_disponible,
-		"para_inversionista": para_inversionista,
-		"para_fondo": para_fondo,
-		"para_admin": para_admin,
-		"porcentajes": porcentajes,
+	"total_invertido": total_invertido,
+	"total_aportado": total_invertido_bruto,
+	"total_retirado": total_retirado,
+	"prestado": prestado,
+	"fondo_disponible": fondo_disponible,
+	"para_inversionista": para_inversionista,
+	"para_fondo": para_fondo,
+	"para_admin": para_admin,
+	"ganancia_admin_disponible": ganancia_admin_disponible,
+	"porcentajes": porcentajes,
 	})
 
 
@@ -770,6 +1006,221 @@ def listar_inversiones():
 		inversion["creado_en"] = inversion["creado_en"].isoformat()
 
 	return jsonify(inversiones)
+
+
+@app.route("/api/inversiones/<int:inversion_id>", methods=["PUT", "PATCH"])
+@login_requerido
+def actualizar_inversion(inversion_id):
+	# Modifica el monto o el inversionista de una inversión registrada.
+	if not DB_DISPONIBLE:
+		return respuesta_base_no_disponible()
+
+	datos = request.get_json(silent=True) or {}
+	actualizaciones = {}
+
+	if "inversionista" in datos and str(datos["inversionista"]).strip():
+		actualizaciones["inversionista"] = str(datos["inversionista"]).strip()
+
+	if "monto" in datos:
+		try:
+			monto = float(datos["monto"])
+		except (TypeError, ValueError):
+			return jsonify({"error": "Ingresa un monto válido."}), 400
+		if monto <= 0:
+			return jsonify({"error": "El monto debe ser mayor a cero."}), 400
+		actualizaciones["monto"] = monto
+
+	if not actualizaciones:
+		return jsonify({"error": "No hay datos para actualizar."}), 400
+
+	set_sql = ", ".join(f"{clave} = %s" for clave in actualizaciones)
+	valores = list(actualizaciones.values()) + [inversion_id, session.get("usuario_id")]
+
+	conexion = conectar()
+	try:
+		cursor = conexion.cursor()
+		cursor.execute(
+			f"UPDATE inversiones SET {set_sql} WHERE id = %s AND creado_por = %s RETURNING id",
+			valores,
+		)
+		fila = cursor.fetchone()
+		if not fila:
+			return jsonify({"error": "La inversión no existe."}), 404
+		conexion.commit()
+	except Exception as error:
+		conexion.rollback()
+		return jsonify({"error": str(error)}), 500
+	finally:
+		conexion.close()
+
+	return jsonify({"success": True})
+
+
+@app.delete("/api/inversiones/<int:inversion_id>")
+@login_requerido
+def eliminar_inversion(inversion_id):
+	if not DB_DISPONIBLE:
+		return respuesta_base_no_disponible()
+
+	conexion = conectar()
+	try:
+		cursor = conexion.cursor()
+		cursor.execute(
+			"DELETE FROM inversiones WHERE id = %s AND creado_por = %s RETURNING monto",
+			(inversion_id, session.get("usuario_id")),
+		)
+		fila = cursor.fetchone()
+		if not fila:
+			return jsonify({"error": "La inversión no existe."}), 404
+		conexion.commit()
+	except Exception as error:
+		conexion.rollback()
+		return jsonify({"error": str(error)}), 500
+	finally:
+		conexion.close()
+
+	return jsonify({"success": True})
+
+
+@app.post("/api/inversiones/retiros")
+@login_requerido
+def crear_retiro_inversion():
+	# Retira capital del fondo. El monto no puede superar lo invertido.
+	if not DB_DISPONIBLE:
+		return respuesta_base_no_disponible()
+
+	datos = request.get_json(silent=True) or {}
+	try:
+		monto = float(datos.get("monto") or 0)
+	except (TypeError, ValueError):
+		return jsonify({"error": "Ingresa un monto válido."}), 400
+	inversionista = (datos.get("inversionista") or "Inversionista").strip() or "Inversionista"
+
+	if monto <= 0:
+		return jsonify({"error": "Ingresa un monto de retiro válido."}), 400
+
+	usuario_id = session.get("usuario_id")
+	conexion = conectar()
+	try:
+		cursor = conexion.cursor()
+		cursor.execute("SELECT COALESCE(SUM(monto), 0) FROM inversiones WHERE creado_por = %s", (usuario_id,))
+		total_invertido = float(cursor.fetchone()[0])
+		cursor.execute("SELECT COALESCE(SUM(monto), 0) FROM retiros_inversiones WHERE creado_por = %s", (usuario_id,))
+		total_retirado = float(cursor.fetchone()[0])
+		disponible = total_invertido - total_retirado
+
+		if monto > disponible:
+			return jsonify({"error": f"El retiro supera el capital invertido disponible ({disponible:.2f})."}), 400
+
+		cursor.execute(
+			"INSERT INTO retiros_inversiones (creado_por, inversionista, monto) VALUES (%s, %s, %s) RETURNING id",
+			(usuario_id, inversionista, monto),
+		)
+		retiro_id = cursor.fetchone()[0]
+		conexion.commit()
+	except Exception as error:
+		conexion.rollback()
+		return jsonify({"error": str(error)}), 500
+	finally:
+		conexion.close()
+
+	return jsonify({"success": True, "retiro_id": retiro_id}), 201
+
+
+@app.get("/api/inversiones/retiros")
+@login_requerido
+def listar_retiros_inversion():
+	if not DB_DISPONIBLE:
+		return respuesta_base_no_disponible()
+
+	conexion = conectar()
+	try:
+		cursor = conexion.cursor()
+		cursor.execute(
+			"SELECT id, inversionista, monto, creado_en FROM retiros_inversiones "
+			"WHERE creado_por = %s ORDER BY creado_en DESC",
+			(session.get("usuario_id"),),
+		)
+		columnas = ("id", "inversionista", "monto", "creado_en")
+		retiros = [dict(zip(columnas, fila)) for fila in cursor.fetchall()]
+	finally:
+		conexion.close()
+
+	for retiro in retiros:
+		retiro["monto"] = float(retiro["monto"])
+		retiro["creado_en"] = retiro["creado_en"].isoformat()
+
+	return jsonify(retiros)
+
+
+@app.post("/api/admin/retiro-ganancia")
+@login_requerido
+def retirar_ganancia_admin():
+	"""El admin retira su ganancia acumulada (para_admin). Queda registrada
+	como un retiro y el acumulado para_admin vuelve a cero."""
+	if not DB_DISPONIBLE:
+		return respuesta_base_no_disponible()
+
+	usuario_id = session.get("usuario_id")
+	conexion = conectar()
+	try:
+		cursor = conexion.cursor()
+		cursor.execute(
+			"SELECT COALESCE(SUM(d.admin), 0) FROM distribucion_pagos d "
+			"JOIN pagos pg ON pg.id = d.pago_id "
+			"JOIN prestamos p ON p.id = pg.prestamo_id "
+			"WHERE p.creado_por = %s",
+			(usuario_id,),
+		)
+		acumulado = float(cursor.fetchone()[0])
+
+		cursor.execute(
+			"SELECT COALESCE(SUM(monto), 0) FROM retiros_ganancias_admin WHERE creado_por = %s",
+			(usuario_id,),
+		)
+		ya_retirado = float(cursor.fetchone()[0])
+
+		disponible = acumulado - ya_retirado
+		if disponible <= 0:
+			return jsonify({"error": "No tienes ganancias disponibles para retirar."}), 400
+
+		cursor.execute(
+			"INSERT INTO retiros_ganancias_admin (creado_por, monto) VALUES (%s, %s) RETURNING id",
+			(usuario_id, disponible),
+		)
+		retiro_id = cursor.fetchone()[0]
+		conexion.commit()
+	except Exception as error:
+		conexion.rollback()
+		return jsonify({"error": str(error)}), 500
+	finally:
+		conexion.close()
+
+	return jsonify({"success": True, "retiro_id": retiro_id, "monto_retirado": disponible}), 201
+
+
+@app.get("/api/admin/retiros-ganancia")
+@login_requerido
+def listar_retiros_ganancia():
+	if not DB_DISPONIBLE:
+		return respuesta_base_no_disponible()
+
+	conexion = conectar()
+	try:
+		cursor = conexion.cursor()
+		cursor.execute(
+			"SELECT id, monto, creado_en FROM retiros_ganancias_admin "
+			"WHERE creado_por = %s ORDER BY creado_en DESC",
+			(session.get("usuario_id"),),
+		)
+		retiros = [
+			{"id": f[0], "monto": float(f[1]), "creado_en": f[2].isoformat()}
+			for f in cursor.fetchall()
+		]
+	finally:
+		conexion.close()
+
+	return jsonify(retiros)
 
 
 @app.post("/api/configuracion")
@@ -856,10 +1307,10 @@ def cliente():
 				"""
 				SELECT id, nombre, direccion, telefono, banco, cuenta,
 				       foto_frente, foto_reverso, estado
-				FROM clientes WHERE id = %s
+				FROM clientes WHERE id = %s AND creado_por = %s
 				""",
-				(int(cliente_id),),
-			)
+				(int(cliente_id), session.get("usuario_id")),
+				)
 			fila = cursor.fetchone()
 			if fila:
 				datos = {
