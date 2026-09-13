@@ -9,6 +9,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.utils import secure_filename
 
 from database import conectar, inicializar_base
+from correos import enviar_correo_estado
 from psycopg2 import Binary
 
 app = Flask(__name__)
@@ -21,13 +22,31 @@ try:
 	conexion = conectar()
 	cursor = conexion.cursor()
 	cursor.execute(
-		"""
-		ALTER TABLE clientes
-			ADD COLUMN IF NOT EXISTS foto_frente_data BYTEA,
-			ADD COLUMN IF NOT EXISTS foto_frente_tipo TEXT,
-			ADD COLUMN IF NOT EXISTS foto_reverso_data BYTEA,
-			ADD COLUMN IF NOT EXISTS foto_reverso_tipo TEXT
-		"""
+	"""
+	ALTER TABLE clientes
+	ADD COLUMN IF NOT EXISTS foto_frente_data BYTEA,
+	ADD COLUMN IF NOT EXISTS foto_frente_tipo TEXT,
+	ADD COLUMN IF NOT EXISTS foto_reverso_data BYTEA,
+		ADD COLUMN IF NOT EXISTS foto_reverso_tipo TEXT,
+		ADD COLUMN IF NOT EXISTS correo VARCHAR(150)
+	"""
+	)
+	conexion.commit()
+
+	# Los enlaces guardan quién los generó, para que los clientes que se
+	# registran desde el formulario público queden asociados a ese admin.
+	cursor.execute(
+	    "ALTER TABLE enlaces_registro "
+	    "ADD COLUMN IF NOT EXISTS creado_por BIGINT REFERENCES usuarios (id) ON DELETE SET NULL"
+	)
+	conexion.commit()
+
+	# Reparación: clientes registrados por el formulario público antes de esta
+	# corrección quedaron con creado_por NULL y no aparecian en el panel.
+	# Se asignan al primer admin (por ahora solo hay un usuario del sistema).
+	cursor.execute(
+	    "UPDATE clientes SET creado_por = (SELECT MIN(id) FROM usuarios) "
+	    "WHERE creado_por IS NULL"
 	)
 	conexion.commit()
 
@@ -238,6 +257,7 @@ def url_base_publica():
 
 
 @app.post("/api/enlaces")
+@login_requerido
 def crear_enlace():
 	if not DB_DISPONIBLE:
 		return respuesta_base_no_disponible()
@@ -248,8 +268,8 @@ def crear_enlace():
 	try:
 		cursor = conexion.cursor()
 		cursor.execute(
-			"INSERT INTO enlaces_registro (token) VALUES (%s)",
-			(token,),
+			"INSERT INTO enlaces_registro (token, creado_por) VALUES (%s, %s)",
+			(token, session.get("usuario_id")),
 		)
 		conexion.commit()
 	finally:
@@ -274,20 +294,23 @@ def crear_cliente():
 		"telefono": request.form.get("telefono", "").strip(),
 		"banco": request.form.get("banco", "").strip(),
 		"cuenta": request.form.get("cuenta", "").strip(),
+		"correo": request.form.get("correo", "").strip().lower(),
 	}
 	foto_frente = request.files.get("fotoFrente") or request.files.get("foto_frente")
 	foto_reverso = request.files.get("fotoReverso") or request.files.get("foto_reverso")
 
 	if not token or any(not valor for valor in campos.values()) or not foto_frente or not foto_reverso:
 		return jsonify({"error": "Completa todos los datos y documentos requeridos."}), 400
+	if "@" not in campos["correo"] or "." not in campos["correo"].split("@", 1)[1]:
+		return jsonify({"error": "Ingresa un correo electrónico válido."}), 400
 
 	conexion = conectar()
 
 	try:
 		cursor = conexion.cursor()
 		cursor.execute(
-			"SELECT usado FROM enlaces_registro WHERE token = %s",
-			(token,),
+		"SELECT usado, creado_por FROM enlaces_registro WHERE token = %s",
+		(token,),
 		)
 		registro = cursor.fetchone()
 
@@ -295,6 +318,10 @@ def crear_cliente():
 			return jsonify({"error": "El enlace de registro no es válido."}), 404
 		if registro[0]:
 			return jsonify({"error": "Este enlace de registro ya fue utilizado."}), 409
+
+		# El cliente queda asociado al admin que generó el enlace
+		# (la sesión no existe porque el registro es público).
+		propietario_id = registro[1] or session.get("usuario_id")
 
 		archivos = []
 		for archivo in (foto_frente, foto_reverso):
@@ -304,17 +331,17 @@ def crear_cliente():
 		cursor.execute(
 			"""
 			INSERT INTO clientes
-			(creado_por, nombre, direccion, telefono, banco, cuenta,
-			 foto_frente, foto_reverso, foto_frente_data, foto_frente_tipo,
-			 foto_reverso_data, foto_reverso_tipo)
-			VALUES (%s, %s, %s, %s, %s, %s, '', '', %s, %s, %s, %s)
-			RETURNING id
-			""",
-			(
-				session.get("usuario_id"), campos["nombre"], campos["direccion"], campos["telefono"],
-				campos["banco"], campos["cuenta"],
-				archivos[0][0], archivos[0][1], archivos[1][0], archivos[1][1],
-			),
+							(creado_por, nombre, direccion, telefono, banco, cuenta, correo,
+							 foto_frente, foto_reverso, foto_frente_data, foto_frente_tipo,
+							 foto_reverso_data, foto_reverso_tipo)
+						VALUES (%s, %s, %s, %s, %s, %s, %s, '', '', %s, %s, %s, %s)
+						RETURNING id
+						""",
+						 		(
+							propietario_id, campos["nombre"], campos["direccion"], campos["telefono"],
+							campos["banco"], campos["cuenta"], campos["correo"],
+							archivos[0][0], archivos[0][1], archivos[1][0], archivos[1][1],
+						),
 		)
 		nuevo_id = cursor.fetchone()[0]
 		cursor.execute(
@@ -382,13 +409,13 @@ def listar_clientes():
 	try:
 		cursor = conexion.cursor()
 		cursor.execute(
-		        "SELECT id, nombre, direccion, telefono, banco, cuenta, "
-		        "foto_frente, foto_reverso, estado, creado_en "
-		        "FROM clientes WHERE creado_por = %s ORDER BY creado_en DESC",
-		        (session.get("usuario_id"),),
-		    )
+			"SELECT id, nombre, direccion, telefono, banco, cuenta, correo, "
+			"foto_frente, foto_reverso, estado, creado_en "
+			"FROM clientes WHERE creado_por = %s ORDER BY creado_en DESC",
+			(session.get("usuario_id"),),
+		)
 		columnas = (
-			"id", "nombre", "direccion", "telefono", "banco", "cuenta",
+			"id", "nombre", "direccion", "telefono", "banco", "cuenta", "correo",
 			"foto_frente", "foto_reverso", "estado", "creado_en",
 		)
 		clientes = [dict(zip(columnas, fila)) for fila in cursor.fetchall()]
@@ -410,7 +437,7 @@ def actualizar_cliente(cliente_id):
 		return respuesta_base_no_disponible()
 
 	datos = request.get_json(silent=True) or {}
-	campos_permitidos = ("nombre", "direccion", "telefono", "banco", "cuenta", "estado")
+	campos_permitidos = ("nombre", "direccion", "telefono", "banco", "cuenta", "correo", "estado")
 	actualizaciones = {clave: datos[clave].strip() for clave in campos_permitidos if clave in datos}
 
 	if not actualizaciones:
@@ -436,7 +463,18 @@ def actualizar_cliente(cliente_id):
 	finally:
 		conexion.close()
 
-	return jsonify({"success": True})
+	respuesta = {"success": True}
+
+	# Si cambió el estado, se notifica al cliente por correo.
+	if "estado" in actualizaciones:
+		enviado, detalle = enviar_correo_estado(
+			cliente_id, session.get("usuario_id"), actualizaciones["estado"]
+		)
+		print(f"[Kreditmx] Notificación de estado: {detalle}")
+		respuesta["correo_enviado"] = enviado
+		respuesta["correo_detalle"] = detalle
+
+	return jsonify(respuesta)
 
 
 @app.delete("/api/clientes/<int:cliente_id>")
@@ -1305,7 +1343,7 @@ def cliente():
 			cursor = conexion.cursor()
 			cursor.execute(
 				"""
-				SELECT id, nombre, direccion, telefono, banco, cuenta,
+				SELECT id, nombre, direccion, telefono, banco, cuenta, correo,
 				       foto_frente, foto_reverso, estado
 				FROM clientes WHERE id = %s AND creado_por = %s
 				""",
@@ -1315,7 +1353,7 @@ def cliente():
 			if fila:
 				datos = {
 					"nombre": fila[1], "direccion": fila[2], "telefono": fila[3],
-					"banco": fila[4], "cuenta": fila[5], "estado": fila[8],
+					"banco": fila[4], "cuenta": fila[5], "correo": fila[6], "estado": fila[8],
 					"foto_frente_url": f"/api/clientes/{fila[0]}/foto/frente",
 					"foto_reverso_url": f"/api/clientes/{fila[0]}/foto/reverso",
 				}

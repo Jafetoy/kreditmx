@@ -1,0 +1,13 @@
+# Archivo con claves y contraseñas
+.env
+
+# Entorno virtual de Python
+venv/
+
+# Caché de Python
+__pycache__/
+*.pyc
+
+# Configuración de VS Code
+.vscode/
+

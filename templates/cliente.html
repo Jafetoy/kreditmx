@@ -156,6 +156,18 @@
 
             </div>
 
+            <div class="dato">
+
+                <span>
+                    Correo electrónico
+                </span>
+
+                <strong>
+                    {{ cliente.correo or "No registrado" }}
+                </strong>
+
+            </div>
+
 
             <div class="dato">
 
@@ -301,7 +313,9 @@ async function guardarEstado() {
             throw new Error(resultado.error || "No se pudo guardar el estado.");
         }
 
-        mensaje.textContent = "Estado actualizado correctamente.";
+        mensaje.textContent = "Estado actualizado correctamente."
+            + (resultado.correo_enviado ? " Se notificó al cliente por correo." : "")
+            + (resultado.correo_detalle && !resultado.correo_enviado && resultado.correo_detalle !== "El cliente no tiene correo registrado." && !resultado.correo_detalle.includes("no tiene correo") ? ` (${resultado.correo_detalle})` : "");
         mensaje.style.color = "#15803d";
     } catch (error) {
         mensaje.textContent = error.message;

@@ -403,7 +403,7 @@ function renderizarClientesRegistrados(clientes) {
             : cliente.estado.toLowerCase().replace(/^./, (letra) => letra.toUpperCase());
 
         return `
-            <tr data-id="${cliente.id}">
+            <tr data-id="${cliente.id}" data-correo="${cliente.correo || ""}">
                 <td data-label="ID">#${String(cliente.id).padStart(3, "0")}</td>
                 <td data-label="Cliente">${cliente.nombre}</td>
                 <td data-label="Teléfono">${cliente.telefono}</td>
@@ -565,6 +565,10 @@ function editarCliente(boton) {
     document.getElementById("nombreCliente").value = fila.cells[1].textContent.trim();
     document.getElementById("telefonoCliente").value = fila.cells[2].textContent.trim();
     document.getElementById("bancoCliente").value = fila.cells[3].textContent.trim();
+    const campoCorreo = document.getElementById("correoCliente");
+    if (campoCorreo) {
+        campoCorreo.value = fila.dataset.correo || "";
+    }
 
     mostrarModulo("clientes");
     document.getElementById("nombreCliente").focus();
@@ -621,6 +625,8 @@ if (formularioCliente) {
         const nombre = document.getElementById("nombreCliente").value.trim();
         const telefono = document.getElementById("telefonoCliente").value.trim();
         const banco = document.getElementById("bancoCliente").value.trim();
+        const campoCorreo = document.getElementById("correoCliente");
+        const correo = campoCorreo ? campoCorreo.value.trim() : "";
 
         if (!id) {
             alert("Selecciona un cliente de la tabla para modificarlo.");
@@ -631,7 +637,7 @@ if (formularioCliente) {
             const respuesta = await fetch(`/api/clientes/${id}`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ nombre, telefono, banco }),
+                body: JSON.stringify({ nombre, telefono, banco, correo }),
             });
             const resultado = await respuesta.json();
 
@@ -992,6 +998,10 @@ async function generarPrestamo() {
             `Préstamo generado correctamente.\n` +
             `Se descontaron ${formatoDinero(monto)} del fondo disponible.`
         );
+
+        // Descargar el PDF con el calendario de pagos
+        generarCalendarioPDF(prestamoActual);
+
         await cargarDatosMariaDB();
         cargarFondo();
     } catch (error) {
@@ -2716,6 +2726,83 @@ function generarReciboPagoPDF() {
 
 }
 
+// ------------------------------------------
+// PDF: SOLO CALENDARIO DE PAGOS
+// (se descarga al generar un préstamo nuevo)
+// ------------------------------------------
+
+async function generarCalendarioPDF(datos) {
+
+    try {
+
+        const pdf = await prepararPDF(
+            "CALENDARIO DE PAGOS",
+            `${datos.cliente}  |  ${datos.periodicidad === "quincenal" ? "Quincenal" : "Mensual"}  |  ${datos.numeroPagos} pagos`
+        );
+
+        pdf.setFont("helvetica", "bold");
+        pdf.setFontSize(14);
+        pdf.text(datos.cliente || "Cliente", 15, 56);
+        pdf.setFont("helvetica", "normal");
+        pdf.setFontSize(9);
+        pdf.setTextColor(98, 125, 152);
+        pdf.text(
+            `Inicio: ${formatoFecha(datos.fechaInicio)}   |   Término: ${formatoFecha(datos.fechaTermino)}`,
+            15,
+            63
+        );
+        pdf.setTextColor(16, 42, 67);
+
+        tarjetaPDF(pdf, 15, 73, 55, "MONTO PRESTADO", formatoDinero(datos.monto));
+        tarjetaPDF(pdf, 75, 73, 55, "TOTAL A PAGAR", formatoDinero(datos.total));
+        tarjetaPDF(pdf, 135, 73, 50, "PAGO POR PERIODO", formatoDinero(datos.pago));
+
+        tituloPDF(pdf, "CALENDARIO DE PAGOS", 116);
+        pdf.setFillColor(232, 241, 251);
+        pdf.roundedRect(15, 122, 180, 9, 2, 2, "F");
+        pdf.setFont("helvetica", "bold");
+        pdf.setFontSize(8);
+        pdf.text("PAGO", 25, 128);
+        pdf.text("FECHA", 70, 128);
+        pdf.text("IMPORTE", 135, 128);
+
+        let y = 138;
+
+        for (let i = 1; i <= datos.numeroPagos; i++) {
+
+            if (y > 275) {
+                pdf.addPage();
+                y = 22;
+            }
+
+            pdf.setFont("helvetica", "normal");
+            pdf.setFontSize(9);
+            pdf.setTextColor(16, 42, 67);
+            pdf.text(String(i), 25, y);
+            pdf.text(formatoFecha(obtenerFechaPago(i, datos)), 70, y);
+            pdf.text(formatoDinero(datos.pago), 135, y);
+            pdf.setDrawColor(225, 232, 239);
+            pdf.line(15, y + 4, 195, y + 4);
+            y += 9;
+
+        }
+
+        pdf.setFontSize(8);
+        pdf.setTextColor(98, 125, 152);
+        pdf.text("Documento generado por Kreditmx", 15, 287);
+
+        const nombre = `calendario-pagos-${(datos.cliente || "cliente")
+            .replace(/[^a-zA-Z0-9]/g, "-")
+            .toLowerCase()}.pdf`;
+
+        pdf.save(nombre);
+
+    } catch (error) {
+        console.error("No se pudo generar el calendario PDF:", error);
+    }
+
+}
+
 function obtenerFechaPago(numero, prestamo = prestamoActual) {
 
     const fecha = new Date(prestamo.fechaInicio);
@@ -3084,7 +3171,7 @@ function renderizarClientes(clientes, clientesConPrestamo = new Set()) {
             : `<button type="button" class="btn-tabla btn-eliminar" onclick="eliminarCliente(this)">Eliminar</button>`;
 
         return `
-            <tr data-id="${cliente.id}">
+            <tr data-id="${cliente.id}" data-correo="${cliente.correo || ""}">
                 <td data-label="ID">#${String(cliente.id).padStart(3, "0")}</td>
                 <td data-label="Cliente">${cliente.nombre}</td>
                 <td data-label="Teléfono">${cliente.telefono}</td>
