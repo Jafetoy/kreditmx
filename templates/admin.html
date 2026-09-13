@@ -173,6 +173,12 @@
                 <span>Consulta quién tiene un préstamo activo.</span>
             </button>
 
+            <button class="modulo-card modulo-card-destacado" type="button" onclick="mostrarModulo('fondo'); cargarFondo();">
+                <span class="modulo-icono">&#9878;</span>
+                <strong>Fondo de inversión</strong>
+                <span>Inversiones, fondo disponible y reparto de pagos.</span>
+            </button>
+
         </div>
 
     </section>
@@ -283,18 +289,6 @@
 
                 <option value="">
                     Seleccionar cliente
-                </option>
-
-                <option value="Juan Pérez">
-                    Juan Pérez
-                </option>
-
-                <option value="María López">
-                    María López
-                </option>
-
-                <option value="Carlos García">
-                    Carlos García
                 </option>
 
             </select>
@@ -789,6 +783,285 @@
                 </tbody>
 
             </table>
+
+        </div>
+
+    </section>
+
+    <!-- FONDO DE INVERSION -->
+
+    <section id="modulo-fondo" class="panel modulo-panel">
+
+        <div class="panel-header">
+
+            <div>
+
+                <h2>
+                    Fondo de inversión
+                </h2>
+
+                <p>
+                    Registra inversiones y consulta cómo
+                    se reparten los pagos de los clientes.
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <div class="estadisticas estadisticas-fondo">
+
+            <div class="stat-card">
+
+                <span>
+                    Total invertido
+                </span>
+
+                <strong id="fondoTotalInvertido">
+                    $0.00
+                </strong>
+
+            </div>
+
+
+            <div class="stat-card">
+
+                <span>
+                    Prestado a clientes
+                </span>
+
+                <strong id="fondoPrestado">
+                    $0.00
+                </strong>
+
+            </div>
+
+
+            <div class="stat-card stat-colocados">
+
+                <span>
+                    Fondo disponible
+                </span>
+
+                <strong id="fondoDisponible">
+                    $0.00
+                </strong>
+
+                <small>
+                    Invertido menos prestado más abonos al fondo
+                </small>
+
+            </div>
+
+
+            <div class="stat-card">
+
+                <span>
+                    Para el inversionista
+                </span>
+
+                <strong id="fondoInversionista">
+                    $0.00
+                </strong>
+
+                <small>
+                    Acumulado de los pagos
+                </small>
+
+            </div>
+
+
+            <div class="stat-card">
+
+                <span>
+                    Para el admin
+                </span>
+
+                <strong id="fondoAdmin">
+                    $0.00
+                </strong>
+
+                <small>
+                    Acumulado de los pagos
+                </small>
+
+            </div>
+
+        </div>
+
+
+        <div class="prestamo-form">
+
+
+            <!-- REGISTRAR INVERSION -->
+
+            <div class="campo-prestamo">
+
+                <label for="inversionistaNombre">
+                    Inversionista
+                </label>
+
+                <input
+                    type="text"
+                    id="inversionistaNombre"
+                    placeholder="Nombre del inversionista"
+                >
+
+            </div>
+
+
+            <div class="campo-prestamo">
+
+                <label for="inversionMonto">
+                    Cantidad invertida
+                </label>
+
+                <div class="input-moneda">
+
+                    <span>
+                        $
+                    </span>
+
+                    <input
+                        type="number"
+                        id="inversionMonto"
+                        placeholder="0.00"
+                        min="0"
+                        step="0.01"
+                    >
+
+                </div>
+
+            </div>
+
+
+            <div class="campo-prestamo">
+
+                <button
+                    type="button"
+                    class="btn-calcular"
+                    onclick="registrarInversion()"
+                >
+                    Registrar inversión
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <!-- PORCENTAJES DE REPARTO -->
+
+        <div class="panel-seccion">
+
+            <div class="titulo-seccion">
+                <h2>📊 Reparto de cada pago</h2>
+                <p>Define qué porcentaje del pago va al inversionista, al fondo y al admin. Deben sumar 100.</p>
+            </div>
+
+            <div class="prestamo-form">
+
+                <div class="campo-prestamo">
+
+                    <label for="porcentajeInversionista">
+                        Inversionista (%)
+                    </label>
+
+                    <input
+                        type="number"
+                        id="porcentajeInversionista"
+                        min="0"
+                        max="100"
+                        step="0.01"
+                    >
+
+                </div>
+
+
+                <div class="campo-prestamo">
+
+                    <label for="porcentajeFondo">
+                        Fondo (%)
+                    </label>
+
+                    <input
+                        type="number"
+                        id="porcentajeFondo"
+                        min="0"
+                        max="100"
+                        step="0.01"
+                    >
+
+                </div>
+
+
+                <div class="campo-prestamo">
+
+                    <label for="porcentajeAdmin">
+                        Admin (%)
+                    </label>
+
+                    <input
+                        type="number"
+                        id="porcentajeAdmin"
+                        min="0"
+                        max="100"
+                        step="0.01"
+                    >
+
+                </div>
+
+
+                <div class="campo-prestamo">
+
+                    <button
+                        type="button"
+                        class="btn-calcular"
+                        onclick="guardarPorcentajes()"
+                    >
+                        Guardar porcentajes
+                    </button>
+
+                </div>
+
+            </div>
+
+            <div id="mensajeFondo" class="mensaje-pago"></div>
+
+        </div>
+
+
+        <!-- INVERSIONES REGISTRADAS -->
+
+        <div class="panel-seccion">
+
+            <div class="titulo-seccion">
+                <h2>💼 Inversiones registradas</h2>
+                <p>Historial de capital invertido en el fondo.</p>
+            </div>
+
+            <div class="tabla-wrapper">
+
+                <table id="tablaInversiones">
+
+                    <thead>
+                        <tr>
+                            <th>Inversionista</th>
+                            <th>Monto</th>
+                            <th>Fecha</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        <tr>
+                            <td colspan="3">No hay inversiones registradas.</td>
+                        </tr>
+                    </tbody>
+
+                </table>
+
+            </div>
 
         </div>
 

@@ -459,7 +459,7 @@ function calcularPrestamo() {
 
 
     const pagoPorQuincena =
-        round(total / numeroPagos);
+        total / numeroPagos;
 
 
     // --------------------------------------
@@ -2626,4 +2626,132 @@ function renderizarClientes(clientes) {
             </tr>
         `;
     }).join("");
+}// ==========================================
+// FONDO DE INVERSION
+// ==========================================
+
+const dineroFondo = (valor) => formatoDinero(valor);
+
+async function cargarFondo() {
+
+    try {
+        const respuesta = await fetch("/api/fondo");
+
+        if (!respuesta.ok) {
+            return;
+        }
+
+        const fondo = await respuesta.json();
+
+        document.getElementById("fondoTotalInvertido").textContent = dineroFondo(fondo.total_invertido);
+        document.getElementById("fondoPrestado").textContent = dineroFondo(fondo.prestado);
+        document.getElementById("fondoDisponible").textContent = dineroFondo(fondo.fondo_disponible);
+        document.getElementById("fondoInversionista").textContent = dineroFondo(fondo.para_inversionista);
+        document.getElementById("fondoAdmin").textContent = dineroFondo(fondo.para_admin);
+
+        document.getElementById("porcentajeInversionista").value = fondo.porcentajes.inversionista;
+        document.getElementById("porcentajeFondo").value = fondo.porcentajes.fondo;
+        document.getElementById("porcentajeAdmin").value = fondo.porcentajes.admin;
+
+        await cargarInversiones();
+
+    } catch (error) {
+        console.warn("No se pudo cargar el fondo de inversión.", error);
+    }
+
+}
+
+async function cargarInversiones() {
+
+    try {
+        const respuesta = await fetch("/api/inversiones");
+
+        if (!respuesta.ok) {
+            return;
+        }
+
+        const inversiones = await respuesta.json();
+        const tabla = document.querySelector("#tablaInversiones tbody");
+
+        tabla.innerHTML = inversiones.length
+            ? inversiones.map((inversion) => `
+                <tr>
+                    <td>${inversion.inversionista}</td>
+                    <td>${dinero(inversion.monto)}</td>
+                    <td>${new Date(inversion.creado_en).toLocaleDateString("es-MX")}</td>
+                </tr>
+            `).join("")
+            : `<tr><td colspan="3">No hay inversiones registradas.</td></tr>`;
+
+    } catch (error) {
+        console.warn("No se pudieron cargar las inversiones.", error);
+    }
+
+}
+
+async function registrarInversion() {
+
+    const monto = parseFloat(document.getElementById("inversionMonto").value);
+    const inversionista = document.getElementById("inversionistaNombre").value.trim() || "Inversionista";
+    const mensaje = document.getElementById("mensajeFondo");
+
+    if (!monto || monto <= 0) {
+        mensaje.textContent = "Ingresa un monto de inversión válido.";
+        mensaje.style.color = "#b91c1c";
+        return;
+    }
+
+    try {
+        const respuesta = await fetch("/api/inversiones", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ monto, inversionista }),
+        });
+        const resultado = await respuesta.json();
+
+        if (!respuesta.ok) {
+            throw new Error(resultado.error || "No se pudo registrar la inversión.");
+        }
+
+        document.getElementById("inversionMonto").value = "";
+        mensaje.textContent = "Inversión registrada correctamente.";
+        mensaje.style.color = "#15803d";
+        cargarFondo();
+
+    } catch (error) {
+        mensaje.textContent = error.message;
+        mensaje.style.color = "#b91c1c";
+    }
+
+}
+
+async function guardarPorcentajes() {
+
+    const datos = {
+        inversionista: parseFloat(document.getElementById("porcentajeInversionista").value),
+        fondo: parseFloat(document.getElementById("porcentajeFondo").value),
+        admin: parseFloat(document.getElementById("porcentajeAdmin").value),
+    };
+    const mensaje = document.getElementById("mensajeFondo");
+
+    try {
+        const respuesta = await fetch("/api/configuracion", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(datos),
+        });
+        const resultado = await respuesta.json();
+
+        if (!respuesta.ok) {
+            throw new Error(resultado.error || "No se pudieron guardar los porcentajes.");
+        }
+
+        mensaje.textContent = "Porcentajes guardados correctamente.";
+        mensaje.style.color = "#15803d";
+
+    } catch (error) {
+        mensaje.textContent = error.message;
+        mensaje.style.color = "#b91c1c";
+    }
+
 }

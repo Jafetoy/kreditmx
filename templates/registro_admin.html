@@ -10,7 +10,7 @@
         content="width=device-width, initial-scale=1.0"
     >
 
-    <title>Administrador</title>
+    <title>Registro Administrador</title>
 
     <link
         rel="stylesheet"
@@ -32,26 +32,58 @@
         >
 
         <h1>
-            Administrador
+            Registro
         </h1>
 
         <p>
-            Ingresa a tu cuenta para continuar.
+            Crea tu cuenta de administrador.
         </p>
 
 
-        <form id="loginForm">
+        <form id="registroForm">
 
             <div class="campo-admin">
 
                 <label>
-                    Usuario o correo
+                    Nombre completo
+                </label>
+
+                <input
+                    type="text"
+                    id="nombre_completo"
+                    placeholder="Nombre completo"
+                    required
+                >
+
+            </div>
+
+
+            <div class="campo-admin">
+
+                <label>
+                    Nombre de usuario
                 </label>
 
                 <input
                     type="text"
                     id="usuario"
-                    placeholder="Usuario o correo"
+                    placeholder="Nombre de usuario"
+                    required
+                >
+
+            </div>
+
+
+            <div class="campo-admin">
+
+                <label>
+                    Correo
+                </label>
+
+                <input
+                    type="email"
+                    id="correo"
+                    placeholder="correo@ejemplo.com"
                     required
                 >
 
@@ -66,8 +98,9 @@
 
                 <input
                     type="password"
-                    id="password"
-                    placeholder="Contraseña"
+                    id="contrasena"
+                    placeholder="Mínimo 8 caracteres"
+                    minlength="8"
                     required
                 >
 
@@ -75,7 +108,7 @@
 
 
             <p
-                id="loginError"
+                id="registroError"
                 style="color: #c0392b; display: none;"
             >
             </p>
@@ -85,7 +118,7 @@
                 type="submit"
                 class="btn-admin"
             >
-                Iniciar sesión
+                Crear cuenta
             </button>
 
         </form>
@@ -93,8 +126,8 @@
 
         <p style="text-align: center; margin-top: 15px;">
 
-            <a href="/registro-admin" style="font-size: 14px;">
-                ¿No tienes cuenta? Regístrate
+            <a href="/login" style="font-size: 14px;">
+                Ya tengo cuenta
             </a>
 
         </p>
@@ -107,36 +140,44 @@
 <script>
 
 document
-    .getElementById("loginForm")
+    .getElementById("registroForm")
     .addEventListener(
         "submit",
         async function(event) {
 
             event.preventDefault();
 
-            const errorParrafo = document.getElementById("loginError");
+            const errorParrafo = document.getElementById("registroError");
             errorParrafo.style.display = "none";
+
+            if (document.getElementById("contrasena").value.length < 8) {
+                errorParrafo.textContent = "La contraseña debe tener al menos 8 caracteres.";
+                errorParrafo.style.display = "block";
+                return;
+            }
 
             try {
 
-                const respuesta = await fetch("/api/login", {
+                const respuesta = await fetch("/api/registro-admin", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
+                        nombre_completo: document.getElementById("nombre_completo").value,
                         usuario: document.getElementById("usuario").value,
-                        contrasena: document.getElementById("password").value,
+                        correo: document.getElementById("correo").value,
+                        contrasena: document.getElementById("contrasena").value,
                     }),
                 });
 
                 const datos = await respuesta.json();
 
                 if (!respuesta.ok) {
-                    errorParrafo.textContent = datos.error || "No se pudo iniciar sesión.";
+                    errorParrafo.textContent = datos.error || "No se pudo registrar la cuenta.";
                     errorParrafo.style.display = "block";
                     return;
                 }
 
-                window.location.href = "/admin";
+                window.location.href = "/login";
 
             } catch (error) {
                 errorParrafo.textContent = "Error de conexión. Intenta de nuevo.";
@@ -150,4 +191,4 @@ document
 
 </body>
 
-</html> 
+</html>

@@ -4,7 +4,8 @@ import uuid
 from datetime import date
 import math
 
-from flask import Flask, jsonify, render_template, request, send_from_directory
+from flask import Flask, jsonify, render_template, redirect, request, send_from_directory, session, url_for
+from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.utils import secure_filename
 
 from database import conectar, inicializar_base
@@ -12,41 +13,15 @@ from database import conectar, inicializar_base
 
 app = Flask(__name__)
 app.config["UPLOAD_FOLDER"] = os.path.join(app.root_path, "uploads")
+app.secret_key = os.getenv("SECRET_KEY") or secrets.token_hex(32)
 os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 
 try:
 	inicializar_base()
 	DB_DISPONIBLE = True
 except Exception as error:
-	print(f"MariaDB no disponible: {error}")
+	print(f"PostgreSQL/Supabase no disponible: {error}")
 	DB_DISPONIBLE = False
-
-CLIENTES = {
-	"001": {
-		"nombre": "Juan Pérez",
-		"telefono": "5551234567",
-		"banco": "BBVA",
-		"direccion": "Av. Ejemplo #123, Ciudad de México",
-		"cuenta": "1234567890123456",
-		"estado": "PENDIENTE",
-	},
-	"002": {
-		"nombre": "María López",
-		"telefono": "5559876543",
-		"banco": "Santander",
-		"direccion": "Calle Reforma #45, Ciudad de México",
-		"cuenta": "9876543210987654",
-		"estado": "EN_REVISION",
-	},
-	"003": {
-		"nombre": "Carlos García",
-		"telefono": "5552223333",
-		"banco": "Banorte",
-		"direccion": "Av. Juárez #78, Ciudad de México",
-		"cuenta": "4567890123456789",
-		"estado": "APROBADO",
-	},
-}
 
 
 @app.get("/css/<path:filename>")
@@ -70,7 +45,109 @@ def archivo_subido(filename):
 
 
 def respuesta_base_no_disponible():
-	return jsonify({"error": "MariaDB no está disponible."}), 503
+	return jsonify({"error": "La base de datos no está disponible."}), 503
+
+
+# ------------------------------------------------------------
+# AUTENTICACIÓN DE ADMINISTRADORES
+# ------------------------------------------------------------
+def login_requerido(funcion):
+	"""Protege rutas: exige sesión iniciada como administrador."""
+	from functools import wraps
+
+	@wraps(funcion)
+	def envuelto(*argumentos, **kwargs):
+		if not session.get("usuario_id"):
+			if request.path.startswith("/api/"):
+				return jsonify({"error": "No autorizado. Inicia sesión."}), 401
+			return redirect(url_for("login"))
+		return funcion(*argumentos, **kwargs)
+
+	return envuelto
+
+
+@app.post("/api/registro-admin")
+def registro_admin():
+	if not DB_DISPONIBLE:
+		return respuesta_base_no_disponible()
+
+	datos = request.get_json(silent=True) or {}
+	nombre_completo = (datos.get("nombre_completo") or "").strip()
+	usuario = (datos.get("usuario") or "").strip().lower()
+	correo = (datos.get("correo") or "").strip().lower()
+	contrasena = datos.get("contrasena") or ""
+
+	if not all((nombre_completo, usuario, correo, contrasena)):
+		return jsonify({"error": "Completa nombre completo, usuario, correo y contraseña."}), 400
+	if len(contrasena) < 8:
+		return jsonify({"error": "La contraseña debe tener al menos 8 caracteres."}), 400
+	if "@" not in correo or "." not in correo.split("@", 1)[1]:
+		return jsonify({"error": "Ingresa un correo válido."}), 400
+	if not usuario.replace(".", "").replace("_", "").isalnum():
+		return jsonify({"error": "El usuario solo puede tener letras, números, puntos y guiones."}), 400
+
+	conexion = conectar()
+	try:
+		cursor = conexion.cursor()
+		cursor.execute(
+			"""
+			INSERT INTO usuarios (nombre_completo, usuario, correo, contrasena_hash)
+			VALUES (%s, %s, %s, %s)
+			RETURNING id
+			""",
+			(nombre_completo, usuario, correo, generate_password_hash(contrasena)),
+		)
+		nuevo_id = cursor.fetchone()[0]
+		conexion.commit()
+	except Exception as error:
+		conexion.rollback()
+		mensaje = str(error)
+		if "usuarios_usuario_key" in mensaje:
+			return jsonify({"error": "Ese nombre de usuario ya está registrado."}), 409
+		if "usuarios_correo_key" in mensaje:
+			return jsonify({"error": "Ese correo ya está registrado."}), 409
+		return jsonify({"error": mensaje}), 500
+	finally:
+		conexion.close()
+
+	return jsonify({"success": True, "usuario_id": nuevo_id}), 201
+
+
+@app.post("/api/login")
+def api_login():
+	if not DB_DISPONIBLE:
+		return respuesta_base_no_disponible()
+
+	datos = request.get_json(silent=True) or {}
+	usuario = (datos.get("usuario") or "").strip().lower()
+	contrasena = datos.get("contrasena") or ""
+
+	if not usuario or not contrasena:
+		return jsonify({"error": "Ingresa usuario y contraseña."}), 400
+
+	conexion = conectar()
+	try:
+		cursor = conexion.cursor()
+		cursor.execute(
+			"SELECT id, contrasena_hash FROM usuarios WHERE usuario = %s OR correo = %s",
+			(usuario, usuario),
+		)
+		fila = cursor.fetchone()
+	finally:
+		conexion.close()
+
+	if not fila or not check_password_hash(fila[1], contrasena):
+		return jsonify({"error": "Usuario o contraseña incorrectos."}), 401
+
+	session["usuario_id"] = fila[0]
+	session.permanent = True
+	return jsonify({"success": True})
+
+
+@app.post("/api/logout")
+def api_logout():
+	session.clear()
+	return jsonify({"success": True})
 
 
 @app.post("/api/enlaces")
@@ -84,7 +161,7 @@ def crear_enlace():
 	try:
 		cursor = conexion.cursor()
 		cursor.execute(
-			"INSERT INTO enlaces_registro (token) VALUES (?)",
+			"INSERT INTO enlaces_registro (token) VALUES (%s)",
 			(token,),
 		)
 		conexion.commit()
@@ -122,7 +199,7 @@ def crear_cliente():
 	try:
 		cursor = conexion.cursor()
 		cursor.execute(
-			"SELECT usado FROM enlaces_registro WHERE token = ?",
+			"SELECT usado FROM enlaces_registro WHERE token = %s",
 			(token,),
 		)
 		registro = cursor.fetchone()
@@ -141,21 +218,21 @@ def crear_cliente():
 		cursor.execute(
 			"""
 			INSERT INTO clientes
-			(nombre, direccion, telefono, banco, cuenta, foto_frente, foto_reverso)
-			VALUES (?, ?, ?, ?, ?, ?, ?)
+			(creado_por, nombre, direccion, telefono, banco, cuenta, foto_frente, foto_reverso)
+			VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+			RETURNING id
 			""",
 			(
-				campos["nombre"], campos["direccion"], campos["telefono"],
+				session.get("usuario_id"), campos["nombre"], campos["direccion"], campos["telefono"],
 				campos["banco"], campos["cuenta"], archivos[0], archivos[1],
 			),
 		)
+		nuevo_id = cursor.fetchone()[0]
 		cursor.execute(
-			"UPDATE enlaces_registro SET usado = 1 WHERE token = ?",
+			"UPDATE enlaces_registro SET usado = TRUE WHERE token = %s",
 			(token,),
 		)
 		conexion.commit()
-		cursor.execute("SELECT LAST_INSERT_ID()")
-		nuevo_id = cursor.fetchone()[0]
 		exito = True
 		excepcion = None
 	except Exception as error:
@@ -172,6 +249,7 @@ def crear_cliente():
 
 
 @app.get("/api/admin/resumen")
+@login_requerido
 def resumen_admin():
 	if not DB_DISPONIBLE:
 		return respuesta_base_no_disponible()
@@ -179,15 +257,30 @@ def resumen_admin():
 	conexion = conectar()
 	try:
 		cursor = conexion.cursor()
-		cursor.execute("SELECT COUNT(*) FROM clientes")
+		usuario_id = session.get("usuario_id")
+		cursor.execute(
+			"SELECT COUNT(*) FROM clientes WHERE creado_por = %s", (usuario_id,)
+		)
 		total_clientes = cursor.fetchone()[0]
-		cursor.execute("SELECT COUNT(*) FROM clientes WHERE estado = 'PENDIENTE'")
+		cursor.execute(
+			"SELECT COUNT(*) FROM clientes WHERE estado = 'PENDIENTE' AND creado_por = %s",
+			(usuario_id,),
+		)
 		pendientes = cursor.fetchone()[0]
-		cursor.execute("SELECT COUNT(*) FROM clientes WHERE estado = 'EN_REVISION'")
+		cursor.execute(
+			"SELECT COUNT(*) FROM clientes WHERE estado = 'EN_REVISION' AND creado_por = %s",
+			(usuario_id,),
+		)
 		en_revision = cursor.fetchone()[0]
-		cursor.execute("SELECT COUNT(*) FROM clientes WHERE estado = 'APROBADO'")
+		cursor.execute(
+			"SELECT COUNT(*) FROM clientes WHERE estado = 'APROBADO' AND creado_por = %s",
+			(usuario_id,),
+		)
 		aprobados = cursor.fetchone()[0]
-		cursor.execute("SELECT COUNT(DISTINCT cliente_id) FROM prestamos WHERE estado = 'ACTIVO'")
+		cursor.execute(
+			"SELECT COUNT(DISTINCT cliente_id) FROM prestamos WHERE estado = 'ACTIVO' AND creado_por = %s",
+			(usuario_id,),
+		)
 		clientes_activos = cursor.fetchone()[0]
 	finally:
 		conexion.close()
@@ -202,6 +295,7 @@ def resumen_admin():
 
 
 @app.get("/api/clientes")
+@login_requerido
 def listar_clientes():
 	if not DB_DISPONIBLE:
 		return respuesta_base_no_disponible()
@@ -209,10 +303,12 @@ def listar_clientes():
 	conexion = conectar()
 	try:
 		cursor = conexion.cursor()
+		usuario_id = session.get("usuario_id")
 		cursor.execute(
 			"SELECT id, nombre, direccion, telefono, banco, cuenta, "
 			"foto_frente, foto_reverso, estado, creado_en "
-			"FROM clientes ORDER BY creado_en DESC"
+			"FROM clientes WHERE creado_por = %s ORDER BY creado_en DESC",
+			(usuario_id,),
 		)
 		columnas = (
 			"id", "nombre", "direccion", "telefono", "banco", "cuenta",
@@ -231,6 +327,7 @@ def listar_clientes():
 
 
 @app.post("/api/prestamos")
+@login_requerido
 def crear_prestamo():
 	if not DB_DISPONIBLE:
 		return respuesta_base_no_disponible()
@@ -252,16 +349,17 @@ def crear_prestamo():
 		cursor.execute(
 			"""
 			INSERT INTO prestamos
-			(cliente_id, monto, porcentaje, total, periodicidad, numero_pagos, fecha_inicio)
-			VALUES (?, ?, ?, ?, ?, ?, ?)
+			(cliente_id, creado_por, monto, porcentaje, total, periodicidad, numero_pagos, fecha_inicio)
+			VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+			RETURNING id
 			""",
 			(
-				int(datos["cliente_id"]), monto, porcentaje, total,
+				int(datos["cliente_id"]), session.get("usuario_id"), monto, porcentaje, total,
 				datos["periodicidad"], numero_pagos, datos["fecha_inicio"],
 			),
 		)
+		prestamo_id = cursor.fetchone()[0]
 		conexion.commit()
-		prestamo_id = cursor.lastrowid
 	finally:
 		conexion.close()
 
@@ -276,6 +374,7 @@ def crear_prestamo():
 
 
 @app.get("/api/prestamos/activos")
+@login_requerido
 def listar_prestamos_activos():
 	if not DB_DISPONIBLE:
 		return respuesta_base_no_disponible()
@@ -291,10 +390,11 @@ def listar_prestamos_activos():
 			FROM prestamos p
 			JOIN clientes c ON c.id = p.cliente_id
 			LEFT JOIN pagos pg ON pg.prestamo_id = p.id
-			WHERE p.estado = 'ACTIVO'
+			WHERE p.estado = 'ACTIVO' AND p.creado_por = %s
 			GROUP BY p.id
 			ORDER BY p.creado_en DESC
-			"""
+			""",
+			(session.get("usuario_id"),),
 		)
 		columnas = ("id", "cliente_id", "nombre", "monto", "total", "periodicidad", "numero_pagos", "fecha_inicio", "pagado")
 		prestamos = [dict(zip(columnas, fila)) for fila in cursor.fetchall()]
@@ -312,6 +412,7 @@ def listar_prestamos_activos():
 
 
 @app.post("/api/pagos")
+@login_requerido
 def crear_pago():
 	if not DB_DISPONIBLE:
 		return respuesta_base_no_disponible()
@@ -325,7 +426,7 @@ def crear_pago():
 	try:
 		cursor = conexion.cursor()
 		cursor.execute(
-			"SELECT total FROM prestamos WHERE id = ? AND estado = 'ACTIVO'",
+			"SELECT total FROM prestamos WHERE id = %s AND estado = 'ACTIVO'",
 			(int(datos["prestamo_id"]),),
 		)
 		prestamo = cursor.fetchone()
@@ -333,7 +434,7 @@ def crear_pago():
 			return jsonify({"error": "El préstamo activo no existe."}), 404
 
 		cursor.execute(
-			"SELECT COALESCE(SUM(monto), 0) FROM pagos WHERE prestamo_id = ?",
+			"SELECT COALESCE(SUM(monto), 0) FROM pagos WHERE prestamo_id = %s",
 			(int(datos["prestamo_id"]),),
 		)
 		total_pagado = float(cursor.fetchone()[0])
@@ -347,24 +448,204 @@ def crear_pago():
 			"""
 			INSERT INTO pagos
 			(prestamo_id, numero_pago, fecha_pago, monto, saldo_anterior, nuevo_saldo)
-			VALUES (?, ?, ?, ?, ?, ?)
+			VALUES (%s, %s, %s, %s, %s, %s)
+			RETURNING id
 			""",
 			(
 				int(datos["prestamo_id"]), int(datos["numero_pago"]),
 				datos["fecha_pago"], monto, saldo_anterior, nuevo_saldo,
 			),
 		)
+		pago_id = cursor.fetchone()[0]
 		if nuevo_saldo == 0:
 			cursor.execute(
-				"UPDATE prestamos SET estado = 'LIQUIDADO' WHERE id = ?",
+				"UPDATE prestamos SET estado = 'LIQUIDADO' WHERE id = %s",
 				(int(datos["prestamo_id"]),),
 			)
+
+		# Reparto del pago entre inversionista, fondo y admin.
+		porcentajes = obtener_porcentajes(cursor)
+		reparto_inversionista = round(monto * porcentajes["inversionista"] / 100, 2)
+		reparto_fondo = round(monto * porcentajes["fondo"] / 100, 2)
+		reparto_admin = round(monto - reparto_inversionista - reparto_fondo, 2)
+
 		conexion.commit()
-		pago_id = cursor.lastrowid
+		cursor.execute(
+			"""
+			INSERT INTO distribucion_pagos (pago_id, inversionista, fondo, admin)
+			VALUES (%s, %s, %s, %s)
+			""",
+			(pago_id, reparto_inversionista, reparto_fondo, reparto_admin),
+		)
+		conexion.commit()
 	finally:
 		conexion.close()
 
-	return jsonify({"success": True, "pago_id": pago_id, "saldo": nuevo_saldo}), 201
+	return jsonify({
+		"success": True,
+		"pago_id": pago_id,
+		"saldo": nuevo_saldo,
+		"reparto": {
+			"inversionista": reparto_inversionista,
+			"fondo": reparto_fondo,
+			"admin": reparto_admin,
+		},
+	}), 201
+
+
+PORCENTAJES_DEFAULT = {"inversionista": 60, "fondo": 20, "admin": 20}
+
+
+def obtener_porcentajes(cursor):
+	"""Lee los porcentajes de reparto configurados (o usa los default)."""
+	porcentajes = dict(PORCENTAJES_DEFAULT)
+	cursor.execute("SELECT clave, valor FROM configuracion")
+	for clave, valor in cursor.fetchall():
+		if clave in porcentajes:
+			porcentajes[clave] = float(valor)
+	return porcentajes
+
+
+@app.get("/api/fondo")
+@login_requerido
+def estado_fondo():
+	if not DB_DISPONIBLE:
+		return respuesta_base_no_disponible()
+
+	conexion = conectar()
+	try:
+		cursor = conexion.cursor()
+
+		usuario_id = session.get("usuario_id")
+
+		cursor.execute("SELECT COALESCE(SUM(monto), 0) FROM inversiones WHERE creado_por = %s", (usuario_id,))
+		total_invertido = float(cursor.fetchone()[0])
+
+		cursor.execute("SELECT COALESCE(SUM(monto), 0) FROM prestamos WHERE creado_por = %s", (usuario_id,))
+		prestado = float(cursor.fetchone()[0])
+
+		cursor.execute(
+			"SELECT COALESCE(SUM(d.inversionista), 0), COALESCE(SUM(d.fondo), 0), "
+			"COALESCE(SUM(d.admin), 0) FROM distribucion_pagos d "
+			"JOIN pagos pg ON pg.id = d.pago_id "
+			"JOIN prestamos p ON p.id = pg.prestamo_id "
+			"WHERE p.creado_por = %s",
+			(usuario_id,),
+		)
+		fila = cursor.fetchone()
+		para_inversionista = float(fila[0])
+		para_fondo = float(fila[1])
+		para_admin = float(fila[2])
+
+		porcentajes = obtener_porcentajes(cursor)
+	finally:
+		conexion.close()
+
+	# El fondo disponible crece con la parte del pago asignada al fondo.
+	fondo_disponible = total_invertido - prestado + para_fondo
+
+	return jsonify({
+		"total_invertido": total_invertido,
+		"prestado": prestado,
+		"fondo_disponible": fondo_disponible,
+		"para_inversionista": para_inversionista,
+		"para_fondo": para_fondo,
+		"para_admin": para_admin,
+		"porcentajes": porcentajes,
+	})
+
+
+@app.post("/api/inversiones")
+@login_requerido
+def crear_inversion():
+	if not DB_DISPONIBLE:
+		return respuesta_base_no_disponible()
+
+	datos = request.get_json(silent=True) or {}
+	monto = float(datos.get("monto") or 0)
+	inversionista = (datos.get("inversionista") or "Inversionista").strip()
+
+	if monto <= 0:
+		return jsonify({"error": "Ingresa un monto de inversión válido."}), 400
+
+	conexion = conectar()
+	try:
+		cursor = conexion.cursor()
+		cursor.execute(
+			"INSERT INTO inversiones (creado_por, inversionista, monto) VALUES (%s, %s, %s) RETURNING id",
+			(session.get("usuario_id"), inversionista or "Inversionista", monto),
+		)
+		conexion.commit()
+		inversion_id = cursor.fetchone()[0]
+	finally:
+		conexion.close()
+
+	return jsonify({"success": True, "inversion_id": inversion_id}), 201
+
+
+@app.get("/api/inversiones")
+@login_requerido
+def listar_inversiones():
+	if not DB_DISPONIBLE:
+		return respuesta_base_no_disponible()
+
+	conexion = conectar()
+	try:
+		cursor = conexion.cursor()
+		cursor.execute(
+			"SELECT id, inversionista, monto, creado_en FROM inversiones "
+			"WHERE creado_por = %s ORDER BY creado_en DESC",
+			(session.get("usuario_id"),),
+		)
+		columnas = ("id", "inversionista", "monto", "creado_en")
+		inversiones = [dict(zip(columnas, fila)) for fila in cursor.fetchall()]
+	finally:
+		conexion.close()
+
+	for inversion in inversiones:
+		inversion["monto"] = float(inversion["monto"])
+		inversion["creado_en"] = inversion["creado_en"].isoformat()
+
+	return jsonify(inversiones)
+
+
+@app.post("/api/configuracion")
+@login_requerido
+def guardar_configuracion():
+	if not DB_DISPONIBLE:
+		return respuesta_base_no_disponible()
+
+	datos = request.get_json(silent=True) or {}
+	try:
+		porcentajes = {
+			"inversionista": float(datos["inversionista"]),
+			"fondo": float(datos["fondo"]),
+			"admin": float(datos["admin"]),
+		}
+	except (KeyError, TypeError, ValueError):
+		return jsonify({"error": "Ingresa los tres porcentajes válidos."}), 400
+
+	if any(valor < 0 or valor > 100 for valor in porcentajes.values()):
+		return jsonify({"error": "Los porcentajes deben estar entre 0 y 100."}), 400
+	if sum(porcentajes.values()) != 100:
+		return jsonify({"error": "Los tres porcentajes deben sumar 100."}), 400
+
+	conexion = conectar()
+	try:
+		cursor = conexion.cursor()
+		for clave, valor in porcentajes.items():
+			cursor.execute(
+				"""
+				INSERT INTO configuracion (clave, valor) VALUES (%s, %s)
+				ON CONFLICT (clave) DO UPDATE SET valor = EXCLUDED.valor
+				""",
+				(clave, valor),
+			)
+		conexion.commit()
+	finally:
+		conexion.close()
+
+	return jsonify({"success": True, "porcentajes": porcentajes})
 
 
 @app.get("/")
@@ -374,7 +655,14 @@ def inicio():
 
 @app.get("/login")
 def login():
+	if session.get("usuario_id"):
+		return redirect(url_for("admin"))
 	return render_template("login.html")
+
+
+@app.get("/registro-admin")
+def registro_admin_pagina():
+	return render_template("registro_admin.html")
 
 
 @app.get("/registro")
@@ -387,6 +675,7 @@ def registro_con_token(token):
 
 
 @app.get("/admin")
+@login_requerido
 def admin():
 	return render_template("admin.html")
 
@@ -404,7 +693,7 @@ def cliente():
 				"""
 				SELECT id, nombre, direccion, telefono, banco, cuenta,
 				       foto_frente, foto_reverso, estado
-				FROM clientes WHERE id = ?
+				FROM clientes WHERE id = %s
 				""",
 				(int(cliente_id),),
 			)
@@ -418,9 +707,6 @@ def cliente():
 				}
 		finally:
 			conexion.close()
-
-	if datos is None:
-		datos = CLIENTES.get(cliente_id)
 
 	if datos is None:
 		datos = {
