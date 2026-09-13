@@ -66,26 +66,32 @@ cuenta.addEventListener("input", function () {
 
         mensajeCuenta.style.color = "#16a34a";
 
-    try {
-        const respuesta = await fetch("/api/registro", {
-            method: "POST",
-            body: new FormData(formulario),
-        });
-        const resultado = await respuesta.json();
+    } else {
 
-        if (!respuesta.ok) {
-            throw new Error(resultado.error || "No se pudo enviar el registro.");
-        }
+        mensajeCuenta.textContent =
+            "Ingresa únicamente 16 números.";
 
-        formulario.classList.add("oculto");
-        mensajeExito.classList.remove("oculto");
-        window.scrollTo({ top: 0, behavior: "smooth" });
-    } catch (error) {
-        alert(error.message);
-        btnEnviar.disabled = false;
-        btnEnviar.textContent = "Enviar registro";
+        mensajeCuenta.style.color = "";
+
     }
 
+});
+
+
+// =====================================================
+// PREVIEW DE FOTOGRAFÍAS
+// =====================================================
+
+function mostrarPreview(input, contenedor) {
+
+    const archivo = input.files[0];
+
+    if (!archivo) {
+
+        contenedor.innerHTML = "";
+
+        return;
+    }
 
     if (!archivo.type.startsWith("image/")) {
 
@@ -116,6 +122,7 @@ cuenta.addEventListener("input", function () {
 
     lector.readAsDataURL(archivo);
 }
+
 
 
 fotoFrente.addEventListener("change", function () {
@@ -210,27 +217,23 @@ formulario.addEventListener("submit", async function (evento) {
         "Enviando registro...";
 
 
-    /*
-        POR AHORA SIMULAMOS EL ENVÍO.
+    try {
+        const respuesta = await fetch("/api/registro", {
+            method: "POST",
+            body: new FormData(formulario),
+        });
+        const resultado = await respuesta.json();
 
-        Posteriormente aquí conectaremos:
-
-        try {
-            const respuesta = await fetch("/api/registro", {
-                method: "POST",
-                body: new FormData(formulario),
-            });
-            const resultado = await respuesta.json();
-
-            if (!respuesta.ok) {
-                throw new Error(resultado.error || "No se pudo enviar el registro.");
-            }
-
-            formulario.classList.add("oculto");
-            mensajeExito.classList.remove("oculto");
-            window.scrollTo({ top: 0, behavior: "smooth" });
-        } catch (error) {
-            alert(error.message);
-            btnEnviar.disabled = false;
-            btnEnviar.textContent = "Enviar registro";
+        if (!respuesta.ok) {
+            throw new Error(resultado.error || "No se pudo enviar el registro.");
         }
+
+        formulario.classList.add("oculto");
+        mensajeExito.classList.remove("oculto");
+        window.scrollTo({ top: 0, behavior: "smooth" });
+    } catch (error) {
+        alert(error.message);
+        btnEnviar.disabled = false;
+        btnEnviar.textContent = "Enviar registro";
+    }
+});

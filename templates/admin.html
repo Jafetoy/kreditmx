@@ -57,53 +57,50 @@
     <section class="estadisticas">
 
 
-        <div class="stat-card">
+        <div class="stat-card stat-total">
 
             <span>
                 Total registros
             </span>
 
             <strong id="totalRegistrosCount">
-                24
+                0
             </strong>
 
         </div>
 
-
-        <div class="stat-card">
+        <div class="stat-card stat-pendientes">
 
             <span>
                 Pendientes
             </span>
 
             <strong id="pendientesCount">
-                8
+                0
             </strong>
 
         </div>
 
-
-        <div class="stat-card">
+        <div class="stat-card stat-revision">
 
             <span>
                 En revisión
             </span>
 
             <strong id="revisionCount">
-                5
+                0
             </strong>
 
         </div>
 
-
-        <div class="stat-card">
+        <div class="stat-card stat-aprobados">
 
             <span>
                 Aprobados
             </span>
 
             <strong id="aprobadosCount">
-                11
+                0
             </strong>
 
         </div>
@@ -143,37 +140,49 @@
 
         <div class="modulos-grid">
 
-            <button class="modulo-card" type="button" onclick="mostrarModulo('prestamos')">
+            <button class="modulo-card" data-modulo="prestamos" type="button" onclick="mostrarModulo('prestamos')">
                 <span class="modulo-icono">$</span>
                 <strong>Nuevo préstamo</strong>
                 <span>Calcula pagos y genera recibos.</span>
             </button>
 
-            <button class="modulo-card" type="button" onclick="mostrarModulo('enlace')">
+            <button class="modulo-card" data-modulo="enlace" type="button" onclick="mostrarModulo('enlace')">
                 <span class="modulo-icono">&#128279;</span>
                 <strong>Enlace de registro</strong>
                 <span>Genera enlaces para nuevos clientes.</span>
             </button>
 
-            <button class="modulo-card" type="button" onclick="mostrarModulo('clientes')">
+            <button class="modulo-card" data-modulo="clientes" type="button" onclick="mostrarModulo('clientes')">
                 <span class="modulo-icono">&#9998;</span>
                 <strong>Modificar clientes</strong>
                 <span>Edita la información registrada.</span>
             </button>
 
-            <button class="modulo-card" type="button" onclick="mostrarModulo('clientes')">
+            <button class="modulo-card" data-modulo="eliminar" type="button" onclick="mostrarModulo('clientes')">
                 <span class="modulo-icono">&#10005;</span>
                 <strong>Eliminar clientes</strong>
                 <span>Administra y elimina registros.</span>
             </button>
 
-            <button class="modulo-card modulo-card-destacado" type="button" onclick="mostrarModulo('colocados')">
+            <button class="modulo-card" data-modulo="pagos" type="button" onclick="mostrarModulo('pagos'); cargarPrestamosPago();">
+                <span class="modulo-icono">&#128181;</span>
+                <strong>Registrar pagos</strong>
+                <span>Registra abonos de los préstamos activos.</span>
+            </button>
+
+            <button class="modulo-card modulo-card-destacado" data-modulo="registrados" type="button" onclick="mostrarModulo('registrados')">
+                <span class="modulo-icono">&#128101;</span>
+                <strong>Clientes registrados</strong>
+                <span>Lista de clientes que se registran desde el formulario.</span>
+            </button>
+
+            <button class="modulo-card modulo-card-destacado" data-modulo="colocados" type="button" onclick="mostrarModulo('colocados')">
                 <span class="modulo-icono">&#9670;</span>
                 <strong>Clientes activos</strong>
                 <span>Consulta quién tiene un préstamo activo.</span>
             </button>
 
-            <button class="modulo-card modulo-card-destacado" type="button" onclick="mostrarModulo('fondo'); cargarFondo();">
+            <button class="modulo-card modulo-card-destacado" data-modulo="fondo" type="button" onclick="mostrarModulo('fondo'); cargarFondo();">
                 <span class="modulo-icono">&#9878;</span>
                 <strong>Fondo de inversión</strong>
                 <span>Inversiones, fondo disponible y reparto de pagos.</span>
@@ -186,7 +195,7 @@
 
     <!-- GENERAR LINK -->
 
-    <section id="modulo-enlace" class="panel modulo-panel">
+    <section id="modulo-enlace" class="panel modulo-panel" data-modulo="enlace">
 
         <div class="panel-header">
 
@@ -254,7 +263,7 @@
      NUEVO PRÉSTAMO
 ========================================= -->
 
-<section id="modulo-prestamos" class="panel modulo-panel">
+<section id="modulo-prestamos" class="panel modulo-panel" data-modulo="prestamos">
 
     <div class="panel-header">
 
@@ -417,10 +426,11 @@
 
         <button
             type="button"
+            id="btnGenerarPrestamo"
             class="btn-calcular"
-            onclick="calcularPrestamo()"
+            onclick="generarPrestamo()"
         >
-            Calcular préstamo
+            Generar préstamo
         </button>
 
     </div>
@@ -595,134 +605,146 @@
         </div>
 
 
-        <!-- REGISTRO DE PAGOS -->
-
-        <section class="panel-seccion">
-
-            <div class="titulo-seccion">
-                <h2>💳 Registrar pago</h2>
-                <p>Registra los pagos realizados por el cliente.</p>
             </div>
-
-            <div class="formulario-pago">
-
-                <div class="campo">
-                    <label for="pagoNumero">
-                        Número de pago
-                    </label>
-
-                    <select id="pagoNumero">
-                        <option value="">Selecciona el pago</option>
-                    </select>
-                </div>
-
-                <div class="campo">
-                    <label for="fechaPago">
-                        Fecha del pago
-                    </label>
-
-                    <input
-                        type="date"
-                        id="fechaPago"
-                    >
-                </div>
-
-                <div class="campo">
-                    <label for="montoPago">
-                        Monto del pago
-                    </label>
-
-                    <input
-                        type="number"
-                        id="montoPago"
-                        step="0.01"
-                        min="0"
-                        placeholder="$0.00"
-                    >
-                </div>
-
-            </div>
-
-            <div class="resumen-pago">
-
-                <div class="dato-pago">
-                    <span>Saldo anterior</span>
-                    <strong id="saldoAnterior">$0.00</strong>
-                </div>
-
-                <div class="dato-pago">
-                    <span>Pago realizado</span>
-                    <strong id="pagoRealizado">$0.00</strong>
-                </div>
-
-                <div class="dato-pago principal">
-                    <span>Nuevo saldo</span>
-                    <strong id="nuevoSaldo">$0.00</strong>
-                </div>
-
-            </div>
-
-            <button
-                type="button"
-                id="btnRegistrarPago"
-                class="btn-principal"
-            >
-                Registrar pago
-            </button>
-
-            <div id="mensajePago" class="mensaje-pago"></div>
 
         </section>
 
 
-        <!-- HISTORIAL DE PAGOS -->
+    <!-- REGISTRAR PAGOS -->
 
-        <section class="panel-seccion">
+    <section id="modulo-pagos" class="panel modulo-panel" data-modulo="pagos">
+
+        <div class="panel-header">
+
+            <div>
+                <h2>Registrar pagos</h2>
+                <p>Registra los abonos de los préstamos activos y consulta su historial.</p>
+            </div>
+
+        </div>
+
+        <div class="prestamo-form">
+
+            <div class="campo-prestamo">
+                <label for="pagoPrestamo">Préstamo activo</label>
+                <select id="pagoPrestamo" onchange="seleccionarPrestamoPago()">
+                    <option value="">Seleccionar préstamo</option>
+                </select>
+            </div>
+
+            <div class="campo-prestamo">
+                <label for="pagoNumeroDB">Número de pago</label>
+                <select id="pagoNumeroDB" onchange="actualizarResumenPagoDB()">
+                    <option value="">Selecciona el pago</option>
+                </select>
+            </div>
+
+            <div class="campo-prestamo">
+                <label for="fechaPagoDB">Fecha del pago</label>
+                <input type="date" id="fechaPagoDB">
+            </div>
+
+            <div class="campo-prestamo">
+                <label for="montoPagoDB">Monto del pago</label>
+                <div class="input-moneda">
+                    <span>$</span>
+                    <input type="number" id="montoPagoDB" placeholder="0.00" min="0" step="0.01" oninput="actualizarResumenPagoDB()">
+                </div>
+            </div>
+
+        </div>
+
+        <div class="resumen-pago">
+
+            <div class="dato-pago">
+                <span>Saldo anterior</span>
+                <strong id="saldoAnteriorDB">$0.00</strong>
+            </div>
+
+            <div class="dato-pago">
+                <span>Pago realizado</span>
+                <strong id="pagoRealizadoDB">$0.00</strong>
+            </div>
+
+            <div class="dato-pago principal">
+                <span>Nuevo saldo</span>
+                <strong id="nuevoSaldoDB">$0.00</strong>
+            </div>
+
+        </div>
+
+        <button
+            type="button"
+            id="btnRegistrarPagoDB"
+            class="btn-principal"
+            onclick="registrarPagoDB()"
+        >
+            Registrar pago
+        </button>
+
+        <div id="mensajePagoDB" class="mensaje-pago"></div>
+
+        <div class="panel-seccion">
 
             <div class="titulo-seccion">
                 <h2>📋 Historial de pagos</h2>
-                <p>Pagos registrados del préstamo.</p>
+                <p>Pagos registrados en la base de datos del préstamo seleccionado.</p>
             </div>
 
-            <div class="tabla-contenedor">
+            <div class="tabla-wrapper">
 
-                <table class="tabla-pagos">
-
+                <table class="tabla-movil">
                     <thead>
                         <tr>
                             <th>#</th>
                             <th>Fecha</th>
-                            <th>Pago base</th>
-                            <th>Incremento</th>
-                            <th>Total</th>
+                            <th>Monto</th>
+                            <th>Saldo anterior</th>
+                            <th>Nuevo saldo</th>
                             <th>Estado</th>
                         </tr>
                     </thead>
-
-                    <tbody id="historialPagos">
+                    <tbody id="historialPagosDB">
                         <tr>
-                            <td colspan="6">
-                                No hay pagos registrados.
-                            </td>
+                            <td colspan="6">Selecciona un préstamo activo.</td>
                         </tr>
                     </tbody>
-
                 </table>
 
             </div>
 
-            <div class="acciones-pago">
-                <button
-                    type="button"
-                    id="btnReciboPago"
-                    class="btn-pdf"
-                >
-                    📄 Generar estado de cuenta PDF
-                </button>
+        </div>
+
+        <!-- CALENDARIO DE PAGOS (ESTADO ACTUALIZADO) -->
+
+        <div class="panel-seccion">
+
+            <div class="titulo-seccion">
+                <h2>🗓️ Calendario de pagos</h2>
+                <p>Estado actualizado de cada pago del préstamo seleccionado.</p>
             </div>
 
-        </section>
+            <div class="tabla-wrapper">
 
+                <table class="tabla-movil">
+                    <thead>
+                        <tr>
+                            <th>Pago</th>
+                            <th>Fecha</th>
+                            <th>Importe</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody id="calendarioPagosDB">
+                        <tr>
+                            <td colspan="4">Selecciona un préstamo activo.</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+            </div>
+
+        </div>
 
         <!-- PDF -->
 
@@ -736,16 +758,68 @@
                 🧾 Generar recibo PDF
             </button>
 
+            <button
+                type="button"
+                class="btn-pdf"
+                onclick="generarReciboPagoPDF()"
+            >
+                📄 Generar estado de cuenta PDF
+            </button>
+
         </div>
 
-    </div>
+    </section>
 
-</section>
+    <!-- CLIENTES REGISTRADOS -->
 
+    <section id="modulo-registrados" class="panel modulo-panel" data-modulo="registrados">
+
+        <div class="panel-header">
+
+            <div>
+                <h2>Clientes registrados</h2>
+                <p>Clientes que se registraron desde el formulario con enlace.</p>
+            </div>
+
+            <div class="contador-modulo">
+                <strong id="clientesRegistradosTotal">0</strong>
+                <span>registros</span>
+            </div>
+
+        </div>
+
+        <div class="tabla-wrapper">
+
+            <table id="tablaRegistrados" class="tabla-movil">
+
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Cliente</th>
+                        <th>Teléfono</th>
+                        <th>Banco</th>
+                        <th>Cuenta</th>
+                        <th>Estado</th>
+                        <th>Fecha</th>
+                        <th>Documentos</th>
+                    </tr>
+                </thead>
+
+                <tbody id="clientesRegistradosLista">
+                    <tr>
+                        <td colspan="8">Cargando clientes...</td>
+                    </tr>
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </section>
 
     <!-- CLIENTES COLOCADOS -->
 
-    <section id="modulo-colocados" class="panel modulo-panel">
+    <section id="modulo-colocados" class="panel modulo-panel" data-modulo="colocados">
 
         <div class="panel-header">
 
@@ -763,7 +837,7 @@
 
         <div class="tabla-wrapper">
 
-            <table id="tablaColocados">
+            <table id="tablaColocados" class="tabla-movil">
 
                 <thead>
                     <tr>
@@ -790,7 +864,7 @@
 
     <!-- FONDO DE INVERSION -->
 
-    <section id="modulo-fondo" class="panel modulo-panel">
+    <section id="modulo-fondo" class="panel modulo-panel" data-modulo="fondo">
 
         <div class="panel-header">
 
@@ -1043,7 +1117,7 @@
 
             <div class="tabla-wrapper">
 
-                <table id="tablaInversiones">
+                <table id="tablaInversiones" class="tabla-movil">
 
                     <thead>
                         <tr>
@@ -1069,7 +1143,7 @@
 
     <!-- CLIENTES -->
 
-    <section id="modulo-clientes" class="panel modulo-panel">
+    <section id="modulo-clientes" class="panel modulo-panel" data-modulo="clientes">
 
         <div class="panel-header">
 
@@ -1126,7 +1200,7 @@
 
         <div class="tabla-wrapper">
 
-            <table id="tablaClientes">
+            <table id="tablaClientes" class="tabla-movil">
 
                 <thead>
 

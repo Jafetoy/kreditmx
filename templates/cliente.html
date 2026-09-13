@@ -26,9 +26,11 @@
 
     <div>
 
-        <div class="admin-logo">
-            FINANCIERA
-        </div>
+        <img
+            class="admin-logo-imagen"
+            src="/img/logo-transparente.png"
+            alt="Kreditmx"
+        >
 
         <span>
             Información del cliente
@@ -253,6 +255,7 @@
 
 
             <button
+                id="btnGuardarEstado"
                 onclick="guardarEstado()"
                 class="btn-generar"
             >
@@ -260,6 +263,8 @@
             </button>
 
         </div>
+
+        <div id="mensajeEstado" class="mensaje-pago"></div>
 
     </section>
 
@@ -269,16 +274,42 @@
 
 <script>
 
-function guardarEstado() {
+async function guardarEstado() {
 
     const estado =
         document.getElementById(
             "estadoCliente"
         ).value;
 
-    alert(
-        "Estado cambiado a: " + estado
-    );
+    const clienteId = "{{ cliente_id }}";
+    const boton = document.getElementById("btnGuardarEstado");
+    const mensaje = document.getElementById("mensajeEstado");
+
+    mensaje.textContent = "";
+    boton.disabled = true;
+    boton.textContent = "Guardando...";
+
+    try {
+        const respuesta = await fetch(`/api/clientes/${clienteId}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ estado: estado }),
+        });
+        const resultado = await respuesta.json();
+
+        if (!respuesta.ok) {
+            throw new Error(resultado.error || "No se pudo guardar el estado.");
+        }
+
+        mensaje.textContent = "Estado actualizado correctamente.";
+        mensaje.style.color = "#15803d";
+    } catch (error) {
+        mensaje.textContent = error.message;
+        mensaje.style.color = "#b91c1c";
+    } finally {
+        boton.disabled = false;
+        boton.textContent = "Guardar estado";
+    }
 
 }
 

@@ -823,9 +823,9 @@ th {
     }
 
 }
-´
-.prestamo-form ´{
-      display: grid;
+
+.prestamo-form {
+    display: grid;
 
     grid-template-columns:
         repeat(2, 1fr);
@@ -1244,7 +1244,11 @@ th {
 
     display: flex;
 
-    justify-content: flex-end;
+    flex-direction: column;
+
+    align-items: flex-end;
+
+    gap: 12px;
 }
 
 
@@ -2067,4 +2071,896 @@ th {
     font-family: Georgia, "Times New Roman", serif;
     font-size: 32px;
     font-weight: 500;
+}/* ============================================================
+   TEMA MODERNO KREDITMX
+   Capa final de diseño. Refina la paleta, da color e identidad
+   a cada módulo y moderniza tarjetas, botones y tablas.
+   ============================================================ */
+
+:root {
+    /* Marca */
+    --k-azul: #1d4e89;
+    --k-azul-claro: #2f80c9;
+    --k-tinta: #102a43;
+    --k-tinta-suave: #627d98;
+
+    /* Superficies */
+    --k-fondo: #eef2f8;
+    --k-superficie: #ffffff;
+    --k-linea: #dfe7f1;
+    --k-sombra: 0 12px 30px rgba(16, 42, 67, .08);
+    --k-sombra-hover: 0 18px 44px rgba(16, 42, 67, .16);
+    --k-radio: 16px;
+
+    /* Acentos por módulo */
+    --c-prestamos: #2f80c9;   /* azul */
+    --c-enlace: #7c5cf0;      /* violeta */
+    --c-clientes: #0ea5a4;    /* teal */
+    --c-eliminar: #e05a47;    /* coral */
+    --c-pagos: #149a67;       /* verde */
+    --c-registrados: #d98324; /* ámbar */
+    --c-colocados: #3b6fd4;   /* índigo */
+    --c-fondo: #b8891f;       /* oro */
+}
+
+body {
+    background:
+        radial-gradient(1100px 500px at 100% -10%, #e2ecfb 0%, transparent 60%),
+        radial-gradient(900px 500px at -10% 0%, #e7f4ef 0%, transparent 55%),
+        var(--k-fondo);
+    color: var(--k-tinta);
+    font-family: "Segoe UI", Roboto, system-ui, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* ---------------------------------------------
+   ENCABEZADO
+   --------------------------------------------- */
+
+.admin-header {
+    background: rgba(255, 255, 255, .85);
+    backdrop-filter: saturate(160%) blur(10px);
+    border-bottom: 1px solid var(--k-linea);
+    box-shadow: 0 10px 30px rgba(16, 42, 67, .06);
+    position: sticky;
+    top: 0;
+    z-index: 50;
+}
+
+.admin-header div {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.btn-salir {
+    border: 1px solid #cddcee;
+    color: var(--k-azul);
+    font-weight: 600;
+    border-radius: 999px;
+    padding: 10px 18px;
+    transition: background .2s, color .2s, transform .2s, box-shadow .2s;
+}
+
+.btn-salir:hover {
+    background: var(--k-azul);
+    color: #fff;
+    border-color: var(--k-azul);
+    transform: translateY(-1px);
+    box-shadow: 0 10px 22px rgba(29, 78, 137, .28);
+}
+
+/* ---------------------------------------------
+   ESTADÍSTICAS
+   --------------------------------------------- */
+
+/* Se elimina el círculo decorativo heredado de un diseño anterior. */
+.stat-card::after {
+    display: none;
+}
+
+.stat-card {
+    position: relative;
+    overflow: hidden;
+    background: var(--k-superficie);
+    border: 1px solid var(--k-linea);
+    border-radius: var(--k-radio);
+    box-shadow: var(--k-sombra);
+    transition: transform .2s, box-shadow .2s;
+}
+
+.stat-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--k-sombra-hover);
+}
+
+.stat-card::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 4px;
+    background: var(--k-azul);
+    opacity: .9;
+}
+
+.stat-card span {
+    color: var(--k-tinta-suave);
+    font-weight: 600;
+    letter-spacing: .01em;
+}
+
+.stat-card strong {
+    color: var(--k-tinta);
+    font-family: Georgia, "Times New Roman", serif;
+    font-weight: 600;
+}
+
+/* La primera tarjeta heredaba un fondo oscuro; se unifica al estilo claro. */
+.estadisticas .stat-card:first-child {
+    background: var(--k-superficie);
+}
+
+.estadisticas .stat-card:first-child span {
+    color: var(--k-tinta-suave);
+}
+
+/* Colores por estadística */
+.stat-total::before { background: linear-gradient(90deg, #2f80c9, #7c5cf0); }
+.stat-pendientes::before { background: linear-gradient(90deg, #f0a92b, #e5872b); }
+.stat-revision::before { background: linear-gradient(90deg, #7c5cf0, #2f80c9); }
+.stat-aprobados::before { background: linear-gradient(90deg, #149a67, #0ea5a4); }
+.stat-colocados::before { background: linear-gradient(90deg, #3b6fd4, #2f80c9); }
+
+.stat-pendientes strong { color: #b9720f; }
+.stat-revision strong { color: #6b46e0; }
+.stat-aprobados strong { color: #0f8a5c; }
+.stat-total strong { color: var(--k-azul); }
+
+.stat-colocados {
+    border-color: #cfe0f3;
+    background: linear-gradient(180deg, #f5faff, #ffffff);
+}
+
+/* ---------------------------------------------
+   PANEL DE MÓDULOS
+   --------------------------------------------- */
+
+.modulos-panel {
+    background: var(--k-superficie);
+    border: 1px solid var(--k-linea);
+    border-radius: 20px;
+    box-shadow: var(--k-sombra);
+}
+
+.eyebrow {
+    color: var(--k-azul-claro);
+    letter-spacing: .14em;
+}
+
+.modulos-encabezado h2 {
+    color: var(--k-tinta);
+    font-family: Georgia, "Times New Roman", serif;
+    font-weight: 600;
+    letter-spacing: -.01em;
+}
+
+.modulo-card {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid var(--k-linea);
+    border-radius: var(--k-radio);
+    background: var(--k-superficie);
+    transition: transform .2s, box-shadow .2s, border-color .2s;
+}
+
+.modulo-card::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: var(--k-azul);
+    transform: scaleY(.35);
+    transform-origin: top;
+    transition: transform .25s ease;
+}
+
+.modulo-card:hover {
+    transform: translateY(-4px);
+    border-color: transparent;
+    box-shadow: var(--k-sombra-hover);
+}
+
+.modulo-card:hover::after {
+    transform: scaleY(1);
+}
+
+.modulo-icono {
+    background: var(--k-azul);
+    border-radius: 12px;
+    box-shadow: 0 8px 18px rgba(16, 42, 67, .18);
+    transition: transform .2s;
+}
+
+.modulo-card:hover .modulo-icono {
+    transform: scale(1.06) rotate(-3deg);
+}
+
+/* Acento de color por módulo (tarjeta) */
+.modulo-card[data-modulo="prestamos"]::after   { background: var(--c-prestamos); }
+.modulo-card[data-modulo="enlace"]::after      { background: var(--c-enlace); }
+.modulo-card[data-modulo="clientes"]::after    { background: var(--c-clientes); }
+.modulo-card[data-modulo="eliminar"]::after    { background: var(--c-eliminar); }
+.modulo-card[data-modulo="pagos"]::after       { background: var(--c-pagos); }
+.modulo-card[data-modulo="registrados"]::after { background: var(--c-registrados); }
+.modulo-card[data-modulo="colocados"]::after   { background: var(--c-colocados); }
+.modulo-card[data-modulo="fondo"]::after       { background: var(--c-fondo); }
+
+.modulo-card[data-modulo="prestamos"] .modulo-icono   { background: var(--c-prestamos); }
+.modulo-card[data-modulo="enlace"] .modulo-icono      { background: var(--c-enlace); }
+.modulo-card[data-modulo="clientes"] .modulo-icono    { background: var(--c-clientes); }
+.modulo-card[data-modulo="eliminar"] .modulo-icono    { background: var(--c-eliminar); }
+.modulo-card[data-modulo="pagos"] .modulo-icono       { background: var(--c-pagos); }
+.modulo-card[data-modulo="registrados"] .modulo-icono { background: var(--c-registrados); }
+.modulo-card[data-modulo="colocados"] .modulo-icono   { background: var(--c-colocados); }
+.modulo-card[data-modulo="fondo"] .modulo-icono       { background: var(--c-fondo); }
+
+.modulo-card-destacado {
+    border-color: var(--k-linea);
+    background: linear-gradient(180deg, #f7fbff, #ffffff);
+}
+
+/* ---------------------------------------------
+   PANELES DE MÓDULO CON IDENTIDAD DE COLOR
+   --------------------------------------------- */
+
+.modulo-panel {
+    background: var(--k-superficie);
+    border: 1px solid var(--k-linea);
+    border-radius: 20px;
+    box-shadow: var(--k-sombra);
+    padding: 26px;
+    margin-bottom: 25px;
+    border-top: 4px solid var(--k-azul);
+}
+
+.modulo-panel[data-modulo="prestamos"]   { border-top-color: var(--c-prestamos); }
+.modulo-panel[data-modulo="enlace"]      { border-top-color: var(--c-enlace); }
+.modulo-panel[data-modulo="clientes"]    { border-top-color: var(--c-clientes); }
+.modulo-panel[data-modulo="pagos"]       { border-top-color: var(--c-pagos); }
+.modulo-panel[data-modulo="registrados"] { border-top-color: var(--c-registrados); }
+.modulo-panel[data-modulo="colocados"]   { border-top-color: var(--c-colocados); }
+.modulo-panel[data-modulo="fondo"]       { border-top-color: var(--c-fondo); }
+
+/* Título de cada módulo con su acento */
+.modulo-panel[data-modulo] .panel-header h2 {
+    font-family: Georgia, "Times New Roman", serif;
+    font-weight: 600;
+    letter-spacing: -.01em;
+}
+
+.modulo-panel[data-modulo="prestamos"] .panel-header h2   { color: var(--c-prestamos); }
+.modulo-panel[data-modulo="enlace"] .panel-header h2      { color: var(--c-enlace); }
+.modulo-panel[data-modulo="clientes"] .panel-header h2    { color: var(--c-clientes); }
+.modulo-panel[data-modulo="pagos"] .panel-header h2       { color: var(--c-pagos); }
+.modulo-panel[data-modulo="registrados"] .panel-header h2 { color: var(--c-registrados); }
+.modulo-panel[data-modulo="colocados"] .panel-header h2   { color: var(--c-colocados); }
+.modulo-panel[data-modulo="fondo"] .panel-header h2       { color: var(--c-fondo); }
+
+/* ---------------------------------------------
+   BOTONES
+   --------------------------------------------- */
+
+.btn-principal,
+.btn-calcular,
+.btn-generar,
+.btn-pdf {
+    border: none;
+    border-radius: 999px;
+    font-weight: 700;
+    color: #fff;
+    cursor: pointer;
+    background: linear-gradient(135deg, var(--k-azul-claro), var(--k-azul));
+    box-shadow: 0 10px 22px rgba(29, 78, 137, .22);
+    transition: transform .2s, box-shadow .2s, filter .2s;
+}
+
+.btn-principal:hover,
+.btn-calcular:hover,
+.btn-generar:hover,
+.btn-pdf:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.05);
+    box-shadow: 0 14px 28px rgba(29, 78, 137, .3);
+}
+
+/* Botón PDF en verde suave de marca */
+.btn-pdf {
+    background: linear-gradient(135deg, #17a86f, #0f8a5c);
+    box-shadow: 0 10px 22px rgba(15, 138, 92, .24);
+}
+
+.btn-pdf:hover {
+    background: linear-gradient(135deg, #1bbd7d, #12a06b);
+    box-shadow: 0 14px 28px rgba(15, 138, 92, .32);
+}
+
+.btn-secundario {
+    border-radius: 999px;
+    border: 1px solid var(--k-linea);
+    background: #fff;
+    color: var(--k-tinta-suave);
+    font-weight: 600;
+}
+
+.btn-secundario:hover {
+    border-color: var(--k-azul);
+    color: var(--k-azul);
+}
+
+/* ---------------------------------------------
+   CAMPOS
+   --------------------------------------------- */
+
+.campo-prestamo input,
+.campo-prestamo select,
+.formulario-cliente input,
+.campo input,
+.campo select,
+.buscar {
+    border: 1px solid var(--k-linea);
+    border-radius: 12px;
+    background: #fbfdff;
+    transition: border-color .2s, box-shadow .2s, background .2s;
+}
+
+.campo-prestamo input:focus,
+.campo-prestamo select:focus,
+.formulario-cliente input:focus,
+.campo input:focus,
+.campo select:focus,
+.buscar:focus {
+    outline: none;
+    border-color: var(--k-azul-claro);
+    background: #fff;
+    box-shadow: 0 0 0 4px rgba(47, 128, 201, .14);
+}
+
+.campo-prestamo label,
+.campo-cliente label,
+.campo label {
+    color: var(--k-tinta-suave);
+    font-weight: 600;
+}
+
+/* ---------------------------------------------
+   TABLAS
+   --------------------------------------------- */
+
+.tabla-wrapper,
+.tabla-contenedor {
+    border: 1px solid var(--k-linea);
+    border-radius: 14px;
+    overflow: auto;
+    background: #fff;
+}
+
+.tabla-wrapper table,
+.tabla-contenedor table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.tabla-wrapper thead th,
+.tabla-contenedor thead th,
+.tabla-pagos th {
+    background: #f4f8fd;
+    color: var(--k-azul);
+    font-size: 12px;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    font-weight: 700;
+}
+
+.tabla-wrapper tbody tr,
+.tabla-contenedor tbody tr {
+    transition: background .15s;
+}
+
+.tabla-wrapper tbody tr:hover,
+.tabla-contenedor tbody tr:hover {
+    background: #f8fbff;
+}
+
+/* ---------------------------------------------
+   RESÚMENES Y TARJETAS INTERNAS
+   --------------------------------------------- */
+
+.resumen-item,
+.dato-pago,
+.resumen-pago {
+    border-radius: 14px;
+}
+
+.dato-pago.principal {
+    background: linear-gradient(135deg, #eaf3fd, #f5faff);
+    border: 1px solid #cfe0f3;
+}
+
+.resumen-pago {
+    border: 1px solid var(--k-linea);
+    background: #fbfdff;
+}
+
+/* ---------------------------------------------
+   ESTADOS (etiquetas)
+   --------------------------------------------- */
+
+.estado {
+    border-radius: 999px;
+    font-weight: 700;
+    letter-spacing: .01em;
+}
+
+.estado.aprobado { background: #d9f6e8; color: #0f8a5c; }
+.estado.pendiente { background: #fdefd6; color: #b9720f; }
+.estado.enrevision { background: #ece6fd; color: #6b46e0; }
+.estado.rechazado { background: #fde3df; color: #c0392b; }
+
+/* ---------------------------------------------
+   TÍTULOS DE SECCIÓN
+   --------------------------------------------- */
+
+.titulo-seccion h2 {
+    font-family: Georgia, "Times New Roman", serif;
+    font-weight: 600;
+}
+
+.titulo-seccion p {
+    color: var(--k-tinta-suave);
+}
+
+/* ---------------------------------------------
+   RESPONSIVE
+   --------------------------------------------- */
+
+@media (max-width: 900px) {
+    .modulos-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 560px) {
+    .modulos-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-header {
+        padding: 14px 16px;
+    }
+
+    .modulo-panel {
+        padding: 18px;
+        border-radius: 16px;
+    }
+}
+/* ============================================================
+   RESPONSIVE GLOBAL KREDITMX
+   Capa final que adapta TODOS los módulos y páginas a móvil,
+   tablet y escritorio. Se coloca al final para tener prioridad.
+   ============================================================ */
+
+html {
+    -webkit-text-size-adjust: 100%;
+}
+
+img,
+table {
+    max-width: 100%;
+}
+
+/* Evita que textos largos (correos, cuentas, nombres) rompan la maqueta */
+body,
+p,
+td,
+th,
+span,
+strong,
+h1,
+h2,
+h3,
+label {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+/* ---------- CONTENEDOR Y ENCABEZADO ---------- */
+
+.admin-container {
+    width: 100%;
+    max-width: 1200px;
+    margin: 24px auto;
+    padding: 0 16px;
+}
+
+.admin-header > div {
+    min-width: 0;
+}
+
+.admin-logo-imagen {
+    max-width: 148px;
+    width: 44vw;
+}
+
+.admin-header span {
+    font-size: clamp(11px, 3vw, 13px);
+}
+
+/* ---------- GRIDS QUE DEBEN COLAPSAR ---------- */
+
+.estadisticas {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 14px;
+}
+
+.modulos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 14px;
+}
+
+.modulo-grid,
+.resumen-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 14px;
+}
+
+.prestamo-form {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 16px;
+}
+
+.formulario-cliente {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 14px;
+}
+
+.formulario-pago,
+.resumen-pago {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 16px;
+}
+
+.datos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+}
+
+/* ---------- BOTONES A ANCHO COMPLETO EN MÓVIL ---------- */
+
+.prestamo-acciones button,
+.acciones-recibo button,
+.acciones-pago button,
+.estado-control button,
+.btn-principal,
+.btn-calcular,
+.btn-generar,
+.btn-pdf {
+    max-width: 100%;
+}
+
+/* ---------- PANELES Y TARJETAS ---------- */
+
+.modulo-panel,
+.panel,
+.modulos-panel {
+    padding: 20px;
+    border-radius: 16px;
+}
+
+.panel-header {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: flex-start;
+    justify-content: space-between;
+}
+
+.cliente-titulo {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 14px;
+}
+
+.estado-control {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+}
+
+.estado-control select {
+    flex: 1 1 200px;
+}
+
+.acciones-cliente {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.acciones-recibo {
+    flex-wrap: wrap;
+}
+
+/* ---------- TABLAS ---------- */
+
+/* En móvil, cada fila se convierte en una "tarjeta" etiquetada.
+   Se activa con la clase .tabla-movil aplicada por JS a las tablas
+   anchas; el resto conserva scroll horizontal. */
+
+.tabla-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.tabla-wrapper table,
+.tabla-contenedor table {
+    min-width: 0;
+}
+
+/* ---------- FORMULARIOS ---------- */
+
+.campo-prestamo input,
+.campo-prestamo select,
+.campo-cliente input,
+.campo input,
+.campo select,
+.campo-admin input,
+.estado-control select,
+.buscar {
+    width: 100%;
+    max-width: 100%;
+}
+
+/* ============================================================
+   BREAKPOINTS
+   ============================================================ */
+
+/* Tablet / pantallas medianas */
+@media (max-width: 900px) {
+    .admin-container {
+        margin: 18px auto;
+        padding: 0 14px;
+    }
+
+    .modulo-panel,
+    .panel,
+    .modulos-panel {
+        padding: 18px;
+    }
+}
+
+/* Móvil grande */
+@media (max-width: 700px) {
+    .admin-header {
+        padding: 12px 14px;
+        gap: 10px;
+    }
+
+    .admin-header .btn-salir {
+        padding: 8px 14px;
+        font-size: 13px;
+    }
+
+    .estadisticas {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+
+    .stat-card {
+        min-height: 0;
+        padding: 14px 14px 16px;
+    }
+
+    .stat-card strong {
+        font-size: 22px;
+    }
+
+    .modulos-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+
+    /* Botones y acciones a lo ancho para pulsar con el pulgar */
+    .prestamo-acciones,
+    .acciones-recibo,
+    .acciones-pago {
+        display: block;
+        width: 100%;
+    }
+
+    .prestamo-acciones button,
+    .acciones-recibo button,
+    .acciones-pago button,
+    .estado-control button {
+        width: 100%;
+    }
+
+    .acciones-recibo {
+        align-items: stretch;
+    }
+
+    .resumen-pago,
+    .dato-pago.principal {
+        width: 100%;
+    }
+}
+
+/* Móvil */
+@media (max-width: 560px) {
+    .admin-container {
+        padding: 0 12px;
+    }
+
+    h1 {
+        font-size: 22px;
+    }
+
+    h2 {
+        font-size: 18px;
+    }
+
+    .admin-header > div {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .admin-logo-imagen {
+        width: 120px;
+    }
+
+    .estadisticas {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .stat-card {
+        min-height: 0;
+    }
+
+    .modulos-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .modulo-card {
+        min-height: 0;
+        padding: 14px;
+    }
+
+    .modulo-panel,
+    .panel,
+    .modulos-panel {
+        padding: 14px;
+        border-radius: 14px;
+    }
+
+    .dato,
+    .resumen-item {
+        padding: 12px;
+    }
+
+    /* Botones píldora ocupan todo el ancho del panel */
+    .btn-principal,
+    .btn-calcular,
+    .btn-generar,
+    .btn-pdf,
+    .btn-secundario {
+        width: 100%;
+    }
+}
+
+/* Móvil pequeño */
+@media (max-width: 400px) {
+    .estadisticas {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-logo-imagen {
+        width: 104px;
+    }
+
+    h1 {
+        font-size: 20px;
+    }
+}
+/* ============================================================
+   TABLAS ANCHAS EN MÓVIL: se convierten en tarjetas apiladas
+   (se activa con la clase .tabla-movil; cada <td> usa data-label)
+   ============================================================ */
+
+@media (max-width: 700px) {
+
+    .tabla-movil {
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+
+    .tabla-movil thead {
+        /* La cabecera se oculta: cada celda muestra su etiqueta. */
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        border: 0;
+    }
+
+    .tabla-movil tbody tr {
+        display: block;
+        margin-bottom: 12px;
+        border: 1px solid var(--k-linea);
+        border-radius: 12px;
+        background: #fff;
+        box-shadow: 0 4px 12px rgba(16, 42, 67, .05);
+        overflow: hidden;
+    }
+
+    .tabla-movil tbody td {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 14px;
+        border-bottom: 1px solid #eef2f8;
+        text-align: right;
+    }
+
+    .tabla-movil tbody td:last-child {
+        border-bottom: none;
+    }
+
+    .tabla-movil tbody td::before {
+        content: attr(data-label);
+        font-weight: 700;
+        font-size: 12px;
+        letter-spacing: .04em;
+        text-transform: uppercase;
+        color: var(--k-tinta-suave);
+        text-align: left;
+        flex: 0 0 auto;
+    }
+
+    /* Celdas sin data-label (mensajes de "no hay datos") ocupan todo */
+    .tabla-movil tbody td:not([data-label]) {
+        justify-content: center;
+        text-align: center;
+    }
+
+    .tabla-movil tbody td:not([data-label])::before {
+        content: none;
+    }
+
+    /* Los botones de acción se distribuyen solos */
+    .tabla-movil tbody td[data-label="Documentos"] {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .tabla-movil .btn-tabla {
+        padding: 8px 14px;
+    }
 }

@@ -18,7 +18,10 @@ async function generarLink() {
             throw new Error(resultado.error || "No se pudo generar el enlace.");
         }
 
-        document.getElementById("linkGenerado").value = resultado.url;
+        // Se usa la URL pública que devuelve el servidor (PUBLIC_BASE_URL),
+        // para que el enlace funcione en cualquier dispositivo y red.
+        document.getElementById("linkGenerado").value =
+            resultado.url || `${window.location.origin}/registro/${resultado.token}`;
         document.getElementById("linkResultado").classList.remove("oculto");
     } catch (error) {
         alert(error.message);
@@ -79,9 +82,343 @@ function enviarWhatsApp() {
 
 function cerrarSesion() {
 
-    window.location.href =
-    "/login";
+    fetch("/api/logout", { method: "POST" })
+        .finally(() => {
+            window.location.href = "/login";
+        });
+}
 
+
+// ----------------------------------
+// SELECTOR DE CLIENTES (NUEVO PRÉSTAMO)
+// ----------------------------------
+
+function llenarSelectorClientes(clientes, clientesConPrestamo = new Set()) {
+
+    const selector = document.getElementById("clientePrestamo");
+
+    if (!selector || !clientes) {
+        return;
+    }
+
+    const valorActual = selector.value;
+
+    selector.innerHTML =
+        '<option value="">Seleccionar cliente</option>' +
+        clientes.map((cliente) => {
+            const tienePrestamo = clientesConPrestamo.has(cliente.id);
+
+            if (tienePrestamo) {
+                // El cliente ya tiene un préstamo activo: no puede obtener otro.
+                return `<option value="${cliente.id}" disabled>${cliente.nombre} — ${cliente.telefono} (préstamo activo)</option>`;
+            }
+
+            return `<option value="${cliente.id}">${cliente.nombre} — ${cliente.telefono}</option>`;
+        }).join("");
+
+    // Mantener la selección si el cliente sigue disponible.
+    if (valorActual && !clientesConPrestamo.has(Number(valorActual))) {
+        selector.value = valorActual;
+    }
+}
+
+// ----------------------------------
+// MÓDULO REGISTRAR PAGOS (BASE DE DATOS)
+// ----------------------------------
+
+let prestamoPagoSeleccionado = null;
+let pagosExistentes = [];
+
+async function cargarPrestamosPago() {
+
+    try {
+        const respuesta = await fetch("/api/prestamos/activos");
+
+        if (!respuesta.ok) {
+            return;
+        }
+
+        const prestamos = await respuesta.json();
+        const selector = document.getElementById("pagoPrestamo");
+
+        if (!selector) {
+            return;
+        }
+
+        const valorActual = selector.value;
+        selector.innerHTML =
+            '<option value="">Seleccionar préstamo</option>' +
+            prestamos.map((prestamo) =>
+                `<option value="${prestamo.id}">#${String(prestamo.id).padStart(3, "0")} — ${prestamo.nombre} (saldo: ${formatoDinero(prestamo.saldo)})</option>`
+            ).join("");
+
+        if (valorActual) {
+            selector.value = valorActual;
+        }
+
+        if (!prestamos.length) {
+            selector.innerHTML = '<option value="">No hay préstamos activos</option>';
+        }
+    } catch (error) {
+        console.warn("No se pudieron cargar los préstamos para pagos.", error);
+    }
+}
+
+async function seleccionarPrestamoPago() {
+
+    const selector = document.getElementById("pagoPrestamo");
+    const id = selector.value;
+    const historial = document.getElementById("historialPagosDB");
+    const mensaje = document.getElementById("mensajePagoDB");
+
+    mensaje.textContent = "";
+    prestamoPagoSeleccionado = null;
+    pagosExistentes = [];
+
+    if (!id) {
+        document.getElementById("pagoNumeroDB").innerHTML = '<option value="">Selecciona el pago</option>';
+        document.getElementById("saldoAnteriorDB").textContent = formatoDinero(0);
+        document.getElementById("pagoRealizadoDB").textContent = formatoDinero(0);
+        document.getElementById("nuevoSaldoDB").textContent = formatoDinero(0);
+        historial.innerHTML = `<tr><td colspan="6">Selecciona un préstamo activo.</td></tr>`;
+        renderizarCalendarioPagosDB();
+        return;
+    }
+
+    try {
+        const respuesta = await fetch(`/api/prestamos/${id}/pagos`);
+
+        if (!respuesta.ok) {
+            throw new Error("No se pudo cargar el préstamo.");
+        }
+
+        const datos = await respuesta.json();
+        prestamoPagoSeleccionado = datos;
+        pagosExistentes = datos.pagos;
+
+        document.getElementById("fechaPagoDB").value = new Date().toISOString().slice(0, 10);
+
+        // Autocompletar el monto a pagar del periodo al elegir el cliente/préstamo.
+        document.getElementById("montoPagoDB").value =
+            pagoPeriodoPrestamo(datos).toFixed(2);
+
+        const selectorNumero = document.getElementById("pagoNumeroDB");
+        const pagadosSet = new Set(pagosExistentes.map((pago) => pago.numero_pago));
+        const opciones = ['<option value="">Selecciona el pago</option>'];
+
+        for (let numero = 1; numero <= datos.numero_pagos; numero++) {
+            const deshabilitado = pagadosSet.has(numero) ? "disabled" : "";
+            opciones.push(`<option value="${numero}" ${deshabilitado}>Pago ${numero}${pagadosSet.has(numero) ? " (registrado)" : ""}</option>`);
+        }
+
+        selectorNumero.innerHTML = opciones.join("");
+        renderizarHistorialPagosDB();
+        renderizarCalendarioPagosDB();
+        actualizarResumenPagoDB();
+    } catch (error) {
+        mensaje.textContent = error.message;
+    }
+}
+
+function pagoPeriodoPrestamo(prestamo) {
+
+    const total = Number(prestamo.total) || 0;
+    const numeroPagos = Number(prestamo.numero_pagos) || 0;
+
+    if (!numeroPagos) {
+        return total;
+    }
+
+    return total / numeroPagos;
+}
+
+function actualizarResumenPagoDB() {
+
+    if (!prestamoPagoSeleccionado) {
+        return;
+    }
+
+    const selector = document.getElementById("pagoNumeroDB");
+    const montoInput = document.getElementById("montoPagoDB");
+    const numero = Number(selector.value);
+    const pagoExistente = pagosExistentes.find((pago) => pago.numero_pago === numero);
+
+    const pagadoAcumulado = pagosExistentes.reduce((total, pago) => total + pago.monto, 0);
+    const saldoAnterior = Math.max(prestamoPagoSeleccionado.total - pagadoAcumulado, 0);
+
+    // Al seleccionar un pago nuevo, se autocompleta con el pago del periodo
+    // (sin superar el saldo pendiente).
+    if (numero && !pagoExistente) {
+        const sugerido = Math.min(pagoPeriodoPrestamo(prestamoPagoSeleccionado), saldoAnterior);
+        montoInput.value = sugerido > 0 ? sugerido.toFixed(2) : "";
+    }
+
+    const monto = pagoExistente ? pagoExistente.monto : (Number(montoInput.value) || 0);
+
+    document.getElementById("saldoAnteriorDB").textContent = formatoDinero(saldoAnterior);
+    document.getElementById("pagoRealizadoDB").textContent = formatoDinero(monto);
+    document.getElementById("nuevoSaldoDB").textContent = formatoDinero(Math.max(saldoAnterior - monto, 0));
+}
+
+function renderizarHistorialPagosDB() {
+
+    const historial = document.getElementById("historialPagosDB");
+
+    if (!historial) {
+        return;
+    }
+
+    if (!pagosExistentes.length) {
+        historial.innerHTML = `<tr><td colspan="6">No hay pagos registrados para este préstamo.</td></tr>`;
+        return;
+    }
+
+    historial.innerHTML = pagosExistentes.map((pago) => `
+        <tr>
+            <td data-label="Pago">${pago.numero_pago}</td>
+            <td data-label="Fecha">${new Date(pago.fecha_pago).toLocaleDateString("es-MX")}</td>
+            <td data-label="Monto">${formatoDinero(pago.monto)}</td>
+            <td data-label="Saldo anterior">${formatoDinero(pago.saldo_anterior)}</td>
+            <td data-label="Nuevo saldo">${formatoDinero(pago.nuevo_saldo)}</td>
+            <td data-label="Estado"><span class="estado-pagado">✓ Pagado</span></td>
+        </tr>
+    `).join("");
+}
+
+function renderizarCalendarioPagosDB() {
+
+    const tabla = document.getElementById("calendarioPagosDB");
+
+    if (!tabla) {
+        return;
+    }
+
+    if (!prestamoPagoSeleccionado) {
+        tabla.innerHTML = `<tr><td colspan="4">Selecciona un préstamo activo.</td></tr>`;
+        return;
+    }
+
+    const p = prestamoPagoSeleccionado;
+    const pagadosSet = pagosPagadosSet();
+    const importeBase = p.numero_pagos ? (Number(p.total) / p.numero_pagos) : 0;
+    const filas = [];
+
+    for (let numero = 1; numero <= p.numero_pagos; numero++) {
+        const pagado = pagadosSet.has(numero);
+        const fecha = obtenerFechaPago(numero, {
+            fechaInicio: new Date(p.fecha_inicio + "T00:00:00"),
+            periodicidad: p.periodicidad,
+        });
+        filas.push(`
+            <tr>
+                <td data-label="Pago">${numero}</td>
+                <td data-label="Fecha">${formatoFecha(fecha)}</td>
+                <td data-label="Importe">${formatoDinero(importeBase)}</td>
+                <td data-label="Estado">${pagado
+                    ? '<span class="estado-pagado">✓ Pagado</span>'
+                    : '<span class="estado pendiente">Pendiente</span>'}</td>
+            </tr>
+        `);
+    }
+
+    tabla.innerHTML = filas.join("");
+}
+
+async function registrarPagoDB() {
+
+    const mensaje = document.getElementById("mensajePagoDB");
+    mensaje.textContent = "";
+
+    const prestamoId = document.getElementById("pagoPrestamo").value;
+    const numero = Number(document.getElementById("pagoNumeroDB").value);
+    const fecha = document.getElementById("fechaPagoDB").value;
+    const monto = Number(document.getElementById("montoPagoDB").value);
+
+    if (!prestamoId || !numero || !fecha || !monto || monto <= 0) {
+        mensaje.textContent = "Selecciona el préstamo, el número de pago, la fecha y un monto válido.";
+        return;
+    }
+
+    const boton = document.getElementById("btnRegistrarPagoDB");
+    boton.disabled = true;
+    boton.textContent = "Registrando...";
+
+    try {
+        const respuesta = await fetch("/api/pagos", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                prestamo_id: prestamoId,
+                numero_pago: numero,
+                fecha_pago: fecha,
+                monto: monto,
+            }),
+        });
+        const resultado = await respuesta.json();
+
+        if (!respuesta.ok) {
+            throw new Error(resultado.error || "No se pudo registrar el pago.");
+        }
+
+        mensaje.textContent = `Pago registrado. Nuevo saldo: ${formatoDinero(resultado.saldo)}`;
+        document.getElementById("montoPagoDB").value = "";
+
+        await seleccionarPrestamoPago();
+        await cargarPrestamosPago();
+        await cargarDatosMariaDB();
+    } catch (error) {
+        mensaje.textContent = error.message;
+    } finally {
+        boton.disabled = false;
+        boton.textContent = "Registrar pago";
+    }
+}
+
+// ----------------------------------
+// MÓDULO CLIENTES REGISTRADOS
+// ----------------------------------
+
+function renderizarClientesRegistrados(clientes) {
+
+    const tabla = document.getElementById("clientesRegistradosLista");
+    const contador = document.getElementById("clientesRegistradosTotal");
+
+    if (contador) {
+        contador.textContent = clientes.length;
+    }
+
+    if (!tabla) {
+        return;
+    }
+
+    if (!clientes.length) {
+        tabla.innerHTML = `<tr><td colspan="8">Todavía no hay clientes registrados.</td></tr>`;
+        return;
+    }
+
+    tabla.innerHTML = clientes.map((cliente) => {
+        const estadoClase = cliente.estado.toLowerCase().replace("_", "");
+        const estadoTexto = cliente.estado === "EN_REVISION"
+            ? "En revisión"
+            : cliente.estado.toLowerCase().replace(/^./, (letra) => letra.toUpperCase());
+
+        return `
+            <tr data-id="${cliente.id}">
+                <td data-label="ID">#${String(cliente.id).padStart(3, "0")}</td>
+                <td data-label="Cliente">${cliente.nombre}</td>
+                <td data-label="Teléfono">${cliente.telefono}</td>
+                <td data-label="Banco">${cliente.banco}</td>
+                <td data-label="Cuenta">${cliente.cuenta}</td>
+                <td data-label="Estado"><span class="estado ${estadoClase}">${estadoTexto}</span></td>
+                <td data-label="Fecha">${new Date(cliente.creado_en).toLocaleDateString("es-MX")}</td>
+                <td data-label="Documentos">
+                    <a class="btn-tabla btn-ver" href="${cliente.foto_frente_url}" target="_blank">Frente</a>
+                    <a class="btn-tabla btn-ver" href="${cliente.foto_reverso_url}" target="_blank">Reverso</a>
+                    <a class="btn-tabla btn-editar" href="/cliente?id=${cliente.id}">Ficha</a>
+                </td>
+            </tr>
+        `;
+    }).join("");
 }
 
 
@@ -116,18 +453,25 @@ async function cargarDatosMariaDB() {
         document.getElementById("clientesActivosCount").textContent = resumen.clientes_activos;
         document.getElementById("clientesColocadosTotal").textContent = resumen.clientes_activos;
 
+        // Clientes que ya tienen un préstamo activo (no pueden obtener otro).
+        const clientesConPrestamo = new Set(
+            prestamos.map((prestamo) => prestamo.cliente_id)
+        );
+
         renderizarClientes(clientes);
+        llenarSelectorClientes(clientes, clientesConPrestamo);
+        renderizarClientesRegistrados(clientes);
 
         const tabla = document.querySelector("#tablaColocados tbody");
         tabla.innerHTML = prestamos.length
             ? prestamos.map((prestamo) => `
                 <tr>
-                    <td>${prestamo.nombre}</td>
-                    <td>${dinero(prestamo.monto)}</td>
-                    <td>${dinero(prestamo.saldo)}</td>
-                    <td>${prestamo.periodicidad}</td>
-                    <td><span class="estado aprobado">Activo</span></td>
-                    <td><a class="btn-tabla btn-ver" href="/cliente?id=${prestamo.cliente_id}">Ver cliente</a></td>
+                    <td data-label="Cliente">${prestamo.nombre}</td>
+                    <td data-label="Préstamo original">${dinero(prestamo.monto)}</td>
+                    <td data-label="Saldo pendiente">${dinero(prestamo.saldo)}</td>
+                    <td data-label="Periodicidad">${prestamo.periodicidad}</td>
+                    <td data-label="Estado"><span class="estado aprobado">Activo</span></td>
+                    <td data-label="Acción"><a class="btn-tabla btn-ver" href="/cliente?id=${prestamo.cliente_id}">Ver cliente</a></td>
                 </tr>
             `).join("")
             : `<tr><td colspan="6">No hay préstamos activos.</td></tr>`;
@@ -137,7 +481,14 @@ async function cargarDatosMariaDB() {
 }
 
 cargarDatosMariaDB();
+// Refrescar los datos cada 15 segundos para ver registros nuevos
+// sin recargar la página.
+setInterval(cargarDatosMariaDB, 15000);
 
+
+// ----------------------------------
+// BUSCADOR
+// ----------------------------------
 
 if (buscador) {
 
@@ -209,13 +560,38 @@ function editarCliente(boton) {
 
     const fila = boton.closest("tr");
 
-    document.getElementById("clienteId").value = fila.cells[0].textContent.trim();
+    document.getElementById("clienteId").value = fila.dataset.id || fila.cells[0].textContent.trim().replace("#", "");
     document.getElementById("nombreCliente").value = fila.cells[1].textContent.trim();
     document.getElementById("telefonoCliente").value = fila.cells[2].textContent.trim();
     document.getElementById("bancoCliente").value = fila.cells[3].textContent.trim();
 
     mostrarModulo("clientes");
     document.getElementById("nombreCliente").focus();
+}
+
+async function eliminarCliente(boton) {
+
+    const fila = boton.closest("tr");
+    const nombre = fila.cells[1].textContent.trim();
+    const id = fila.dataset.id || fila.cells[0].textContent.trim().replace("#", "");
+
+    if (!confirm(`¿Eliminar el registro de ${nombre}?`)) {
+        return;
+    }
+
+    try {
+        const respuesta = await fetch(`/api/clientes/${id}`, { method: "DELETE" });
+        const resultado = await respuesta.json();
+
+        if (!respuesta.ok) {
+            throw new Error(resultado.error || "No se pudo eliminar el cliente.");
+        }
+
+        fila.remove();
+        cargarDatosMariaDB();
+    } catch (error) {
+        alert(error.message);
+    }
 }
 
 function verCliente(boton) {
@@ -232,23 +608,11 @@ function verCliente(boton) {
     window.location.href = `/cliente?${parametros.toString()}`;
 }
 
-function eliminarCliente(boton) {
-
-    const fila = boton.closest("tr");
-    const nombre = fila.cells[1].textContent.trim();
-
-    if (!confirm(`¿Eliminar el registro de ${nombre}?`)) {
-        return;
-    }
-
-    fila.remove();
-}
-
 const formularioCliente = document.getElementById("formularioCliente");
 
 if (formularioCliente) {
 
-    formularioCliente.addEventListener("submit", function (evento) {
+    formularioCliente.addEventListener("submit", async function (evento) {
 
         evento.preventDefault();
 
@@ -256,40 +620,30 @@ if (formularioCliente) {
         const nombre = document.getElementById("nombreCliente").value.trim();
         const telefono = document.getElementById("telefonoCliente").value.trim();
         const banco = document.getElementById("bancoCliente").value.trim();
-        const tabla = document.querySelector("#tablaClientes tbody");
 
-        if (id) {
-            const fila = [...tabla.rows].find(
-                (registro) => registro.cells[0].textContent.trim() === id
-            );
-
-            if (fila) {
-                fila.cells[1].textContent = nombre;
-                fila.cells[2].textContent = telefono;
-                fila.cells[3].textContent = banco;
-            }
-        } else {
-            const nuevoId = `#${String(tabla.rows.length + 1).padStart(3, "0")}`;
-            const fila = document.createElement("tr");
-
-            fila.innerHTML = `
-                <td>${nuevoId}</td>
-                <td>${nombre}</td>
-                <td>${telefono}</td>
-                <td>${banco}</td>
-                <td><span class="estado pendiente">Pendiente</span></td>
-                <td>${new Date().toLocaleDateString("es-MX")}</td>
-                <td>
-                    <button type="button" class="btn-tabla btn-ver" onclick="verCliente(this)">Ver</button>
-                    <button type="button" class="btn-tabla btn-editar" onclick="editarCliente(this)">Modificar</button>
-                    <button type="button" class="btn-tabla btn-eliminar" onclick="eliminarCliente(this)">Eliminar</button>
-                </td>
-            `;
-
-            tabla.appendChild(fila);
+        if (!id) {
+            alert("Selecciona un cliente de la tabla para modificarlo.");
+            return;
         }
 
-        limpiarFormularioCliente();
+        try {
+            const respuesta = await fetch(`/api/clientes/${id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ nombre, telefono, banco }),
+            });
+            const resultado = await respuesta.json();
+
+            if (!respuesta.ok) {
+                throw new Error(resultado.error || "No se pudo guardar el cliente.");
+            }
+
+            limpiarFormularioCliente();
+            await cargarDatosMariaDB();
+            mostrarModulo("clientes");
+        } catch (error) {
+            alert(error.message);
+        }
     });
 }
 
@@ -340,7 +694,7 @@ function formatoFecha(fecha) {
 // CALCULAR PRÉSTAMO
 // ------------------------------------------
 
-function calcularPrestamo() {
+async function generarPrestamo() {
 
     const cliente =
         document.getElementById(
@@ -604,9 +958,47 @@ function calcularPrestamo() {
 
     };
 
-    pagosRegistrados = [];
-    historialPagos = [];
-    prepararRegistroPagos();
+    // --------------------------------------
+    // GUARDAR EN LA BASE DE DATOS
+    // (descuenta del fondo disponible)
+    // --------------------------------------
+
+    const boton = document.getElementById("btnGenerarPrestamo");
+    boton.disabled = true;
+    boton.textContent = "Generando...";
+
+    try {
+        const respuesta = await fetch("/api/prestamos", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                cliente_id: cliente,
+                monto: monto,
+                porcentaje: porcentaje,
+                periodicidad: periodicidad,
+                numero_pagos: numeroPagos,
+                fecha_inicio: fechaInicioValor,
+            }),
+        });
+        const resultado = await respuesta.json();
+
+        if (!respuesta.ok) {
+            throw new Error(resultado.error || "No se pudo generar el préstamo.");
+        }
+
+        prestamoActual.id = resultado.prestamo_id;
+        alert(
+            `Préstamo generado correctamente.\n` +
+            `Se descontaron ${formatoDinero(monto)} del fondo disponible.`
+        );
+        await cargarDatosMariaDB();
+        cargarFondo();
+    } catch (error) {
+        alert(error.message);
+    } finally {
+        boton.disabled = false;
+        boton.textContent = "Generar préstamo";
+    }
 
 
     // --------------------------------------
@@ -2323,17 +2715,74 @@ function generarReciboPagoPDF() {
 
 }
 
-function obtenerFechaPago(numero) {
+function obtenerFechaPago(numero, prestamo = prestamoActual) {
 
-    const fecha = new Date(prestamoActual.fechaInicio);
+    const fecha = new Date(prestamo.fechaInicio);
 
-    if (prestamoActual.periodicidad === "quincenal") {
+    if (prestamo.periodicidad === "quincenal") {
         fecha.setDate(fecha.getDate() + (numero * 15));
     } else {
         fecha.setMonth(fecha.getMonth() + numero);
     }
 
     return fecha;
+}
+
+// ------------------------------------------
+// DATOS DEL PRÉSTAMO PARA LOS PDF
+// ------------------------------------------
+// Se toman del préstamo seleccionado en el módulo
+// "Registrar pagos" (base de datos) para que los PDF
+// se actualicen con cada pago registrado.
+
+function obtenerDatosPrestamoPDF() {
+
+    if (!prestamoPagoSeleccionado) {
+        return null;
+    }
+
+    const p = prestamoPagoSeleccionado;
+
+    const pagos = (pagosExistentes || [])
+        .slice()
+        .sort((a, b) => a.numero_pago - b.numero_pago);
+
+    const total = Number(p.total) || 0;
+    const totalPagado = pagos.reduce(
+        (acumulado, pago) => acumulado + Number(pago.monto),
+        0
+    );
+    const fechaInicio = new Date(p.fecha_inicio + "T00:00:00");
+    const fechaTermino = new Date(fechaInicio);
+
+    if (p.periodicidad === "quincenal") {
+        fechaTermino.setDate(fechaTermino.getDate() + (p.numero_pagos * 15));
+    } else {
+        fechaTermino.setMonth(fechaTermino.getMonth() + p.numero_pagos);
+    }
+
+    return {
+        cliente: p.cliente || "Cliente",
+        monto: Number(p.monto) || 0,
+        total: total,
+        numeroPagos: Number(p.numero_pagos) || 0,
+        pago: p.numero_pagos ? total / p.numero_pagos : 0,
+        periodicidad: p.periodicidad,
+        fechaInicio: fechaInicio,
+        fechaTermino: fechaTermino,
+        pagos: pagos,
+        totalPagado: totalPagado,
+        saldo: Math.max(total - totalPagado, 0),
+    };
+}
+
+function pagosPagadosSet() {
+
+    return new Set(
+        (pagosExistentes || []).map(
+            (pago) => Number(pago.numero_pago)
+        )
+    );
 }
 
 function formatoFechaPDF(fecha) {
@@ -2443,12 +2892,14 @@ function tituloPDF(pdf, texto, y) {
 
 async function generarReciboPDF() {
 
-    if (!prestamoActual) {
-        alert("Primero debes calcular el préstamo.");
+    const p = obtenerDatosPrestamoPDF();
+
+    if (!p) {
+        alert("Selecciona un préstamo en el módulo Registrar pagos.");
         return;
     }
 
-    const p = prestamoActual;
+    const pagados = pagosPagadosSet();
     const pdf = await prepararPDF(
         "RECIBO DE PRÉSTAMO",
         "Resumen de condiciones y calendario de pagos"
@@ -2463,10 +2914,17 @@ async function generarReciboPDF() {
     pdf.text(`Inicio: ${formatoFecha(p.fechaInicio)}   |   Término: ${formatoFecha(p.fechaTermino)}`, 15, 63);
     pdf.setTextColor(16, 42, 67);
 
-    tarjetaPDF(pdf, 15, 73, 42, "MONTO PRESTADO", formatoDinero(p.monto));
-    tarjetaPDF(pdf, 61, 73, 42, "TOTAL A PAGAR", formatoDinero(p.total), true);
+    tarjetaPDF(pdf, 15, 73, 42, "SALDO RESTANTE", formatoDinero(p.saldo), true);
+    tarjetaPDF(pdf, 61, 73, 42, "TOTAL A PAGAR", formatoDinero(p.total));
     tarjetaPDF(pdf, 107, 73, 42, "PAGO POR PERIODO", formatoDinero(p.pago));
     tarjetaPDF(pdf, 153, 73, 42, "NÚMERO DE PAGOS", p.numeroPagos);
+
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(9);
+    pdf.setTextColor(29, 78, 137);
+    pdf.text(`TOTAL PAGADO: ${dinero(p.totalPagado)}`, 15, 106);
+    pdf.text(`SALDO PENDIENTE: ${dinero(p.saldo)}`, 105, 106);
+    pdf.setTextColor(16, 42, 67);
 
     tituloPDF(pdf, "CALENDARIO DE PAGOS", 116);
     pdf.setFillColor(232, 241, 251);
@@ -2486,15 +2944,16 @@ async function generarReciboPDF() {
             y = 22;
         }
 
-        const fechaPago = obtenerFechaPago(i);
+        const pagado = pagados.has(i);
+        const fechaPago = obtenerFechaPago(i, p);
         pdf.setFont("helvetica", "normal");
         pdf.setFontSize(9);
         pdf.setTextColor(16, 42, 67);
         pdf.text(String(i), 22, y);
         pdf.text(formatoFecha(fechaPago), 62, y);
         pdf.text(formatoDinero(p.pago), 125, y);
-        pdf.setTextColor(29, 78, 137);
-        pdf.text("PENDIENTE", 163, y);
+        pdf.setTextColor(pagado ? 21 : 29, pagado ? 128 : 78, pagado ? 61 : 137);
+        pdf.text(pagado ? "PAGADO" : "PENDIENTE", 163, y);
         pdf.setDrawColor(225, 232, 239);
         pdf.line(15, y + 4, 195, y + 4);
         y += 9;
@@ -2508,19 +2967,23 @@ async function generarReciboPDF() {
 
 async function generarReciboPagoPDF() {
 
-    if (!prestamoActual || !historialPagos.length) {
-        alert("Calcula un préstamo y registra al menos un pago.");
+    const p = obtenerDatosPrestamoPDF();
+
+    if (!p) {
+        alert("Selecciona un préstamo en el módulo Registrar pagos.");
         return;
     }
 
-    const cliente = prestamoActual.cliente || "Cliente";
-    const totalPrestamo = Number(prestamoActual.total);
-    const totalPagado = historialPagos.reduce(
-        (total, pago) => total + Number(pago.monto),
-        0
-    );
-    const saldoActual = Math.max(totalPrestamo - totalPagado, 0);
-    const ultimoPago = historialPagos[historialPagos.length - 1];
+    if (!p.pagos.length) {
+        alert("Registra al menos un pago para generar el estado de cuenta.");
+        return;
+    }
+
+    const cliente = p.cliente;
+    const totalPrestamo = p.total;
+    const totalPagado = p.totalPagado;
+    const saldoActual = p.saldo;
+    const ultimoPago = p.pagos[p.pagos.length - 1];
     const pdf = await prepararPDF(
         "ESTADO DE CUENTA",
         "Resumen claro de pagos y saldo actual"
@@ -2532,7 +2995,7 @@ async function generarReciboPagoPDF() {
     pdf.setFont("helvetica", "normal");
     pdf.setFontSize(9);
     pdf.setTextColor(98, 125, 152);
-    pdf.text(`Corte: ${formatoFechaPDF(new Date())}   |   Pago más reciente: #${ultimoPago.numero}`, 15, 63);
+    pdf.text(`Corte: ${formatoFechaPDF(new Date())}   |   Pago más reciente: #${ultimoPago.numero_pago}`, 15, 63);
     pdf.setTextColor(16, 42, 67);
 
     tarjetaPDF(pdf, 15, 73, 55, "TOTAL DEL PRÉSTAMO", dinero(totalPrestamo));
@@ -2541,8 +3004,8 @@ async function generarReciboPagoPDF() {
 
     tituloPDF(pdf, "ÚLTIMO PAGO", 116);
     tarjetaPDF(pdf, 15, 123, 55, "PAGO", dinero(ultimoPago.monto));
-    tarjetaPDF(pdf, 75, 123, 55, "FECHA", formatoFechaPDF(ultimoPago.fecha));
-    tarjetaPDF(pdf, 135, 123, 60, "SALDO DESPUÉS", dinero(ultimoPago.nuevoSaldo));
+    tarjetaPDF(pdf, 75, 123, 55, "FECHA", formatoFechaPDF(ultimoPago.fecha_pago));
+    tarjetaPDF(pdf, 135, 123, 60, "SALDO DESPUÉS", dinero(ultimoPago.nuevo_saldo));
 
     tituloPDF(pdf, "HISTORIAL", 166);
     pdf.setFillColor(232, 241, 251);
@@ -2553,10 +3016,11 @@ async function generarReciboPagoPDF() {
     pdf.text("FECHA", 58, 178);
     pdf.text("IMPORTE", 100, 178);
     pdf.text("SALDO", 143, 178);
+    pdf.text("ESTADO", 168, 178);
 
     let y = 188;
 
-    historialPagos.forEach((pago) => {
+    p.pagos.forEach((pago) => {
         if (y > 275) {
             pdf.addPage();
             y = 22;
@@ -2565,10 +3029,12 @@ async function generarReciboPagoPDF() {
         pdf.setFont("helvetica", "normal");
         pdf.setFontSize(9);
         pdf.setTextColor(16, 42, 67);
-        pdf.text(String(pago.numero), 22, y);
-        pdf.text(formatoFechaPDF(pago.fecha), 58, y);
+        pdf.text(String(pago.numero_pago), 22, y);
+        pdf.text(formatoFechaPDF(pago.fecha_pago), 58, y);
         pdf.text(dinero(pago.monto), 100, y);
-        pdf.text(dinero(pago.nuevoSaldo), 143, y);
+        pdf.text(dinero(pago.nuevo_saldo), 143, y);
+        pdf.setTextColor(21, 128, 61);
+        pdf.text("PAGADO", 168, y);
         pdf.setDrawColor(225, 232, 239);
         pdf.line(15, y + 4, 195, y + 4);
         y += 9;
@@ -2611,14 +3077,14 @@ function renderizarClientes(clientes) {
         });
 
         return `
-            <tr>
-                <td>#${String(cliente.id).padStart(3, "0")}</td>
-                <td>${cliente.nombre}</td>
-                <td>${cliente.telefono}</td>
-                <td>${cliente.banco}</td>
-                <td><span class="estado ${estadoClase}">${estadoTexto}</span></td>
-                <td>${new Date(cliente.creado_en).toLocaleDateString("es-MX")}</td>
-                <td>
+            <tr data-id="${cliente.id}">
+                <td data-label="ID">#${String(cliente.id).padStart(3, "0")}</td>
+                <td data-label="Cliente">${cliente.nombre}</td>
+                <td data-label="Teléfono">${cliente.telefono}</td>
+                <td data-label="Banco">${cliente.banco}</td>
+                <td data-label="Estado"><span class="estado ${estadoClase}">${estadoTexto}</span></td>
+                <td data-label="Fecha">${new Date(cliente.creado_en).toLocaleDateString("es-MX")}</td>
+                <td data-label="Acciones">
                     <a class="btn-tabla btn-ver" href="/cliente?${parametros}">Ver</a>
                     <button type="button" class="btn-tabla btn-editar" onclick="editarCliente(this)">Modificar</button>
                     <button type="button" class="btn-tabla btn-eliminar" onclick="eliminarCliente(this)">Eliminar</button>
@@ -2676,9 +3142,9 @@ async function cargarInversiones() {
         tabla.innerHTML = inversiones.length
             ? inversiones.map((inversion) => `
                 <tr>
-                    <td>${inversion.inversionista}</td>
-                    <td>${dinero(inversion.monto)}</td>
-                    <td>${new Date(inversion.creado_en).toLocaleDateString("es-MX")}</td>
+                    <td data-label="Inversionista">${inversion.inversionista}</td>
+                    <td data-label="Monto">${dinero(inversion.monto)}</td>
+                    <td data-label="Fecha">${new Date(inversion.creado_en).toLocaleDateString("es-MX")}</td>
                 </tr>
             `).join("")
             : `<tr><td colspan="3">No hay inversiones registradas.</td></tr>`;

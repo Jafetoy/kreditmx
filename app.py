@@ -9,15 +9,28 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.utils import secure_filename
 
 from database import conectar, inicializar_base
-
+from psycopg2 import Binary
 
 app = Flask(__name__)
-app.config["UPLOAD_FOLDER"] = os.path.join(app.root_path, "uploads")
 app.secret_key = os.getenv("SECRET_KEY") or secrets.token_hex(32)
-os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 
 try:
 	inicializar_base()
+	# Las fotos se guardan DENTRO de la base de datos (Supabase),
+	# no en archivos locales.
+	conexion = conectar()
+	cursor = conexion.cursor()
+	cursor.execute(
+		"""
+		ALTER TABLE clientes
+			ADD COLUMN IF NOT EXISTS foto_frente_data BYTEA,
+			ADD COLUMN IF NOT EXISTS foto_frente_tipo TEXT,
+			ADD COLUMN IF NOT EXISTS foto_reverso_data BYTEA,
+			ADD COLUMN IF NOT EXISTS foto_reverso_tipo TEXT
+		"""
+	)
+	conexion.commit()
+	conexion.close()
 	DB_DISPONIBLE = True
 except Exception as error:
 	print(f"PostgreSQL/Supabase no disponible: {error}")
@@ -42,6 +55,42 @@ def imagen(filename):
 @app.get("/uploads/<path:filename>")
 def archivo_subido(filename):
 	return send_from_directory(app.config["UPLOAD_FOLDER"], filename)
+
+
+@app.get("/api/clientes/<int:cliente_id>/foto/<lado>")
+def foto_cliente(cliente_id, lado):
+	"""Sirve la foto guardada en la base de datos."""
+	if lado not in ("frente", "reverso"):
+		return jsonify({"error": "Lado no válido."}), 400
+
+	columna = f"foto_{lado}"
+	conexion = conectar()
+	try:
+		cursor = conexion.cursor()
+		cursor.execute(
+			f"SELECT {columna}_data, {columna}_tipo, {columna} FROM clientes WHERE id = %s",
+			(cliente_id,),
+		)
+		fila = cursor.fetchone()
+	finally:
+		conexion.close()
+
+	if not fila:
+		return jsonify({"error": "Cliente no encontrado."}), 404
+
+	data, tipo, nombre_archivo = fila
+
+	if data:
+		from flask import Response
+		return Response(bytes(data), mimetype=tipo or "image/jpeg")
+
+	# Compatibilidad con fotos antiguas guardadas localmente.
+	if nombre_archivo:
+		ruta_local = os.path.join(app.root_path, "uploads", nombre_archivo)
+		if os.path.exists(ruta_local):
+			return send_from_directory(os.path.join(app.root_path, "uploads"), nombre_archivo)
+
+	return jsonify({"error": "Foto no disponible."}), 404
 
 
 def respuesta_base_no_disponible():
@@ -150,6 +199,16 @@ def api_logout():
 	return jsonify({"success": True})
 
 
+def url_base_publica():
+	# URL base para los enlaces que se envian al cliente. Si existe
+	# PUBLIC_BASE_URL (dominio o tunel publico) se usa esa; de lo
+	# contrario se usa la URL del host actual.
+	base = (os.getenv("PUBLIC_BASE_URL") or "").strip().rstrip("/")
+	if base:
+		return base
+	return request.host_url.rstrip("/")
+
+
 @app.post("/api/enlaces")
 def crear_enlace():
 	if not DB_DISPONIBLE:
@@ -171,7 +230,7 @@ def crear_enlace():
 	return jsonify({
 		"success": True,
 		"token": token,
-		"url": f"{request.host_url.rstrip('/')}/registro/{token}",
+		"url": f"{url_base_publica()}/registro/{token}",
 	})
 
 
@@ -211,20 +270,22 @@ def crear_cliente():
 
 		archivos = []
 		for archivo in (foto_frente, foto_reverso):
-			nombre = f"{uuid.uuid4().hex}_{secure_filename(archivo.filename)}"
-			archivo.save(os.path.join(app.config["UPLOAD_FOLDER"], nombre))
-			archivos.append(nombre)
+			# La imagen se guarda COMO DATOS en Supabase, no como archivo local.
+			archivos.append((Binary(archivo.read()), archivo.mimetype or "image/jpeg"))
 
 		cursor.execute(
 			"""
 			INSERT INTO clientes
-			(creado_por, nombre, direccion, telefono, banco, cuenta, foto_frente, foto_reverso)
-			VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+			(creado_por, nombre, direccion, telefono, banco, cuenta,
+			 foto_frente, foto_reverso, foto_frente_data, foto_frente_tipo,
+			 foto_reverso_data, foto_reverso_tipo)
+			VALUES (%s, %s, %s, %s, %s, %s, '', '', %s, %s, %s, %s)
 			RETURNING id
 			""",
 			(
 				session.get("usuario_id"), campos["nombre"], campos["direccion"], campos["telefono"],
-				campos["banco"], campos["cuenta"], archivos[0], archivos[1],
+				campos["banco"], campos["cuenta"],
+				archivos[0][0], archivos[0][1], archivos[1][0], archivos[1][1],
 			),
 		)
 		nuevo_id = cursor.fetchone()[0]
@@ -257,29 +318,16 @@ def resumen_admin():
 	conexion = conectar()
 	try:
 		cursor = conexion.cursor()
-		usuario_id = session.get("usuario_id")
-		cursor.execute(
-			"SELECT COUNT(*) FROM clientes WHERE creado_por = %s", (usuario_id,)
-		)
+		cursor.execute("SELECT COUNT(*) FROM clientes")
 		total_clientes = cursor.fetchone()[0]
-		cursor.execute(
-			"SELECT COUNT(*) FROM clientes WHERE estado = 'PENDIENTE' AND creado_por = %s",
-			(usuario_id,),
-		)
+		cursor.execute("SELECT COUNT(*) FROM clientes WHERE estado = 'PENDIENTE'")
 		pendientes = cursor.fetchone()[0]
-		cursor.execute(
-			"SELECT COUNT(*) FROM clientes WHERE estado = 'EN_REVISION' AND creado_por = %s",
-			(usuario_id,),
-		)
+		cursor.execute("SELECT COUNT(*) FROM clientes WHERE estado = 'EN_REVISION'")
 		en_revision = cursor.fetchone()[0]
-		cursor.execute(
-			"SELECT COUNT(*) FROM clientes WHERE estado = 'APROBADO' AND creado_por = %s",
-			(usuario_id,),
-		)
+		cursor.execute("SELECT COUNT(*) FROM clientes WHERE estado = 'APROBADO'")
 		aprobados = cursor.fetchone()[0]
 		cursor.execute(
-			"SELECT COUNT(DISTINCT cliente_id) FROM prestamos WHERE estado = 'ACTIVO' AND creado_por = %s",
-			(usuario_id,),
+			"SELECT COUNT(DISTINCT cliente_id) FROM prestamos WHERE estado = 'ACTIVO'"
 		)
 		clientes_activos = cursor.fetchone()[0]
 	finally:
@@ -303,12 +351,10 @@ def listar_clientes():
 	conexion = conectar()
 	try:
 		cursor = conexion.cursor()
-		usuario_id = session.get("usuario_id")
 		cursor.execute(
-			"SELECT id, nombre, direccion, telefono, banco, cuenta, "
-			"foto_frente, foto_reverso, estado, creado_en "
-			"FROM clientes WHERE creado_por = %s ORDER BY creado_en DESC",
-			(usuario_id,),
+		    "SELECT id, nombre, direccion, telefono, banco, cuenta, "
+		    "foto_frente, foto_reverso, estado, creado_en "
+		    "FROM clientes ORDER BY creado_en DESC"
 		)
 		columnas = (
 			"id", "nombre", "direccion", "telefono", "banco", "cuenta",
@@ -320,10 +366,75 @@ def listar_clientes():
 
 	for cliente in clientes:
 		cliente["creado_en"] = cliente["creado_en"].isoformat()
-		cliente["foto_frente_url"] = f"/uploads/{cliente['foto_frente']}"
-		cliente["foto_reverso_url"] = f"/uploads/{cliente['foto_reverso']}"
+		cliente["foto_frente_url"] = f"/api/clientes/{cliente['id']}/foto/frente"
+		cliente["foto_reverso_url"] = f"/api/clientes/{cliente['id']}/foto/reverso"
 
 	return jsonify(clientes)
+
+
+@app.route("/api/clientes/<int:cliente_id>", methods=["PUT", "PATCH"])
+@login_requerido
+def actualizar_cliente(cliente_id):
+	if not DB_DISPONIBLE:
+		return respuesta_base_no_disponible()
+
+	datos = request.get_json(silent=True) or {}
+	campos_permitidos = ("nombre", "direccion", "telefono", "banco", "cuenta", "estado")
+	actualizaciones = {clave: datos[clave].strip() for clave in campos_permitidos if clave in datos}
+
+	if not actualizaciones:
+		return jsonify({"error": "No hay datos para actualizar."}), 400
+
+	set_sql = ", ".join(f"{clave} = %s" for clave in actualizaciones)
+	valores = list(actualizaciones.values()) + [cliente_id]
+
+	conexion = conectar()
+	try:
+		cursor = conexion.cursor()
+		cursor.execute(
+			f"UPDATE clientes SET {set_sql} WHERE id = %s RETURNING id",
+			valores,
+		)
+		fila = cursor.fetchone()
+		if not fila:
+			return jsonify({"error": "El cliente no existe."}), 404
+		conexion.commit()
+	except Exception as error:
+		conexion.rollback()
+		return jsonify({"error": str(error)}), 500
+	finally:
+		conexion.close()
+
+	return jsonify({"success": True})
+
+
+@app.delete("/api/clientes/<int:cliente_id>")
+@login_requerido
+def eliminar_cliente_api(cliente_id):
+	if not DB_DISPONIBLE:
+		return respuesta_base_no_disponible()
+
+	conexion = conectar()
+	try:
+		cursor = conexion.cursor()
+		cursor.execute(
+			"SELECT foto_frente, foto_reverso FROM clientes WHERE id = %s",
+			(cliente_id,),
+		)
+		fila = cursor.fetchone()
+		if not fila:
+			return jsonify({"error": "El cliente no existe."}), 404
+
+		cursor.execute("DELETE FROM clientes WHERE id = %s", (cliente_id,))
+		conexion.commit()
+	except Exception as error:
+		conexion.rollback()
+		return jsonify({"error": str(error)}), 500
+	finally:
+		conexion.close()
+
+	# Las fotos viven en la base de datos: se borran junto con el cliente.
+	return jsonify({"success": True})
 
 
 @app.post("/api/prestamos")
@@ -346,6 +457,15 @@ def crear_prestamo():
 	conexion = conectar()
 	try:
 		cursor = conexion.cursor()
+
+		# Un cliente no puede tener mas de un prestamo activo a la vez.
+		cursor.execute(
+			"SELECT 1 FROM prestamos WHERE cliente_id = %s AND estado = 'ACTIVO' LIMIT 1",
+			(int(datos["cliente_id"]),)
+		)
+		if cursor.fetchone():
+			conexion.close()
+			return jsonify({"error": "El cliente ya tiene un prestamo activo."}), 409
 		cursor.execute(
 			"""
 			INSERT INTO prestamos
@@ -354,9 +474,9 @@ def crear_prestamo():
 			RETURNING id
 			""",
 			(
-				int(datos["cliente_id"]), session.get("usuario_id"), monto, porcentaje, total,
-				datos["periodicidad"], numero_pagos, datos["fecha_inicio"],
-			),
+			int(datos["cliente_id"]), session.get("usuario_id"), monto, porcentaje, total,
+			datos["periodicidad"], numero_pagos, datos["fecha_inicio"],
+		),
 		)
 		prestamo_id = cursor.fetchone()[0]
 		conexion.commit()
@@ -386,15 +506,12 @@ def listar_prestamos_activos():
 			"""
 			SELECT p.id, p.cliente_id, c.nombre, p.monto, p.total,
 			       p.periodicidad, p.numero_pagos, p.fecha_inicio,
-			       COALESCE(SUM(pg.monto), 0) AS pagado
+			       COALESCE((SELECT SUM(pg.monto) FROM pagos pg WHERE pg.prestamo_id = p.id), 0) AS pagado
 			FROM prestamos p
 			JOIN clientes c ON c.id = p.cliente_id
-			LEFT JOIN pagos pg ON pg.prestamo_id = p.id
-			WHERE p.estado = 'ACTIVO' AND p.creado_por = %s
-			GROUP BY p.id
+			WHERE p.estado = 'ACTIVO'
 			ORDER BY p.creado_en DESC
-			""",
-			(session.get("usuario_id"),),
+			"""
 		)
 		columnas = ("id", "cliente_id", "nombre", "monto", "total", "periodicidad", "numero_pagos", "fecha_inicio", "pagado")
 		prestamos = [dict(zip(columnas, fila)) for fila in cursor.fetchall()]
@@ -409,6 +526,52 @@ def listar_prestamos_activos():
 		prestamo["fecha_inicio"] = prestamo["fecha_inicio"].isoformat()
 
 	return jsonify(prestamos)
+
+
+@app.get("/api/prestamos/<int:prestamo_id>/pagos")
+@login_requerido
+def listar_pagos_prestamo(prestamo_id):
+	if not DB_DISPONIBLE:
+		return respuesta_base_no_disponible()
+
+	conexion = conectar()
+	try:
+		cursor = conexion.cursor()
+		cursor.execute(
+			"SELECT c.nombre, p.total, p.numero_pagos, p.fecha_inicio "
+			"FROM prestamos p JOIN clientes c ON c.id = p.cliente_id "
+			"WHERE p.id = %s",
+			(prestamo_id,),
+		)
+		prestamo = cursor.fetchone()
+		if not prestamo:
+			return jsonify({"error": "El préstamo no existe."}), 404
+
+		cursor.execute(
+			"SELECT numero_pago, fecha_pago, monto, saldo_anterior, nuevo_saldo "
+			"FROM pagos WHERE prestamo_id = %s ORDER BY numero_pago",
+			(prestamo_id,),
+		)
+		pagos = [
+			{
+				"numero_pago": fila[0],
+				"fecha_pago": fila[1].isoformat(),
+				"monto": float(fila[2]),
+				"saldo_anterior": float(fila[3]),
+				"nuevo_saldo": float(fila[4]),
+			}
+			for fila in cursor.fetchall()
+		]
+	finally:
+		conexion.close()
+
+	return jsonify({
+		"cliente": prestamo[0],
+		"total": float(prestamo[1]),
+		"numero_pagos": prestamo[2],
+		"fecha_inicio": prestamo[3].isoformat(),
+		"pagos": pagos,
+	})
 
 
 @app.post("/api/pagos")
@@ -702,8 +865,8 @@ def cliente():
 				datos = {
 					"nombre": fila[1], "direccion": fila[2], "telefono": fila[3],
 					"banco": fila[4], "cuenta": fila[5], "estado": fila[8],
-					"foto_frente_url": f"/uploads/{fila[6]}",
-					"foto_reverso_url": f"/uploads/{fila[7]}",
+					"foto_frente_url": f"/api/clientes/{fila[0]}/foto/frente",
+					"foto_reverso_url": f"/api/clientes/{fila[0]}/foto/reverso",
 				}
 		finally:
 			conexion.close()
@@ -728,4 +891,6 @@ def cliente():
 
 
 if __name__ == "__main__":
-	app.run(host="127.0.0.1", port=5050, debug=True)
+	# 0.0.0.0 permite abrir el panel y el formulario desde el celular
+	# usando la IP de esta computadora en la red local.
+	app.run(host="0.0.0.0", port=5050, debug=True)
