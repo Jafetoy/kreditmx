@@ -1,0 +1,111 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-18T00:00:00-06:00",
+  "title": "Design System: Kreditmx",
+  "extensions": {
+    "colorMeta": {
+      "ink": { "role": "neutral", "displayName": "Ledger Ink", "canonical": "#17182b", "tonalRamp": ["#080811", "#17182b", "#303149", "#505167", "#737482", "#9b9ca6", "#c6c6cc", "#f1f1f3"] },
+      "paper": { "role": "neutral", "displayName": "Warm Paper", "canonical": "#f1f0e9", "tonalRamp": ["#24231f", "#3f3e37", "#626057", "#85837a", "#aaa89f", "#ceccc4", "#e6e4dc", "#f8f7f2"] },
+      "surface": { "role": "neutral", "displayName": "Clean Sheet", "canonical": "#faf9f4", "tonalRamp": ["#262522", "#45443f", "#66655f", "#888781", "#aaa9a3", "#cdccc6", "#e7e6e0", "#fdfcf8"] },
+      "acid": { "role": "primary", "displayName": "Live Acid", "canonical": "#d8ff36", "tonalRamp": ["#293300", "#455700", "#647d00", "#84a600", "#a7d000", "#c9ef20", "#e3ff68", "#f5ffc4"] },
+      "orange": { "role": "secondary", "displayName": "Decision Orange", "canonical": "#ff6b35", "tonalRamp": ["#3d0e00", "#681b00", "#952900", "#c43a0a", "#ef4f1c", "#ff6b35", "#ffa17d", "#ffe0d2"] },
+      "line": { "role": "neutral", "displayName": "Graphite Rule", "canonical": "#cccbc3", "tonalRamp": ["#22221f", "#41413c", "#61605a", "#82817a", "#a4a39c", "#c5c4bd", "#deddd7", "#f5f4ef"] },
+      "muted": { "role": "neutral", "displayName": "Operational Gray", "canonical": "#565661", "tonalRamp": ["#101014", "#24242a", "#3a3a43", "#565661", "#777781", "#9b9ba3", "#c4c4c9", "#eeeeef"] }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Editorial Display", "purpose": "Hero statements and major workflow entry points." },
+      "headline": { "displayName": "Editorial Headline", "purpose": "Section openings and authentication titles." },
+      "body": { "displayName": "Operational Body", "purpose": "Forms, tables, explanations, and working content." },
+      "label": { "displayName": "Financial Metadata", "purpose": "Short labels, dates, identifiers, and state." }
+    },
+    "shadows": [
+      { "name": "ambient-overlay", "value": "0 24px 60px rgba(23, 24, 43, 0.12)", "purpose": "Authentication cards and isolated overlay surfaces only." }
+    ],
+    "motion": [
+      { "name": "state-fast", "value": "180ms ease", "purpose": "Hover, focus, and compact state transitions." },
+      { "name": "state-standard", "value": "200ms ease", "purpose": "Navigation and button foreground/background changes." }
+    ],
+    "breakpoints": [
+      { "name": "wide", "value": "1100px" },
+      { "name": "navigation", "value": "900px" },
+      { "name": "mobile", "value": "680px" },
+      { "name": "compact", "value": "420px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Credit Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Dominant action for starting or confirming credit work.",
+      "html": "<button class=\"ds-btn-primary\">NUEVO CRÉDITO</button>",
+      "css": ".ds-btn-primary { min-height: 48px; border: 1px solid #17182b; border-radius: 0; padding: 14px 22px; color: #17182b; background: #d8ff36; font: 600 11px 'DM Mono', monospace; letter-spacing: .04em; text-transform: uppercase; cursor: pointer; transition: color .2s ease, background-color .2s ease; } .ds-btn-primary:hover { color: #f1f0e9; background: #17182b; } .ds-btn-primary:focus-visible { outline: 2px solid #ff6b35; outline-offset: 3px; }"
+    },
+    {
+      "name": "Secondary Ink Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Strong supporting action without competing with new credit creation.",
+      "html": "<button class=\"ds-btn-secondary\">GUARDAR CAMBIOS</button>",
+      "css": ".ds-btn-secondary { min-height: 46px; border: 1px solid #17182b; border-radius: 0; padding: 14px 22px; color: #f1f0e9; background: #17182b; font: 500 11px 'DM Mono', monospace; letter-spacing: .04em; text-transform: uppercase; cursor: pointer; transition: color .2s ease, background-color .2s ease; } .ds-btn-secondary:hover { color: #17182b; background: #d8ff36; } .ds-btn-secondary:focus-visible { outline: 2px solid #ff6b35; outline-offset: 3px; }"
+    },
+    {
+      "name": "Operational Field",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Square financial input with a decisive bottom-rule focus state.",
+      "html": "<label class=\"ds-field\">MONTO DEL CRÉDITO<input type=\"text\" placeholder=\"$0.00\"></label>",
+      "css": ".ds-field { display: grid; gap: 8px; color: #17182b; font: 500 10px 'DM Mono', monospace; letter-spacing: .06em; } .ds-field input { min-height: 46px; border: 1px solid #cccbc3; border-bottom: 2px solid #17182b; border-radius: 0; padding: 12px 14px; color: #17182b; background: #faf9f4; font: 400 16px 'Space Grotesk', sans-serif; outline: 0; } .ds-field input:focus { border-bottom-color: #ff6b35; box-shadow: inset 0 -1px 0 #ff6b35; } .ds-field input:focus-visible { outline: 2px solid #ff6b35; outline-offset: 3px; }"
+    },
+    {
+      "name": "Operational Card",
+      "kind": "card",
+      "description": "Flat bordered surface for portfolio summaries and workflow modules.",
+      "html": "<article class=\"ds-card\"><span>CRÉDITOS ACTIVOS</span><strong>24</strong><p>Cartera vigente</p></article>",
+      "css": ".ds-card { width: 240px; border: 1px solid #cccbc3; border-radius: 0; padding: 20px; color: #17182b; background: #faf9f4; box-shadow: none; font-family: 'Space Grotesk', sans-serif; } .ds-card span { font: 500 10px 'DM Mono', monospace; letter-spacing: .06em; } .ds-card strong { display: block; margin-top: 12px; font: 400 48px/1 'Instrument Serif', serif; } .ds-card p { margin: 8px 0 0; color: #565661; font-size: 14px; }"
+    },
+    {
+      "name": "Rail Navigation Item",
+      "kind": "nav",
+      "description": "Compact rail destination with an acid active state.",
+      "html": "<button class=\"ds-nav-item\" aria-label=\"Clientes activos\"><span>AC</span><strong>Clientes activos</strong></button>",
+      "css": ".ds-nav-item { width: 72px; height: 55px; display: grid; place-items: center; border: 0; color: #a5a5b2; background: #17182b; font: 500 16px 'DM Mono', monospace; cursor: pointer; transition: color .2s ease, background-color .2s ease; } .ds-nav-item strong { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); } .ds-nav-item:hover, .ds-nav-item:focus-visible { color: #17182b; background: #d8ff36; } .ds-nav-item:focus-visible { outline: 2px solid #ff6b35; outline-offset: 3px; }"
+    },
+    {
+      "name": "Status Label",
+      "kind": "chip",
+      "description": "Bordered semantic state that remains legible without decorative effects.",
+      "html": "<span class=\"ds-status\"><span aria-hidden=\"true\"></span>ACTIVO</span>",
+      "css": ".ds-status { display: inline-flex; align-items: center; gap: 8px; border: 1px solid #187448; border-radius: 999px; padding: 6px 10px; color: #187448; background: #faf9f4; font: 500 10px 'DM Mono', monospace; letter-spacing: .06em; } .ds-status > span { width: 7px; height: 7px; border-radius: 999px; background: #187448; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "Capital in Motion",
+    "overview": "Kreditmx treats financial administration as a living operational ledger: disciplined, immediate, and always moving toward the next sound credit decision. Editorial scale and compact financial metadata keep the primary action clear while preserving dense operational context.",
+    "keyCharacteristics": [
+      "Editorial headlines over structured operational grids.",
+      "Flat, square surfaces separated by fine rules.",
+      "Compact monospace labels for metadata and state.",
+      "Acid green reserved for primary action and active navigation.",
+      "Orange reserved for focus, urgency, and intentional emphasis."
+    ],
+    "rules": [
+      { "name": "The Signal Rarity Rule", "body": "Acid green marks the strongest action or active state; do not spread it across passive decoration.", "section": "colors" },
+      { "name": "The Two-Accent Rule", "body": "Acid green communicates momentum, while orange communicates attention. Never use them interchangeably.", "section": "colors" },
+      { "name": "The Three-Voice Rule", "body": "Serif speaks direction, sans-serif carries work, and monospace reports state.", "section": "typography" },
+      { "name": "The Flat Ledger Rule", "body": "Operational surfaces remain flat at rest; state is expressed through color, borders, and typography rather than decorative elevation.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do make the next credit action obvious before secondary portfolio operations.",
+      "Do use thin rules and alignment to organize dense financial information.",
+      "Do preserve readable contrast and visible keyboard focus on every interactive control.",
+      "Do keep mobile navigation compact while retaining accessible names."
+    ],
+    "donts": [
+      "Don't add rounded dashboard cards, decorative side tabs, or glowing halos.",
+      "Don't use uppercase for sentences or long explanatory text.",
+      "Don't use acid green as passive decoration or orange as a substitute for success.",
+      "Don't change DOM contracts, field names, calculations, percentages, or workflow behavior to achieve a visual effect."
+    ]
+  }
+}
