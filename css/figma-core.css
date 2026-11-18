@@ -1,0 +1,67 @@
+:root {
+    --kx-ink: #17182b;
+    --kx-paper: #f1f0e9;
+    --kx-surface: #faf9f4;
+    --kx-acid: #d8ff36;
+    --kx-orange: #ff6b35;
+    --kx-line: #cccbc3;
+    --kx-muted: #565661;
+    --kx-orange-text: #b43a12;
+    --kx-success: #187448;
+    --kx-warning: #885e00;
+    --kx-danger: #a82e0e;
+    --kx-sans: "Space Grotesk", sans-serif;
+    --kx-serif: "Instrument Serif", serif;
+    --kx-mono: "DM Mono", monospace;
+    --kx-shadow: 0 24px 60px rgba(23, 24, 43, .12);
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+    scrollbar-color: var(--kx-ink) var(--kx-paper);
+}
+
+body {
+    color: var(--kx-ink);
+    background-color: var(--kx-paper);
+    font-family: var(--kx-sans);
+    font-synthesis: none;
+}
+
+::selection {
+    color: var(--kx-ink);
+    background: var(--kx-acid);
+}
+
+button,
+input,
+select,
+textarea {
+    font: inherit;
+}
+
+button,
+a,
+select,
+label[for] {
+    -webkit-tap-highlight-color: transparent;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+    outline: 2px solid var(--kx-orange);
+    outline-offset: 3px;
+}
+
+input::placeholder,
+textarea::placeholder {
+    color: #6f6f77;
+    opacity: 1;
+}
