@@ -57,3 +57,5 @@ L14 — 2026-11-18 — User follow-up (verbatim): "Ok, verifica que todo este co
 L15 — 2026-11-18 — User authorization (verbatim): "si corrije todo los problemas."
 
 L16 — 2026-11-18 — Responsive correction: added visible mobile navigation labels, 44px touch targets, coarse-pointer 16px fields, dynamic viewport units, safe-area handling, capability-gated hover states, non-wrapping client navigation, and a Figma-aligned landing surface. Chromium checks passed 30 page/viewport combinations at 1440, 1024, 768, 390, and 320px with no horizontal overflow or recorded failures.
+
+L17 — 2026-11-18 — Landing detector triage: documented `side-tab` and `radial-halo` as index-scoped false positives from the shared legacy stylesheet; the final `kx-home-page` surface contains neither pattern.

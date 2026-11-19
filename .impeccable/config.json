@@ -315,6 +315,24 @@
         ],
         "createdAt": "2026-11-19T01:31:09.782Z",
         "reason": "Verified legacy CSS false positive: the final home surface uses the documented neutral ambient shadow, not a chromatic glow."
+      },
+      {
+        "rule": "side-tab",
+        "value": "*",
+        "files": [
+          "index.html"
+        ],
+        "createdAt": "2026-11-19T02:01:17.690Z",
+        "reason": "Verified legacy CSS false positive: the flagged stat/module pseudo-elements are absent from the scoped home surface."
+      },
+      {
+        "rule": "radial-halo",
+        "value": "*",
+        "files": [
+          "index.html"
+        ],
+        "createdAt": "2026-11-19T02:01:17.738Z",
+        "reason": "Verified legacy CSS false positive: the scoped home surface replaces the shared legacy radial backgrounds with a solid ink-and-paper split."
       }
     ]
   }
