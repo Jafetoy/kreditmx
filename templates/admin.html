@@ -29,25 +29,37 @@
         <strong>kreditmx</strong>
     </a>
 
-    <nav>
+    <nav aria-label="Módulos del sistema">
         <button type="button" onclick="mostrarModulo('prestamos')" data-label="Nuevo crédito" aria-label="Nuevo crédito">
-            <span>+</span>
-            <strong>Crédito</strong>
+            <svg class="kx-rail-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v16M4 12h16"/></svg>
+            <strong>Nuevo crédito</strong>
         </button>
-        <button type="button" onclick="mostrarModulo('registrados')" data-label="Registrados" aria-label="Clientes registrados">
-            <span>CL</span>
-            <strong>Clientes</strong>
+        <button type="button" onclick="mostrarModulo('enlace')" data-label="Enlace de registro" aria-label="Enlace de registro">
+            <svg class="kx-rail-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.1.1l2-2a5 5 0 0 0-7.1-7.1l-1.1 1.1M14 11a5 5 0 0 0-7.1-.1l-2 2A5 5 0 0 0 12 20l1.1-1.1"/></svg>
+            <strong>Enlace</strong>
         </button>
-        <button type="button" onclick="mostrarModulo('colocados')" data-label="Activos" aria-label="Clientes activos">
-            <span>AC</span>
+        <button type="button" onclick="mostrarModulo('clientes')" data-label="Modificar clientes" aria-label="Modificar clientes">
+            <svg class="kx-rail-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8M17 8h5M19.5 5.5v5"/></svg>
+            <strong>Editar clientes</strong>
+        </button>
+        <button type="button" onclick="mostrarModulo('clientes')" data-label="Eliminar clientes" aria-label="Eliminar clientes">
+            <svg class="kx-rail-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M6 6l1 15h10l1-15M10 10v7M14 10v7"/></svg>
+            <strong>Eliminar clientes</strong>
+        </button>
+        <button type="button" onclick="mostrarModulo('pagos'); cargarPrestamosPago();" data-label="Registrar pagos" aria-label="Registrar pagos">
+            <svg class="kx-rail-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h14a2 2 0 0 1 2 2v13H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z"/><path d="M16 11h6v5h-6a2.5 2.5 0 0 1 0-5Z"/></svg>
+            <strong>Registrar pagos</strong>
+        </button>
+        <button type="button" onclick="mostrarModulo('registrados')" data-label="Clientes registrados" aria-label="Clientes registrados">
+            <svg class="kx-rail-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8M17 11a4 4 0 0 0 0-8M22 21v-2a4 4 0 0 0-3-3.87"/></svg>
+            <strong>Registrados</strong>
+        </button>
+        <button type="button" onclick="mostrarModulo('colocados')" data-label="Clientes activos" aria-label="Clientes activos">
+            <svg class="kx-rail-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>
             <strong>Activos</strong>
         </button>
-        <button type="button" onclick="mostrarModulo('pagos'); cargarPrestamosPago();" data-label="Pagos" aria-label="Registrar pagos">
-            <span>PG</span>
-            <strong>Pagos</strong>
-        </button>
-        <button type="button" onclick="mostrarModulo('fondo'); cargarFondo();" data-label="Fondo" aria-label="Fondo de inversión">
-            <span>FI</span>
+        <button type="button" onclick="mostrarModulo('fondo'); cargarFondo();" data-label="Fondo de inversión" aria-label="Fondo de inversión">
+            <svg class="kx-rail-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m3 9 9-6 9 6M5 10v8M10 10v8M14 10v8M19 10v8M3 21h18"/></svg>
             <strong>Fondo</strong>
         </button>
     </nav>
@@ -98,6 +110,27 @@
                 Nuevo crédito <span aria-hidden="true">→</span>
             </button>
         </div>
+    </section>
+
+
+    <section class="kx-capital-summary" aria-label="Resumen del fondo">
+        <div class="kx-capital-copy">
+            <span>Capital disponible para colocar</span>
+            <strong id="fondoDisponibleResumen">$0.00</strong>
+            <p>
+                <b id="fondoDisponiblePorcentaje">0%</b>
+                <span id="fondoResumenDetalle">del fondo está listo para nuevos créditos.</span>
+            </p>
+        </div>
+        <div class="kx-capital-orbit" aria-hidden="true">
+            <i></i><i></i><i></i>
+            <b id="fondoDisponibleOrbita">0%</b>
+        </div>
+        <button type="button" onclick="mostrarModulo('prestamos')">
+            <span class="kx-capital-action-icon">+</span>
+            <span><small>Acción rápida</small>Nuevo crédito</span>
+            <span aria-hidden="true">→</span>
+        </button>
     </section>
 
 
@@ -171,73 +204,6 @@
 
         </div>
 
-
-    </section>
-
-
-    <!-- MODULOS -->
-
-    <section class="modulos-panel">
-
-        <div class="modulos-encabezado">
-            <div>
-                <p class="eyebrow">Administración</p>
-                <h2>Módulos del sistema</h2>
-                <p>Selecciona una herramienta para trabajar sin salir del panel.</p>
-            </div>
-        </div>
-
-        <div class="modulos-grid">
-
-            <button class="modulo-card" data-modulo="prestamos" type="button" onclick="mostrarModulo('prestamos')">
-                <span class="modulo-icono">$</span>
-                <strong>Nuevo préstamo</strong>
-                <span>Calcula pagos y genera recibos.</span>
-            </button>
-
-            <button class="modulo-card" data-modulo="enlace" type="button" onclick="mostrarModulo('enlace')">
-                <span class="modulo-icono">EN</span>
-                <strong>Enlace de registro</strong>
-                <span>Genera enlaces para nuevos clientes.</span>
-            </button>
-
-            <button class="modulo-card" data-modulo="clientes" type="button" onclick="mostrarModulo('clientes')">
-                <span class="modulo-icono">ED</span>
-                <strong>Modificar clientes</strong>
-                <span>Edita la información registrada.</span>
-            </button>
-
-            <button class="modulo-card" data-modulo="eliminar" type="button" onclick="mostrarModulo('clientes')">
-                <span class="modulo-icono">EL</span>
-                <strong>Eliminar clientes</strong>
-                <span>Administra y elimina registros.</span>
-            </button>
-
-            <button class="modulo-card" data-modulo="pagos" type="button" onclick="mostrarModulo('pagos'); cargarPrestamosPago();">
-                <span class="modulo-icono">PG</span>
-                <strong>Registrar pagos</strong>
-                <span>Registra abonos de los préstamos activos.</span>
-            </button>
-
-            <button class="modulo-card modulo-card-destacado" data-modulo="registrados" type="button" onclick="mostrarModulo('registrados')">
-                <span class="modulo-icono">RG</span>
-                <strong>Clientes registrados</strong>
-                <span>Lista de clientes que se registran desde el formulario.</span>
-            </button>
-
-            <button class="modulo-card modulo-card-destacado" data-modulo="colocados" type="button" onclick="mostrarModulo('colocados')">
-                <span class="modulo-icono">AC</span>
-                <strong>Clientes activos</strong>
-                <span>Consulta quién tiene un préstamo activo.</span>
-            </button>
-
-            <button class="modulo-card modulo-card-destacado" data-modulo="fondo" type="button" onclick="mostrarModulo('fondo'); cargarFondo();">
-                <span class="modulo-icono">FI</span>
-                <strong>Fondo de inversión</strong>
-                <span>Inversiones, fondo disponible y reparto de pagos.</span>
-            </button>
-
-        </div>
 
     </section>
 

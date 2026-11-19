@@ -432,10 +432,11 @@ const buscador =
 async function cargarDatosMariaDB() {
 
     try {
-        const [resumenRespuesta, prestamosRespuesta, clientesRespuesta] = await Promise.all([
+        const [resumenRespuesta, prestamosRespuesta, clientesRespuesta, fondoRespuesta] = await Promise.all([
             fetch("/api/admin/resumen"),
             fetch("/api/prestamos/activos"),
             fetch("/api/clientes"),
+            fetch("/api/fondo"),
         ]);
 
         if (!resumenRespuesta.ok || !prestamosRespuesta.ok || !clientesRespuesta.ok) {
@@ -445,6 +446,7 @@ async function cargarDatosMariaDB() {
         const resumen = await resumenRespuesta.json();
         const prestamos = await prestamosRespuesta.json();
         const clientes = await clientesRespuesta.json();
+        const fondo = fondoRespuesta.ok ? await fondoRespuesta.json() : null;
 
         document.getElementById("totalRegistrosCount").textContent = resumen.total_clientes;
         document.getElementById("pendientesCount").textContent = resumen.pendientes;
@@ -452,6 +454,22 @@ async function cargarDatosMariaDB() {
         document.getElementById("aprobadosCount").textContent = resumen.aprobados;
         document.getElementById("clientesActivosCount").textContent = resumen.clientes_activos;
         document.getElementById("clientesColocadosTotal").textContent = resumen.clientes_activos;
+
+        if (fondo) {
+            const totalInvertido = Number(fondo.total_invertido) || 0;
+            const disponible = Number(fondo.fondo_disponible) || 0;
+            const porcentajeDisponible = totalInvertido > 0
+                ? Math.max(0, Math.round((disponible / totalInvertido) * 100))
+                : 0;
+            const porcentajeTexto = `${porcentajeDisponible}%`;
+
+            document.getElementById("fondoDisponibleResumen").textContent = formatoDinero(disponible);
+            document.getElementById("fondoDisponiblePorcentaje").textContent = porcentajeTexto;
+            document.getElementById("fondoDisponibleOrbita").textContent = porcentajeTexto;
+            document.getElementById("fondoResumenDetalle").textContent = totalInvertido > 0
+                ? `del fondo está listo para nuevos créditos. ${formatoDinero(fondo.prestado)} está colocado.`
+                : "Agrega capital al fondo para comenzar a colocar créditos.";
+        }
 
         // Clientes que ya tienen un préstamo activo (no pueden obtener otro).
         const clientesConPrestamo = new Set(
