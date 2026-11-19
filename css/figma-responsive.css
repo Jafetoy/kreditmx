@@ -1,0 +1,313 @@
+@media (max-width: 1100px) {
+    .kx-admin-page .estadisticas {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .kx-admin-page .stat-card:nth-child(3) {
+        border-right: 0;
+    }
+
+    .kx-admin-page .stat-card:nth-child(-n + 3) {
+        border-bottom: 1px solid var(--kx-line);
+    }
+
+    .kx-admin-page .modulos-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 900px) {
+    .kx-admin-rail {
+        inset: auto 0 0;
+        width: auto;
+        height: 68px;
+        padding: 8px 12px;
+        flex-direction: row;
+        align-items: center;
+        border-top: 1px solid #38394c;
+    }
+
+    .kx-rail-brand {
+        display: none;
+    }
+
+    .kx-admin-rail nav {
+        width: 100%;
+        flex-direction: row;
+        gap: 4px;
+    }
+
+    .kx-admin-rail nav button {
+        flex: 1 1 0;
+        min-width: 0;
+        height: 50px;
+    }
+
+    .kx-admin-rail nav button > strong {
+        position: static;
+        display: block;
+        padding: 0;
+        opacity: 1;
+        color: inherit;
+        background: transparent;
+        font-size: 7px;
+        transform: none;
+    }
+
+    .kx-admin-rail nav button > span {
+        font-size: 12px;
+    }
+
+    .kx-admin-page .admin-header {
+        margin-left: 0;
+        padding-inline: 18px;
+    }
+
+    .kx-admin-page .admin-container {
+        margin-left: 0;
+        padding: 34px 18px 100px;
+    }
+
+    .kx-dashboard-intro {
+        grid-template-columns: 1fr;
+        align-items: start;
+    }
+
+    .kx-dashboard-priority {
+        padding-left: 0;
+        border-left: 0;
+    }
+
+    .kx-dashboard-priority p {
+        max-width: 55ch;
+    }
+
+    .kx-registration-page .tarjeta {
+        grid-template-columns: 1fr;
+    }
+
+    .kx-registration-page .encabezado {
+        position: relative;
+        min-height: 360px;
+        grid-column: 1;
+        grid-row: auto;
+        padding: 90px 34px 42px;
+    }
+
+    .kx-registration-page .registro-logo-imagen {
+        top: 26px;
+        left: 34px;
+    }
+
+    .kx-registration-page .encabezado h1 {
+        max-width: 10ch;
+        font-size: 54px;
+    }
+
+    .kx-registration-page .aviso,
+    .kx-registration-page #formRegistro,
+    .kx-registration-page .mensaje-exito {
+        grid-column: 1;
+    }
+
+    .kx-registration-page .aviso {
+        margin-top: 32px;
+    }
+}
+
+@media (max-width: 680px) {
+    .kx-admin-page .admin-header {
+        min-height: 64px;
+        grid-template-columns: 1fr auto;
+        gap: 12px;
+    }
+
+    .kx-admin-page .admin-header > div:first-child > span,
+    .kx-admin-page .bienvenida-usuario {
+        display: none;
+    }
+
+    .kx-admin-page .admin-logo-imagen {
+        width: 116px;
+    }
+
+    .kx-admin-page .btn-salir {
+        min-height: 38px;
+        padding: 0 12px;
+        font-size: 8px;
+    }
+
+    .kx-dashboard-intro h1 {
+        font-size: clamp(46px, 14vw, 66px);
+    }
+
+    .kx-admin-page .estadisticas {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .kx-admin-page .stat-card,
+    .kx-admin-page .stat-card:nth-child(3) {
+        min-height: 130px;
+        border-right: 1px solid var(--kx-line);
+        border-bottom: 1px solid var(--kx-line);
+    }
+
+    .kx-admin-page .stat-card:nth-child(even) {
+        border-right: 0;
+    }
+
+    .kx-admin-page .stat-card:last-child {
+        grid-column: 1 / -1;
+        border-bottom: 0;
+        border-right: 0;
+    }
+
+    .kx-admin-page .modulos-panel,
+    .kx-admin-page .panel,
+    .kx-client-page .panel {
+        padding: 20px 16px;
+    }
+
+    .kx-admin-page .modulos-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .kx-admin-page .modulo-card {
+        min-height: 122px;
+    }
+
+    .kx-auth-page {
+        background: var(--kx-ink);
+    }
+
+    .kx-auth-page .login-pagina {
+        padding: 80px 18px 28px;
+        align-items: start;
+    }
+
+    .kx-auth-page .login-card {
+        margin-left: 0;
+        padding: 32px 24px;
+    }
+
+    .kx-auth-page .login-card h1 {
+        white-space: normal;
+    }
+
+    .kx-auth-page .login-card::before {
+        top: -56px;
+        left: 0;
+        width: 56px;
+        height: 56px;
+        font-size: 30px;
+    }
+
+    .kx-registration-page .encabezado {
+        min-height: 300px;
+        padding-inline: 24px;
+    }
+
+    .kx-registration-page .registro-logo-imagen {
+        left: 24px;
+    }
+
+    .kx-registration-page .encabezado h1 {
+        font-size: 46px;
+    }
+
+    .kx-registration-page .aviso,
+    .kx-registration-page #formRegistro,
+    .kx-registration-page .mensaje-exito {
+        width: calc(100% - 32px);
+    }
+
+    .kx-registration-page .aviso,
+    .kx-registration-page #formRegistro {
+        min-width: 0;
+        overflow: hidden;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        scroll-behavior: auto !important;
+        transition-duration: .01ms !important;
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+    }
+}
+
+/* Legibility overrides for the compact operational type system. */
+
+.kx-admin-page .admin-header > div:first-child > span,
+.kx-admin-page .bienvenida-usuario,
+.kx-admin-page .btn-salir,
+.kx-dashboard-intro > div:first-child > p,
+.kx-dashboard-priority > span,
+.kx-dashboard-priority button,
+.kx-admin-page .stat-card span,
+.kx-admin-page .stat-card small,
+.kx-admin-page label,
+.kx-client-page label,
+.kx-admin-page .btn-principal,
+.kx-admin-page .btn-calcular,
+.kx-admin-page .btn-generar,
+.kx-admin-page .btn-pdf,
+.kx-admin-page .btn-primario,
+.kx-admin-page .btn-guardar-edicion,
+.kx-admin-page .btn-secundario,
+.kx-admin-page .btn-cancelar-prestamo,
+.kx-client-page .btn-generar,
+.kx-client-page .btn-salir,
+.kx-auth-page .campo-admin label,
+.kx-auth-page .btn-admin {
+    font-size: 11px;
+}
+
+.kx-admin-page th {
+    color: #555661;
+    font-size: 11px;
+}
+
+.kx-admin-page .modulo-card > span:last-child,
+.kx-admin-page .panel-header p,
+.kx-admin-page .modulos-encabezado > div > p:last-child {
+    color: #555661;
+    opacity: 1;
+}
+
+.kx-admin-page .modulo-card:first-child > span:last-child {
+    color: #d8d8df;
+}
+
+@media (max-width: 900px) {
+    .kx-admin-rail nav button > strong {
+        font-size: 11px;
+        line-height: 1.1;
+    }
+
+    .kx-admin-rail {
+        height: 76px;
+    }
+}
+
+@media (max-width: 420px) {
+    .kx-admin-rail nav button > strong {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+        clip-path: inset(50%);
+        white-space: nowrap;
+        border: 0;
+    }
+
+    .kx-admin-rail nav button > span {
+        font-size: 14px;
+    }
+}
