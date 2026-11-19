@@ -3,365 +3,163 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-
-    <title>Registro de cliente</title>
-
+    <title>Expediente de cliente | Kreditmx</title>
     <link rel="stylesheet" href="/css/registro.css">
     <link rel="stylesheet" href="/css/figma-theme.css">
 </head>
 
 <body class="kx-registration-page">
-
     <main class="contenedor">
-
         <section class="tarjeta">
-
-            <div class="encabezado">
-                <img
-                    class="registro-logo-imagen"
-                    src="/img/logo-transparente.png"
-                    alt="Kreditmx"
-                >
-
-                <h1>Registro de cliente</h1>
-
-                <p>
-                    Completa tus datos para iniciar el proceso de verificación.
-                </p>
-            </div>
-
-
-            <div class="aviso">
-                <strong>Importante</strong>
-
-                <p>
-                    Ingresa tus datos exactamente como aparecen en tu
-                    identificación. La información proporcionada será utilizada
-                    únicamente para el proceso de registro y verificación.
-                </p>
-            </div>
-
-
-            <form id="formRegistro" enctype="multipart/form-data">
-
-                <input
-                    type="hidden"
-                    name="token"
-                    value="{{ token }}"
-                >
-
-                <!-- DATOS PERSONALES -->
-
-                <div class="seccion">
-                    <h2>1. Datos personales</h2>
-
-                    <div class="campo">
-                        <label for="nombre">
-                            Nombre completo
-                        </label>
-
-                        <input
-                            type="text"
-                            id="nombre"
-                            name="nombre"
-                            placeholder="Escribe tu nombre completo"
-                            required
-                        >
-                    </div>
-
-
-                    <div class="campo">
-                        <label for="direccion">
-                            Dirección
-                        </label>
-
-                        <textarea
-                            id="direccion"
-                            name="direccion"
-                            rows="3"
-                            placeholder="Escribe tu dirección tal como aparece en tu identificación"
-                            required
-                        ></textarea>
-                    </div>
-
-
-                    <div class="campo">
-                        <label for="telefono">
-                            Número de teléfono
-                        </label>
-
-                        <input
-                            type="tel"
-                            id="telefono"
-                            name="telefono"
-                            maxlength="10"
-                            placeholder="10 dígitos"
-                            inputmode="numeric"
-                            required
-                        >
-                    </div>
-
-                    <div class="campo">
-                        <label for="correo">
-                            Correo electrónico
-                        </label>
-
-                        <input
-                            type="email"
-                            id="correo"
-                            name="correo"
-                            placeholder="correo@ejemplo.com"
-                            required
-                        >
-                    </div>
-
+            <aside class="encabezado">
+                <img class="registro-logo-imagen" src="/img/logo-transparente.png" alt="Kreditmx">
+                <div class="registro-intro">
+                    <span>Expediente privado</span>
+                    <h1>Tu historia financiera,</h1>
+                    <p>Comparte lo esencial. Nosotros protegemos cada dato durante el proceso de verificación.</p>
                 </div>
-
-
-                <!-- DATOS BANCARIOS -->
-
-                <div class="seccion">
-
-                    <h2>2. Datos bancarios</h2>
-
-                    <div class="campo">
-
-                        <label for="banco">
-                            Banco
-                        </label>
-
-                        <select id="banco" name="banco" required>
-
-                            <option value="">
-                                Selecciona tu banco
-                            </option>
-
-                            <option value="BBVA">
-                                BBVA
-                            </option>
-
-                            <option value="Santander">
-                                Santander
-                            </option>
-
-                            <option value="Banorte">
-                                Banorte
-                            </option>
-
-                            <option value="HSBC">
-                                HSBC
-                            </option>
-
-                            <option value="Scotiabank">
-                                Scotiabank
-                            </option>
-
-                            <option value="Citibanamex">
-                                Citibanamex
-                            </option>
-
-                            <option value="Banco Azteca">
-                                Banco Azteca
-                            </option>
-
-                            <option value="Otro">
-                                Otro
-                            </option>
-
-                        </select>
-
-                    </div>
-
-
-                    <div class="campo">
-
-                        <label for="cuenta">
-                            Número de cuenta
-                        </label>
-
-                        <input
-                            type="text"
-                            id="cuenta"
-                            name="cuenta"
-                            maxlength="16"
-                            placeholder="16 dígitos"
-                            inputmode="numeric"
-                            autocomplete="off"
-                            required
-                        >
-
-                        <small id="mensajeCuenta">
-                            Ingresa únicamente 16 números.
-                        </small>
-
-                    </div>
-
+                <div class="registro-seguridad">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="m9 12 2 2 4-4"/></svg>
+                    <span>Conexión privada<br>y cifrada</span>
                 </div>
+            </aside>
 
+            <section class="registro-contenido">
+                <header class="registro-barra">
+                    <span>Solicitud Kreditmx</span>
+                    <span>Menos de 8 minutos</span>
+                </header>
 
-                <!-- IDENTIFICACIÓN -->
+                <div class="registro-form-wrap">
+                    <div class="registro-progreso" aria-label="Progreso del expediente">
+                        <div class="activo" data-progress="1"><b>01</b><span>Tú</span><i></i></div>
+                        <div data-progress="2"><b>02</b><span>Tu cuenta</span><i></i></div>
+                        <div data-progress="3"><b>03</b><span>Evidencia</span></div>
+                    </div>
 
-                <div class="seccion">
+                    <form id="formRegistro" enctype="multipart/form-data">
+                        <input type="hidden" name="token" value="{{ token }}">
+                        <input type="hidden" id="nombreCompleto" name="nombre">
 
-                    <h2>3. Identificación</h2>
+                        <fieldset class="registro-paso" data-step="1">
+                            <legend>Empecemos por <em>conocerte.</em></legend>
+                            <p class="registro-lead">Escribe tus datos exactamente como aparecen en tu identificación.</p>
 
-                    <p class="descripcion">
-                        Sube una fotografía clara de ambos lados de tu
-                        identificación.
-                    </p>
-
-
-                    <div class="documentos">
-
-                        <!-- FRENTE -->
-
-                        <div class="documento">
-
-                            <label for="fotoFrente">
-
-                                <div class="icono-documento">
-                                    📄
+                            <div class="registro-campos">
+                                <div class="campo">
+                                    <label for="nombre">Nombre(s)</label>
+                                    <input type="text" id="nombre" name="nombres" autocomplete="given-name" placeholder="Tu nombre" required>
                                 </div>
-
-                                <strong>
-                                    Frente
-                                </strong>
-
-                                <span>
-                                    Seleccionar fotografía
-                                </span>
-
-                            </label>
-
-                            <input
-                                type="file"
-                                id="fotoFrente"
-                                name="foto_frente"
-                                accept="image/jpeg,image/png,image/webp"
-                                required
-                            >
-
-                            <div
-                                id="previewFrente"
-                                class="preview"
-                            ></div>
-
-                        </div>
-
-
-                        <!-- REVERSO -->
-
-                        <div class="documento">
-
-                            <label for="fotoReverso">
-
-                                <div class="icono-documento">
-                                    📄
+                                <div class="campo">
+                                    <label for="apellidos">Apellidos</label>
+                                    <input type="text" id="apellidos" name="apellidos" autocomplete="family-name" placeholder="Tus apellidos" required>
                                 </div>
+                                <div class="campo">
+                                    <label for="curp">CURP</label>
+                                    <input type="text" id="curp" name="curp" maxlength="18" minlength="18" autocomplete="off" placeholder="18 caracteres" required>
+                                </div>
+                                <div class="campo">
+                                    <label for="fechaNacimiento">Fecha de nacimiento</label>
+                                    <input type="date" id="fechaNacimiento" name="fecha_nacimiento" autocomplete="bday" required>
+                                </div>
+                                <div class="campo">
+                                    <label for="telefono">Teléfono celular</label>
+                                    <input type="tel" id="telefono" name="telefono" maxlength="10" inputmode="numeric" autocomplete="tel" placeholder="55 0000 0000" required>
+                                </div>
+                                <div class="campo">
+                                    <label for="correo">Correo electrónico</label>
+                                    <input type="email" id="correo" name="correo" autocomplete="email" placeholder="tu@correo.com" required>
+                                </div>
+                                <div class="campo campo-completo">
+                                    <label for="direccion">Domicilio</label>
+                                    <textarea id="direccion" name="direccion" rows="2" autocomplete="street-address" placeholder="Como aparece en tu comprobante" required></textarea>
+                                </div>
+                            </div>
+                        </fieldset>
 
-                                <strong>
-                                    Reverso
-                                </strong>
+                        <fieldset class="registro-paso" data-step="2" hidden>
+                            <legend>¿Dónde movemos <em>tu dinero?</em></legend>
+                            <p class="registro-lead">La cuenta debe estar a tu nombre. Nunca solicitaremos claves ni contraseñas.</p>
 
-                                <span>
-                                    Seleccionar fotografía
-                                </span>
+                            <div class="registro-campos">
+                                <div class="campo">
+                                    <label for="banco">Banco</label>
+                                    <select id="banco" name="banco" required>
+                                        <option value="">Selecciona</option>
+                                        <option value="BBVA">BBVA</option>
+                                        <option value="Banorte">Banorte</option>
+                                        <option value="Santander">Santander</option>
+                                        <option value="HSBC">HSBC</option>
+                                        <option value="Scotiabank">Scotiabank</option>
+                                        <option value="Citibanamex">Citibanamex</option>
+                                        <option value="Banco Azteca">Banco Azteca</option>
+                                        <option value="Otro">Otro</option>
+                                    </select>
+                                </div>
+                                <div class="campo">
+                                    <label for="cuenta">CLABE interbancaria</label>
+                                    <input type="text" id="cuenta" name="cuenta" maxlength="18" minlength="18" inputmode="numeric" autocomplete="off" placeholder="18 dígitos" required>
+                                    <small id="mensajeCuenta">Ingresa únicamente 18 números.</small>
+                                </div>
+                                <div class="campo">
+                                    <label for="ingresoMensual">Ingreso mensual</label>
+                                    <input type="number" id="ingresoMensual" name="ingreso_mensual" min="0" step="0.01" inputmode="decimal" placeholder="$ 0.00" required>
+                                </div>
+                                <div class="campo">
+                                    <label for="ocupacion">Ocupación</label>
+                                    <input type="text" id="ocupacion" name="ocupacion" autocomplete="organization-title" placeholder="Tu actividad actual" required>
+                                </div>
+                            </div>
+                        </fieldset>
 
-                            </label>
+                        <fieldset class="registro-paso" data-step="3" hidden>
+                            <legend>Última revisión: <em>tu evidencia.</em></legend>
+                            <p class="registro-lead">Sube archivos claros en JPG, PNG, WEBP o PDF. Máximo 5 MB por archivo.</p>
 
-                            <input
-                                type="file"
-                                id="fotoReverso"
-                                name="foto_reverso"
-                                accept="image/jpeg,image/png,image/webp"
-                                required
-                            >
+                            <div class="documentos">
+                                <div class="documento">
+                                    <label for="fotoFrente"><b>01</b><span><strong>Identificación / frente</strong><small>JPG, PNG o WEBP</small></span><em>Subir</em></label>
+                                    <input type="file" id="fotoFrente" name="foto_frente" accept="image/jpeg,image/png,image/webp" required>
+                                    <div id="previewFrente" class="preview"></div>
+                                </div>
+                                <div class="documento">
+                                    <label for="fotoReverso"><b>02</b><span><strong>Identificación / reverso</strong><small>JPG, PNG o WEBP</small></span><em>Subir</em></label>
+                                    <input type="file" id="fotoReverso" name="foto_reverso" accept="image/jpeg,image/png,image/webp" required>
+                                    <div id="previewReverso" class="preview"></div>
+                                </div>
+                                <div class="documento">
+                                    <label for="comprobanteDomicilio"><b>03</b><span><strong>Comprobante de domicilio</strong><small>JPG, PNG o PDF</small></span><em>Subir</em></label>
+                                    <input type="file" id="comprobanteDomicilio" name="comprobante_domicilio" accept="image/jpeg,image/png,image/webp,application/pdf" required>
+                                    <div id="previewComprobante" class="preview"></div>
+                                </div>
+                            </div>
 
-                            <div
-                                id="previewReverso"
-                                class="preview"
-                            ></div>
+                            <div class="autorizacion">
+                                <label>
+                                    <input type="checkbox" id="acepto" name="autoriza_historial" value="true" required>
+                                    <span>Acepto el aviso de privacidad y autorizo la consulta de mi historial crediticio para evaluar esta solicitud.</span>
+                                </label>
+                            </div>
+                        </fieldset>
 
+                        <div class="registro-acciones">
+                            <button type="button" id="btnAnterior" class="btn-anterior" hidden>← Anterior</button>
+                            <button type="button" id="btnContinuar">Continuar <span aria-hidden="true">→</span></button>
+                            <button type="submit" id="btnEnviar" hidden>Enviar expediente <span aria-hidden="true">→</span></button>
                         </div>
+                    </form>
 
+                    <div id="mensajeExito" class="mensaje-exito oculto">
+                        <div class="check" aria-hidden="true">✓</div>
+                        <p>Expediente completo</p>
+                        <h2>Todo está <em>en orden.</em></h2>
+                        <span>Tu asesor revisará la información y se pondrá en contacto contigo. No necesitas hacer nada más.</span>
                     </div>
-
                 </div>
-
-
-                <!-- AUTORIZACIÓN -->
-
-                <div class="autorizacion">
-
-                    <label>
-
-                        <input
-                            type="checkbox"
-                            id="acepto"
-                            required
-                        >
-
-                        <span>
-                            Confirmo que la información proporcionada es
-                            correcta y autorizo su utilización para el proceso
-                            de registro y verificación.
-                        </span>
-
-                    </label>
-
-                </div>
-
-
-                <!-- BOTÓN -->
-
-                <button
-                    type="submit"
-                    id="btnEnviar"
-                >
-                    Enviar registro
-                </button>
-
-            </form>
-
-
-            <!-- MENSAJE DE ÉXITO -->
-
-            <div
-                id="mensajeExito"
-                class="mensaje-exito oculto"
-            >
-
-                <div class="check">
-                    ✓
-                </div>
-
-                <h2>¡Registro enviado!</h2>
-
-                <p>
-                    Hemos recibido correctamente tus datos.
-                </p>
-
-                <p>
-                    Tu información se encuentra en proceso de verificación.
-                </p>
-
-                <strong>
-                    Te notificaremos cuando tu registro haya sido revisado.
-                </strong>
-
-            </div>
-
-
-            <footer>
-                Tus datos serán tratados de manera segura.
-            </footer>
-
+            </section>
         </section>
-
     </main>
 
-
     <script src="/js/registro.js"></script>
-
 </body>
 </html>

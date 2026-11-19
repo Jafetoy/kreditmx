@@ -175,3 +175,37 @@
 .kx-client-page .dato {
     margin: 0;
 }
+
+.kx-client-page .documentos-admin {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.kx-client-page .btn-documento {
+    min-height: 150px;
+    display: grid;
+    place-items: center;
+    padding: 18px;
+    border: 1px solid var(--kx-line);
+    color: var(--kx-ink);
+    background: var(--kx-acid);
+    font: 500 10px var(--kx-mono);
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    text-underline-offset: 4px;
+}
+
+.kx-client-page .consentimiento-cliente {
+    margin: 18px 0 0;
+    color: var(--kx-muted);
+    font-size: 13px;
+}
+
+.kx-client-page .consentimiento-cliente strong {
+    color: var(--kx-ink);
+}
+
+@media (max-width: 760px) {
+    .kx-client-page .documentos-admin {
+        grid-template-columns: 1fr;
+    }
+}

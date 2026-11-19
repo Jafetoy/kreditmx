@@ -1,15 +1,20 @@
-/* Applicant registration */
+/* Applicant registration — Figma Make adaptation */
 
 .kx-registration-page {
     min-width: 320px;
     min-height: 100vh;
     min-height: 100dvh;
-    color: var(--kx-ink);
-    background: var(--kx-paper);
     overflow-x: hidden;
+    color: var(--kx-ink);
+    background: #faf9f4;
 }
 
-.kx-registration-page .contenedor {
+.kx-registration-page [hidden] {
+    display: none !important;
+}
+
+.kx-registration-page .contenedor,
+.kx-registration-page .tarjeta {
     width: 100%;
     min-height: 100vh;
     min-height: 100dvh;
@@ -19,19 +24,13 @@
 }
 
 .kx-registration-page .tarjeta {
-    width: 100%;
-    min-height: 100vh;
-    min-height: 100dvh;
-    margin: 0;
-    padding: 0;
     display: grid;
-    grid-template-columns: minmax(330px, .78fr) minmax(0, 1.45fr);
-    grid-auto-rows: min-content;
+    grid-template-columns: minmax(330px, .82fr) minmax(0, 1.5fr);
     border: 0;
     border-radius: 0;
     box-shadow: none;
-    background: var(--kx-surface);
-    overflow: hidden;
+    background: #faf9f4;
+    overflow: visible;
 }
 
 .kx-registration-page .encabezado {
@@ -39,212 +38,612 @@
     top: 0;
     min-height: 100vh;
     min-height: 100svh;
-    grid-column: 1;
-    grid-row: 1 / span 4;
-    padding: clamp(36px, 6vw, 78px);
-    overflow: hidden;
+    padding: 36px clamp(30px, 4vw, 70px);
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    justify-content: center;
-    text-align: left;
+    overflow: hidden;
     color: #fff;
     background: var(--kx-ink);
+    text-align: left;
 }
 
 .kx-registration-page .encabezado::after {
-    content: "K";
     position: absolute;
-    right: -62px;
-    bottom: -168px;
+    right: -58px;
+    bottom: -180px;
     color: rgba(255, 255, 255, .035);
-    font: 400 420px var(--kx-serif);
+    content: "K";
+    font: 400 450px var(--kx-serif);
 }
 
 .kx-registration-page .registro-logo-imagen {
-    position: absolute;
-    top: 36px;
-    left: clamp(36px, 6vw, 78px);
+    position: static;
+    z-index: 1;
     width: 150px;
     max-height: 52px;
     object-fit: contain;
     filter: brightness(0) invert(1);
 }
 
-.kx-registration-page .encabezado h1 {
-    position: relative;
+.kx-registration-page .registro-intro {
     z-index: 1;
-    max-width: 8ch;
-    margin: 0 0 22px;
-    font-family: var(--kx-serif);
-    font-size: clamp(50px, 6vw, 78px);
-    line-height: .88;
-    letter-spacing: -.04em;
-    color: #fff;
+    margin: auto 0;
 }
 
-.kx-registration-page .encabezado h1::after {
-    content: "sin vueltas.";
-    display: block;
-    color: #ff7b4c;
-    font: italic 400 1em/.9 var(--kx-serif);
+.kx-registration-page .registro-intro > span,
+.kx-registration-page .registro-seguridad,
+.kx-registration-page .registro-barra,
+.kx-registration-page .registro-progreso,
+.kx-registration-page .campo label,
+.kx-registration-page .documento label,
+.kx-registration-page .registro-acciones button,
+.kx-registration-page .mensaje-exito > p {
+    font-family: var(--kx-mono);
 }
 
-.kx-registration-page .encabezado p {
-    position: relative;
-    z-index: 1;
-    max-width: 32ch;
-    color: #b6b6c2;
-    font-size: 13px;
-    line-height: 1.75;
-}
-
-.kx-registration-page .aviso,
-.kx-registration-page #formRegistro,
-.kx-registration-page .mensaje-exito {
-    grid-column: 2;
-    min-width: 0;
-    width: min(760px, calc(100% - 48px));
-    margin-inline: auto;
-}
-
-.kx-registration-page .aviso {
-    margin-top: 64px;
-    margin-bottom: 10px;
-    padding: 18px 20px;
-    border: 1px solid var(--kx-line);
-    border-radius: 0;
-    color: var(--kx-ink);
-    background: var(--kx-paper);
-}
-
-.kx-registration-page .aviso strong {
-    color: var(--kx-orange-text);
-    font: 500 11px var(--kx-mono);
+.kx-registration-page .registro-intro > span {
+    color: var(--kx-acid);
+    font-size: 10px;
+    font-weight: 500;
     letter-spacing: .08em;
     text-transform: uppercase;
 }
 
-.kx-registration-page .aviso p {
-    margin-bottom: 0;
-    color: var(--kx-muted);
-    font-size: 14px;
-    line-height: 1.65;
-    overflow-wrap: anywhere;
-}
-
-.kx-registration-page #formRegistro {
-    padding: 28px 0 70px;
-}
-
-.kx-registration-page .seccion {
-    margin: 0;
-    padding: 34px 0;
-    border: 0;
-    border-bottom: 1px solid var(--kx-line);
-    border-radius: 0;
-    background: transparent;
-}
-
-.kx-registration-page .seccion h2 {
-    margin: 0 0 26px;
-    color: var(--kx-ink);
-    font-size: clamp(25px, 3vw, 35px);
-    line-height: 1;
-    letter-spacing: -.03em;
+.kx-registration-page .registro-intro h1 {
+    max-width: 8ch;
+    margin: 20px 0 24px;
+    color: #fff;
     font-family: var(--kx-sans);
+    font-size: clamp(48px, 5.5vw, 74px);
     font-weight: 600;
+    line-height: .86;
+    letter-spacing: -.04em;
 }
 
-.kx-registration-page .campo {
-    margin-bottom: 22px;
+.kx-registration-page .registro-intro h1::after {
+    display: block;
+    color: var(--kx-orange);
+    content: "sin vueltas.";
+    font: italic 400 1.02em/.9 var(--kx-serif);
 }
 
-.kx-registration-page .campo label,
-.kx-registration-page .documentos > label {
-    color: var(--kx-ink);
-    font: 500 11px/1.5 var(--kx-mono);
-    letter-spacing: .06em;
+.kx-registration-page .registro-intro p {
+    max-width: 30ch;
+    color: #aaaab5;
+    font-size: 13px;
+    line-height: 1.75;
+}
+
+.kx-registration-page .registro-seguridad {
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #d5d5dc;
+    font-size: 9px;
+    line-height: 1.5;
+    letter-spacing: .05em;
     text-transform: uppercase;
 }
 
-.kx-registration-page .autorizacion {
+.kx-registration-page .registro-seguridad svg {
+    width: 23px;
+    height: 23px;
+    fill: none;
+    stroke: var(--kx-acid);
+    stroke-width: 1.7;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.kx-registration-page .registro-contenido {
+    min-width: 0;
+    padding: 0 clamp(25px, 7vw, 100px) 50px;
+}
+
+.kx-registration-page .registro-barra {
+    min-height: 75px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--kx-line);
+    color: #777780;
+    font-size: 9px;
+    font-weight: 500;
+    letter-spacing: .07em;
+    text-transform: uppercase;
+}
+
+.kx-registration-page .registro-form-wrap {
+    width: min(720px, 100%);
+    margin: 45px auto 0;
+}
+
+.kx-registration-page .registro-progreso {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+}
+
+.kx-registration-page .registro-progreso > div {
+    display: grid;
+    grid-template-columns: 30px auto 1fr;
+    align-items: center;
+    gap: 9px;
+    color: #aaa9a2;
+}
+
+.kx-registration-page .registro-progreso > div:last-child {
+    grid-template-columns: 30px auto;
+}
+
+.kx-registration-page .registro-progreso b {
+    width: 30px;
+    height: 30px;
+    display: grid;
+    place-items: center;
+    border: 1px solid currentColor;
+    border-radius: 50%;
+    font-size: 9px;
+    font-weight: 500;
+}
+
+.kx-registration-page .registro-progreso span {
+    font-size: 9px;
+    font-weight: 500;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+}
+
+.kx-registration-page .registro-progreso i {
+    height: 1px;
+    background: #d8d7d0;
+}
+
+.kx-registration-page .registro-progreso .activo,
+.kx-registration-page .registro-progreso .completo {
     color: var(--kx-ink);
-    font: 400 14px/1.65 var(--kx-sans);
-    letter-spacing: 0;
-    text-transform: none;
 }
 
-.kx-registration-page .autorizacion label {
-    min-height: 44px;
-    align-items: flex-start;
+.kx-registration-page .registro-progreso .activo b,
+.kx-registration-page .registro-progreso .completo b {
+    background: var(--kx-acid);
 }
 
-.kx-registration-page .autorizacion input[type="checkbox"] {
-    flex: 0 0 20px;
-    width: 20px;
-    height: 20px;
-    margin-top: 2px;
-    accent-color: var(--kx-ink);
+.kx-registration-page #formRegistro {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+.kx-registration-page .registro-paso {
+    min-width: 0;
+    margin: 52px 0 0;
+    padding: 0;
+    border: 0;
+}
+
+.kx-registration-page .registro-paso legend {
+    max-width: 12ch;
+    margin: 0;
+    padding: 0;
+    color: var(--kx-ink);
+    font-family: var(--kx-sans);
+    font-size: clamp(38px, 4vw, 57px);
+    font-weight: 600;
+    line-height: .9;
+    letter-spacing: -.04em;
+}
+
+.kx-registration-page .registro-paso legend em,
+.kx-registration-page .mensaje-exito h2 em {
+    color: var(--kx-orange-text);
+    font-family: var(--kx-serif);
+    font-weight: 400;
+}
+
+.kx-registration-page .registro-lead {
+    max-width: 56ch;
+    margin: 18px 0 34px;
+    color: #62626c;
+    font-size: 13px;
+    line-height: 1.7;
+}
+
+.kx-registration-page .registro-campos {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 4px 28px;
+}
+
+.kx-registration-page .campo {
+    min-width: 0;
+    margin: 0 0 22px;
+}
+
+.kx-registration-page .campo-completo {
+    grid-column: 1 / -1;
+}
+
+.kx-registration-page .campo label {
+    display: block;
+    margin-bottom: 7px;
+    color: var(--kx-ink);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: .07em;
+    text-transform: uppercase;
 }
 
 .kx-registration-page .campo input,
 .kx-registration-page .campo select,
 .kx-registration-page .campo textarea {
     width: 100%;
-    max-width: 100%;
     min-height: 48px;
+    margin: 0;
     padding: 0;
     border: 0;
     border-bottom: 1px solid #8f8f91;
     border-radius: 0;
+    outline: 0;
     color: var(--kx-ink);
     background: transparent;
+    font-family: var(--kx-sans);
+    font-size: 14px;
+}
+
+.kx-registration-page .campo textarea {
+    min-height: 70px;
+    padding-top: 13px;
+    resize: vertical;
 }
 
 .kx-registration-page .campo input:focus,
 .kx-registration-page .campo select:focus,
 .kx-registration-page .campo textarea:focus {
-    border-bottom-color: var(--kx-orange);
-    box-shadow: inset 0 -1px 0 var(--kx-orange);
+    border-bottom: 2px solid var(--kx-orange);
+    box-shadow: none;
+}
+
+.kx-registration-page .campo small {
+    display: block;
+    margin-top: 7px;
+    color: #74747c;
+    font-size: 11px;
+}
+
+.kx-registration-page .documentos {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
 }
 
 .kx-registration-page .documento {
+    min-width: 0;
+    padding: 0;
     border: 1px solid var(--kx-line);
     border-radius: 0;
     background: #fff;
+    text-align: left;
+    transition: none;
 }
 
-.kx-registration-page .icono-documento {
+.kx-registration-page .documento label {
+    min-height: 76px;
+    display: grid;
+    grid-template-columns: 32px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 15px;
+    padding: 12px 16px;
+    cursor: pointer;
+}
+
+.kx-registration-page .documento label > b {
+    color: var(--kx-orange-text);
+    font-size: 10px;
+    font-weight: 500;
+}
+
+.kx-registration-page .documento label strong,
+.kx-registration-page .documento label small {
+    display: block;
+    font-size: 10px;
+    font-style: normal;
+    font-weight: 500;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+}
+
+.kx-registration-page .documento label > span,
+.kx-registration-page .documento label strong {
     color: var(--kx-ink);
-    background: var(--kx-acid);
 }
 
-.kx-registration-page button[type="submit"] {
+.kx-registration-page .documento label small {
+    margin-top: 5px;
+    color: #808088;
+    font-size: 8px;
+}
+
+.kx-registration-page .documento label em {
+    padding: 10px 12px;
+    color: var(--kx-ink);
+    background: var(--kx-paper);
+    font-size: 9px;
+    font-style: normal;
+    font-weight: 500;
+    text-transform: uppercase;
+}
+
+.kx-registration-page .documento input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+}
+
+.kx-registration-page .documento:focus-within {
+    outline: 3px solid color-mix(in srgb, var(--kx-orange) 38%, transparent);
+    outline-offset: 2px;
+}
+
+.kx-registration-page .preview {
+    min-height: 0;
+    padding: 0 16px;
+    color: #62626c;
+    font-size: 12px;
+}
+
+.kx-registration-page .preview:not(:empty) {
+    padding-bottom: 14px;
+}
+
+.kx-registration-page .preview img {
     width: 100%;
-    min-height: 56px;
-    margin-top: 32px;
+    max-height: 180px;
+    object-fit: contain;
+    border: 1px solid var(--kx-line);
+}
+
+.kx-registration-page .autorizacion {
+    margin-top: 18px;
+    padding: 0;
     border: 0;
     border-radius: 0;
+    color: #5f5f68;
+    background: transparent;
+    font-size: 12px;
+    line-height: 1.65;
+}
+
+.kx-registration-page .autorizacion label {
+    min-height: 44px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    cursor: pointer;
+}
+
+.kx-registration-page .autorizacion input {
+    flex: 0 0 20px;
+    width: 20px;
+    height: 20px;
+    margin-top: 1px;
+    accent-color: var(--kx-ink);
+}
+
+.kx-registration-page .registro-acciones {
+    min-height: 80px;
+    margin-top: 30px;
+    padding-top: 18px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    border-top: 1px solid var(--kx-line);
+}
+
+.kx-registration-page .registro-acciones button {
+    min-height: 50px;
+    border: 0;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    cursor: pointer;
+}
+
+.kx-registration-page .btn-anterior {
+    padding: 0;
+    color: var(--kx-ink);
+    background: transparent;
+}
+
+.kx-registration-page #btnContinuar,
+.kx-registration-page #btnEnviar {
+    min-width: 190px;
+    margin: 0 0 0 auto;
+    padding: 0 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     color: #fff;
     background: var(--kx-ink);
-    font: 500 11px var(--kx-mono);
+}
+
+.kx-registration-page #btnEnviar:disabled {
+    cursor: wait;
+    opacity: .65;
+}
+
+.kx-registration-page .mensaje-exito {
+    max-width: 540px;
+    margin: 13vh auto 0;
+    padding: 0;
+    border: 0;
+    box-shadow: none;
+    background: transparent;
+    text-align: center;
+}
+
+.kx-registration-page .mensaje-exito .check {
+    width: 66px;
+    height: 66px;
+    margin: auto;
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--kx-ink);
+    border-radius: 50%;
+    color: var(--kx-ink);
+    background: var(--kx-acid);
+    font-size: 30px;
+}
+
+.kx-registration-page .mensaje-exito > p {
+    margin: 25px 0 0;
+    color: var(--kx-orange-text);
+    font-size: 10px;
+    font-weight: 500;
     letter-spacing: .06em;
     text-transform: uppercase;
 }
 
+.kx-registration-page .mensaje-exito h2 {
+    margin: 12px 0 20px;
+    color: var(--kx-ink);
+    font-size: clamp(40px, 5vw, 62px);
+    line-height: .9;
+    letter-spacing: -.04em;
+}
+
+.kx-registration-page .mensaje-exito > span {
+    display: block;
+    color: #62626c;
+    font-size: 13px;
+    line-height: 1.75;
+}
+
 @media (hover: hover) and (pointer: fine) {
-    .kx-registration-page button[type="submit"]:hover {
+    .kx-registration-page #btnContinuar:hover,
+    .kx-registration-page #btnEnviar:hover {
         color: var(--kx-ink);
         background: var(--kx-acid);
     }
 }
 
-.kx-registration-page .mensaje-exito {
-    margin-top: 12vh;
-    padding: 50px;
-    border: 1px solid var(--kx-line);
-    border-radius: 0;
-    box-shadow: none;
-    background: #fff;
+@media (max-width: 900px) {
+    .kx-registration-page .tarjeta {
+        grid-template-columns: 1fr;
+    }
+
+    .kx-registration-page .encabezado {
+        position: relative;
+        min-height: 330px;
+        padding: calc(30px + env(safe-area-inset-top, 0px))
+            max(34px, env(safe-area-inset-right, 0px)) 34px
+            max(34px, env(safe-area-inset-left, 0px));
+    }
+
+    .kx-registration-page .registro-intro {
+        margin: 60px 0 30px;
+    }
+
+    .kx-registration-page .registro-intro h1 {
+        max-width: 11ch;
+        margin: 12px 0 16px;
+        font-size: 54px;
+    }
+
+    .kx-registration-page .registro-seguridad {
+        display: none;
+    }
+
+    .kx-registration-page .registro-contenido {
+        padding: 0 max(25px, env(safe-area-inset-right, 0px)) 50px
+            max(25px, env(safe-area-inset-left, 0px));
+    }
+}
+
+@media (max-width: 640px) {
+    .kx-registration-page .encabezado {
+        min-height: 260px;
+        padding-inline: max(22px, env(safe-area-inset-left, 0px));
+    }
+
+    .kx-registration-page .registro-logo-imagen {
+        width: 132px;
+    }
+
+    .kx-registration-page .registro-intro {
+        margin-top: 42px;
+    }
+
+    .kx-registration-page .registro-intro h1 {
+        font-size: 43px;
+    }
+
+    .kx-registration-page .registro-intro p,
+    .kx-registration-page .registro-barra > span:last-child {
+        display: none;
+    }
+
+    .kx-registration-page .registro-form-wrap {
+        margin-top: 30px;
+    }
+
+    .kx-registration-page .registro-progreso span {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+    }
+
+    .kx-registration-page .registro-progreso > div {
+        grid-template-columns: 30px 1fr;
+    }
+
+    .kx-registration-page .registro-progreso > div:last-child {
+        grid-template-columns: 30px;
+    }
+
+    .kx-registration-page .registro-paso {
+        margin-top: 40px;
+    }
+
+    .kx-registration-page .registro-paso legend {
+        font-size: 40px;
+    }
+
+    .kx-registration-page .registro-campos {
+        grid-template-columns: 1fr;
+    }
+
+    .kx-registration-page .campo-completo {
+        grid-column: auto;
+    }
+
+    .kx-registration-page .documento label {
+        grid-template-columns: 25px minmax(0, 1fr);
+    }
+
+    .kx-registration-page .documento label em {
+        grid-column: 2;
+        width: fit-content;
+    }
+
+    .kx-registration-page .registro-acciones {
+        gap: 12px;
+    }
+
+    .kx-registration-page #btnContinuar,
+    .kx-registration-page #btnEnviar {
+        min-width: 164px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .kx-registration-page * {
+        scroll-behavior: auto !important;
+    }
 }

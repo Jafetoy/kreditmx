@@ -17,12 +17,18 @@ S5. Apply the same approved visual language to the administrator panel, authenti
 
 S6. Verify desktop and mobile rendering and exercise the reachable interactions needed for login, module navigation, client registration, credit creation, client management, payments, and fund visibility. Report any check that cannot run because external services or credentials are unavailable.
 
+S7. Apply the Figma administrator dashboard composition more faithfully: keep the summary in the main workspace with real system data, remove the central module-button grid, and place every module action in the sidebar.
+
+S8. Apply the Figma applicant form screens and fields while preserving the existing registration flow. Persist any Figma field that does not exist yet through additive, backward-compatible database columns and migrations.
+
 ## Tasks
 
 - T1 — S1-S4 — route: inline (single shared visual system and shared templates; no independent write unit) — status: complete — commits: `a2f6bb3`, `05f35f9`, `1484a41`
 - T2 — S1, S5 — route: inline (supporting surfaces reuse T1 tokens and cannot proceed independently) — status: complete — commits: `95564c6`, `e309eca`, `5f7830d`
 - T3 — S2, S4, S6 — route: inline verification (functional and DOM-contract checks) — status: complete — evidence: zero removed DOM IDs or form names; all administrator modules activated independently; Flask smoke checks passed; 390px viewport had no horizontal overflow
 - T4 — S1, S5, S6 — route: inline finish and design-system documentation — status: complete — commits: `d086ddd` and this final tooling record
+- T5 — S1-S4, S7 — route: inline (the administrator shell and existing module handlers share one edit surface) — status: complete — verification: eight sidebar actions activate the seven existing modules; the central module grid is absent; live summary data rendered without overflow at 1440px and 390px
+- T6 — S2, S4-S6, S8 — route: inline (the applicant screen, API payload, and additive schema form one behavior) — status: complete — risk: item 1, additive persisted client fields — verification: two registration tests passed; three steps advanced in Chromium; all 15 required fields and three documents were present; no overflow at 1440px or 390px
 
 ## Log
 
@@ -59,3 +65,13 @@ L15 — 2026-11-18 — User authorization (verbatim): "si corrije todo los probl
 L16 — 2026-11-18 — Responsive correction: added visible mobile navigation labels, 44px touch targets, coarse-pointer 16px fields, dynamic viewport units, safe-area handling, capability-gated hover states, non-wrapping client navigation, and a Figma-aligned landing surface. Chromium checks passed 30 page/viewport combinations at 1440, 1024, 768, 390, and 320px with no horizontal overflow or recorded failures.
 
 L17 — 2026-11-18 — Landing detector triage: documented `side-tab` and `radial-halo` as index-scoped false positives from the shared legacy stylesheet; the final `kx-home-page` surface contains neither pattern.
+
+L18 — 2026-11-18 — User follow-up (verbatim): "quiero que en el panel del admin se vea tal cual como el de figma y que los botones del modulo ya no aparezcan alli en ese lugar, sino que esten en la barra lateral. El panel de resumen me gusta tal cual me lo dio figma y quiero que lo apliques con los datos reales en el sistema."
+
+L19 — 2026-11-18 — User follow-up (verbatim): "En el aspecto del formulario, quiero que igual pidas y apliques el diseño y pantallas de figma tal cual. Si falta algun campo agregalo a la base de datos para que pueda ser guardado."
+
+L20 — 2026-11-18 — Figma field comparison: the reference adds separate given names and surnames, CURP, birth date, monthly income, occupation, a proof-of-address document, and credit-history consent. The existing system already stores contact, address, bank, account, and both identification images.
+
+L21 — 2026-11-18 — Implementation: replaced the central administrator module grid with eight sidebar actions, added the Figma capital summary fed by `/api/fondo`, and rebuilt applicant registration as the three Figma screens. Added only backward-compatible nullable/defaulted client columns and retained every existing DOM ID and form name.
+
+L22 — 2026-11-18 — Verification: registration API tests passed for complete persistence and missing-proof rejection; Python and JavaScript syntax checks passed; route and asset smoke checks passed; Chromium confirmed all sidebar actions, real summary values, both form step transitions, 50px mobile controls, and zero page overflow at 1440px and 390px.

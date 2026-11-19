@@ -27,8 +27,17 @@ try:
 	ADD COLUMN IF NOT EXISTS foto_frente_data BYTEA,
 	ADD COLUMN IF NOT EXISTS foto_frente_tipo TEXT,
 	ADD COLUMN IF NOT EXISTS foto_reverso_data BYTEA,
-		ADD COLUMN IF NOT EXISTS foto_reverso_tipo TEXT,
-		ADD COLUMN IF NOT EXISTS correo VARCHAR(150)
+	ADD COLUMN IF NOT EXISTS foto_reverso_tipo TEXT,
+	ADD COLUMN IF NOT EXISTS correo VARCHAR(150),
+	ADD COLUMN IF NOT EXISTS nombres VARCHAR(100),
+	ADD COLUMN IF NOT EXISTS apellidos VARCHAR(150),
+	ADD COLUMN IF NOT EXISTS curp VARCHAR(18),
+	ADD COLUMN IF NOT EXISTS fecha_nacimiento DATE,
+	ADD COLUMN IF NOT EXISTS ingreso_mensual NUMERIC(12, 2),
+	ADD COLUMN IF NOT EXISTS ocupacion VARCHAR(150),
+	ADD COLUMN IF NOT EXISTS comprobante_domicilio_data BYTEA,
+	ADD COLUMN IF NOT EXISTS comprobante_domicilio_tipo TEXT,
+	ADD COLUMN IF NOT EXISTS autoriza_historial BOOLEAN NOT NULL DEFAULT FALSE
 	"""
 	)
 	conexion.commit()
@@ -105,16 +114,21 @@ def archivo_subido(filename):
 
 @app.get("/api/clientes/<int:cliente_id>/foto/<lado>")
 def foto_cliente(cliente_id, lado):
-	"""Sirve la foto guardada en la base de datos."""
-	if lado not in ("frente", "reverso"):
+	"""Sirve la identificación o el comprobante guardado en la base de datos."""
+	columnas = {
+		"frente": ("foto_frente_data", "foto_frente_tipo", "foto_frente"),
+		"reverso": ("foto_reverso_data", "foto_reverso_tipo", "foto_reverso"),
+		"domicilio": ("comprobante_domicilio_data", "comprobante_domicilio_tipo", "NULL"),
+	}
+	if lado not in columnas:
 		return jsonify({"error": "Lado no válido."}), 400
 
-	columna = f"foto_{lado}"
+	columna_data, columna_tipo, columna_archivo = columnas[lado]
 	conexion = conectar()
 	try:
 		cursor = conexion.cursor()
 		cursor.execute(
-		f"SELECT {columna}_data, {columna}_tipo, {columna} FROM clientes "
+		f"SELECT {columna_data}, {columna_tipo}, {columna_archivo} FROM clientes "
 		"WHERE id = %s AND creado_por = %s",
 		(cliente_id, session.get("usuario_id")),
 		)
@@ -288,21 +302,68 @@ def crear_cliente():
 		return respuesta_base_no_disponible()
 
 	token = request.form.get("token", "").strip()
+	nombres = request.form.get("nombres", "").strip()
+	apellidos = request.form.get("apellidos", "").strip()
+	nombre_completo = request.form.get("nombre", "").strip() or f"{nombres} {apellidos}".strip()
 	campos = {
-		"nombre": request.form.get("nombre", "").strip(),
+		"nombre": nombre_completo,
+		"nombres": nombres,
+		"apellidos": apellidos,
+		"curp": request.form.get("curp", "").strip().upper(),
+		"fecha_nacimiento": request.form.get("fecha_nacimiento", "").strip(),
 		"direccion": request.form.get("direccion", "").strip(),
 		"telefono": request.form.get("telefono", "").strip(),
 		"banco": request.form.get("banco", "").strip(),
 		"cuenta": request.form.get("cuenta", "").strip(),
 		"correo": request.form.get("correo", "").strip().lower(),
+		"ingreso_mensual": request.form.get("ingreso_mensual", "").strip(),
+		"ocupacion": request.form.get("ocupacion", "").strip(),
 	}
 	foto_frente = request.files.get("fotoFrente") or request.files.get("foto_frente")
 	foto_reverso = request.files.get("fotoReverso") or request.files.get("foto_reverso")
+	comprobante_domicilio = request.files.get("comprobante_domicilio")
+	autoriza_historial = request.form.get("autoriza_historial", "").lower() in ("true", "1", "on", "si", "sí")
 
-	if not token or any(not valor for valor in campos.values()) or not foto_frente or not foto_reverso:
+	if (
+		not token
+		or any(not valor for valor in campos.values())
+		or not foto_frente
+		or not foto_reverso
+		or not comprobante_domicilio
+		or not autoriza_historial
+	):
 		return jsonify({"error": "Completa todos los datos y documentos requeridos."}), 400
 	if "@" not in campos["correo"] or "." not in campos["correo"].split("@", 1)[1]:
 		return jsonify({"error": "Ingresa un correo electrónico válido."}), 400
+	if len(campos["curp"]) != 18 or not campos["curp"].isalnum():
+		return jsonify({"error": "La CURP debe contener exactamente 18 caracteres."}), 400
+	if len(campos["telefono"]) != 10 or not campos["telefono"].isdigit():
+		return jsonify({"error": "El teléfono debe contener exactamente 10 dígitos."}), 400
+	if len(campos["cuenta"]) != 18 or not campos["cuenta"].isdigit():
+		return jsonify({"error": "La CLABE debe contener exactamente 18 dígitos."}), 400
+	try:
+		ingreso_mensual = float(campos["ingreso_mensual"])
+	except ValueError:
+		return jsonify({"error": "Ingresa un ingreso mensual válido."}), 400
+	if ingreso_mensual < 0:
+		return jsonify({"error": "El ingreso mensual no puede ser negativo."}), 400
+
+	tipos_imagen = {"image/jpeg", "image/png", "image/webp"}
+	tipos_comprobante = tipos_imagen | {"application/pdf"}
+	archivos_formulario = (
+		(foto_frente, tipos_imagen, "identificación frontal"),
+		(foto_reverso, tipos_imagen, "identificación posterior"),
+		(comprobante_domicilio, tipos_comprobante, "comprobante de domicilio"),
+	)
+	archivos = []
+	for archivo, tipos_permitidos, descripcion in archivos_formulario:
+		tipo = (archivo.mimetype or "").lower()
+		if tipo not in tipos_permitidos:
+			return jsonify({"error": f"El archivo de {descripcion} no tiene un formato permitido."}), 400
+		contenido = archivo.read()
+		if not contenido or len(contenido) > 5 * 1024 * 1024:
+			return jsonify({"error": f"El archivo de {descripcion} debe pesar entre 1 byte y 5 MB."}), 400
+		archivos.append((Binary(contenido), tipo))
 
 	conexion = conectar()
 
@@ -323,25 +384,26 @@ def crear_cliente():
 		# (la sesión no existe porque el registro es público).
 		propietario_id = registro[1] or session.get("usuario_id")
 
-		archivos = []
-		for archivo in (foto_frente, foto_reverso):
-			# La imagen se guarda COMO DATOS en Supabase, no como archivo local.
-			archivos.append((Binary(archivo.read()), archivo.mimetype or "image/jpeg"))
-
 		cursor.execute(
 			"""
 			INSERT INTO clientes
-							(creado_por, nombre, direccion, telefono, banco, cuenta, correo,
-							 foto_frente, foto_reverso, foto_frente_data, foto_frente_tipo,
-							 foto_reverso_data, foto_reverso_tipo)
-						VALUES (%s, %s, %s, %s, %s, %s, %s, '', '', %s, %s, %s, %s)
-						RETURNING id
-						""",
-						 		(
-							propietario_id, campos["nombre"], campos["direccion"], campos["telefono"],
-							campos["banco"], campos["cuenta"], campos["correo"],
-							archivos[0][0], archivos[0][1], archivos[1][0], archivos[1][1],
-						),
+				(creado_por, nombre, nombres, apellidos, curp, fecha_nacimiento,
+				 direccion, telefono, banco, cuenta, correo, ingreso_mensual, ocupacion,
+				 foto_frente, foto_reverso, foto_frente_data, foto_frente_tipo,
+				 foto_reverso_data, foto_reverso_tipo, comprobante_domicilio_data,
+				 comprobante_domicilio_tipo, autoriza_historial)
+			VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+				'', '', %s, %s, %s, %s, %s, %s, %s)
+			RETURNING id
+			""",
+			(
+				propietario_id, campos["nombre"], campos["nombres"], campos["apellidos"],
+				campos["curp"], campos["fecha_nacimiento"], campos["direccion"],
+				campos["telefono"], campos["banco"], campos["cuenta"], campos["correo"],
+				ingreso_mensual, campos["ocupacion"], archivos[0][0], archivos[0][1],
+				archivos[1][0], archivos[1][1], archivos[2][0], archivos[2][1],
+				autoriza_historial,
+			),
 		)
 		nuevo_id = cursor.fetchone()[0]
 		cursor.execute(
@@ -410,13 +472,17 @@ def listar_clientes():
 		cursor = conexion.cursor()
 		cursor.execute(
 			"SELECT id, nombre, direccion, telefono, banco, cuenta, correo, "
-			"foto_frente, foto_reverso, estado, creado_en "
+			"foto_frente, foto_reverso, estado, creado_en, nombres, apellidos, "
+			"curp, fecha_nacimiento, ingreso_mensual, ocupacion, autoriza_historial, "
+			"comprobante_domicilio_data IS NOT NULL "
 			"FROM clientes WHERE creado_por = %s ORDER BY creado_en DESC",
 			(session.get("usuario_id"),),
 		)
 		columnas = (
 			"id", "nombre", "direccion", "telefono", "banco", "cuenta", "correo",
-			"foto_frente", "foto_reverso", "estado", "creado_en",
+			"foto_frente", "foto_reverso", "estado", "creado_en", "nombres", "apellidos",
+			"curp", "fecha_nacimiento", "ingreso_mensual", "ocupacion", "autoriza_historial",
+			"tiene_comprobante_domicilio",
 		)
 		clientes = [dict(zip(columnas, fila)) for fila in cursor.fetchall()]
 	finally:
@@ -424,8 +490,16 @@ def listar_clientes():
 
 	for cliente in clientes:
 		cliente["creado_en"] = cliente["creado_en"].isoformat()
+		if cliente["fecha_nacimiento"]:
+			cliente["fecha_nacimiento"] = cliente["fecha_nacimiento"].isoformat()
+		if cliente["ingreso_mensual"] is not None:
+			cliente["ingreso_mensual"] = float(cliente["ingreso_mensual"])
 		cliente["foto_frente_url"] = f"/api/clientes/{cliente['id']}/foto/frente"
 		cliente["foto_reverso_url"] = f"/api/clientes/{cliente['id']}/foto/reverso"
+		cliente["comprobante_domicilio_url"] = (
+			f"/api/clientes/{cliente['id']}/foto/domicilio"
+			if cliente["tiene_comprobante_domicilio"] else ""
+		)
 
 	return jsonify(clientes)
 
@@ -1344,7 +1418,9 @@ def cliente():
 			cursor.execute(
 				"""
 				SELECT id, nombre, direccion, telefono, banco, cuenta, correo,
-				       foto_frente, foto_reverso, estado
+				       foto_frente, foto_reverso, estado, nombres, apellidos, curp,
+				       fecha_nacimiento, ingreso_mensual, ocupacion, autoriza_historial,
+				       comprobante_domicilio_data IS NOT NULL
 				FROM clientes WHERE id = %s AND creado_por = %s
 				""",
 				(int(cliente_id), session.get("usuario_id")),
@@ -1353,9 +1429,16 @@ def cliente():
 			if fila:
 				datos = {
 					"nombre": fila[1], "direccion": fila[2], "telefono": fila[3],
-					"banco": fila[4], "cuenta": fila[5], "correo": fila[6], "estado": fila[8],
+					"banco": fila[4], "cuenta": fila[5], "correo": fila[6], "estado": fila[9],
+					"nombres": fila[10], "apellidos": fila[11], "curp": fila[12],
+					"fecha_nacimiento": fila[13],
+					"ingreso_mensual": float(fila[14]) if fila[14] is not None else None,
+					"ocupacion": fila[15], "autoriza_historial": fila[16],
 					"foto_frente_url": f"/api/clientes/{fila[0]}/foto/frente",
 					"foto_reverso_url": f"/api/clientes/{fila[0]}/foto/reverso",
+					"comprobante_domicilio_url": (
+						f"/api/clientes/{fila[0]}/foto/domicilio" if fila[17] else ""
+					),
 				}
 		finally:
 			conexion.close()
@@ -1367,9 +1450,14 @@ def cliente():
 			"banco": request.args.get("banco", "Sin banco"),
 			"direccion": "Pendiente de completar",
 			"cuenta": "Pendiente de completar",
+			"correo": "",
 			"estado": "PENDIENTE",
+			"nombres": "", "apellidos": "", "curp": "",
+			"fecha_nacimiento": None, "ingreso_mensual": None,
+			"ocupacion": "", "autoriza_historial": False,
 			"foto_frente_url": "",
 			"foto_reverso_url": "",
+			"comprobante_domicilio_url": "",
 		}
 
 	return render_template(

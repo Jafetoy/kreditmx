@@ -22,16 +22,44 @@ CREATE TABLE IF NOT EXISTS clientes (
     id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     creado_por BIGINT REFERENCES usuarios (id) ON DELETE SET NULL,
     nombre VARCHAR(150) NOT NULL,
+    nombres VARCHAR(100),
+    apellidos VARCHAR(150),
+    curp VARCHAR(18),
+    fecha_nacimiento DATE,
     direccion VARCHAR(255) NOT NULL,
     telefono VARCHAR(20) NOT NULL,
     banco VARCHAR(80) NOT NULL,
     cuenta VARCHAR(32) NOT NULL,
     correo VARCHAR(150),
+    ingreso_mensual NUMERIC(12, 2),
+    ocupacion VARCHAR(150),
     foto_frente VARCHAR(255) NOT NULL,
     foto_reverso VARCHAR(255) NOT NULL,
+    foto_frente_data BYTEA,
+    foto_frente_tipo TEXT,
+    foto_reverso_data BYTEA,
+    foto_reverso_tipo TEXT,
+    comprobante_domicilio_data BYTEA,
+    comprobante_domicilio_tipo TEXT,
+    autoriza_historial BOOLEAN NOT NULL DEFAULT FALSE,
     estado VARCHAR(30) NOT NULL DEFAULT 'PENDIENTE',
     creado_en TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+ALTER TABLE clientes
+    ADD COLUMN IF NOT EXISTS nombres VARCHAR(100),
+    ADD COLUMN IF NOT EXISTS apellidos VARCHAR(150),
+    ADD COLUMN IF NOT EXISTS curp VARCHAR(18),
+    ADD COLUMN IF NOT EXISTS fecha_nacimiento DATE,
+    ADD COLUMN IF NOT EXISTS ingreso_mensual NUMERIC(12, 2),
+    ADD COLUMN IF NOT EXISTS ocupacion VARCHAR(150),
+    ADD COLUMN IF NOT EXISTS foto_frente_data BYTEA,
+    ADD COLUMN IF NOT EXISTS foto_frente_tipo TEXT,
+    ADD COLUMN IF NOT EXISTS foto_reverso_data BYTEA,
+    ADD COLUMN IF NOT EXISTS foto_reverso_tipo TEXT,
+    ADD COLUMN IF NOT EXISTS comprobante_domicilio_data BYTEA,
+    ADD COLUMN IF NOT EXISTS comprobante_domicilio_tipo TEXT,
+    ADD COLUMN IF NOT EXISTS autoriza_historial BOOLEAN NOT NULL DEFAULT FALSE;
 
 CREATE INDEX IF NOT EXISTS idx_clientes_estado ON clientes (estado);
 CREATE INDEX IF NOT EXISTS idx_clientes_telefono ON clientes (telefono);
