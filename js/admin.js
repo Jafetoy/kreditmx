@@ -494,6 +494,9 @@ async function cargarDatosMariaDB() {
                 </tr>
             `).join("")
             : `<tr><td colspan="6">No hay préstamos activos.</td></tr>`;
+
+        // Paneles operativos de la mesa de control (presentación con datos reales).
+        renderizarPanelesMesaControl(resumen, prestamos, clientes);
     } catch (error) {
         console.warn("No se pudieron cargar los datos de MariaDB.", error);
     }
@@ -503,6 +506,237 @@ cargarDatosMariaDB();
 // Refrescar los datos cada 15 segundos para ver registros nuevos
 // sin recargar la página.
 setInterval(cargarDatosMariaDB, 15000);
+
+
+// ------------------------------------------
+// MESA DE CONTROL — PANELES OPERATIVOS (FIGMA)
+// Presentación de datos reales ya cargados. No agrega endpoints ni cálculos de negocio.
+// ------------------------------------------
+
+const KX_MESES = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"];
+
+function kxTexto(id, valor) {
+    const nodo = document.getElementById(id);
+    if (nodo) nodo.textContent = valor;
+}
+
+function kxEscapar(valor) {
+    return String(valor ?? "").replace(/[&<>"']/g, (caracter) => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+    })[caracter]);
+}
+
+function kxNumero(valor) {
+    const numero = Number(valor);
+    return Number.isFinite(numero) ? numero : 0;
+}
+
+function kxIniciales(nombre) {
+    const partes = String(nombre || "").trim().split(/\s+/).filter(Boolean);
+    if (!partes.length) return "—";
+    if (partes.length === 1) return partes[0].slice(0, 2).toUpperCase();
+    return (partes[0][0] + partes[partes.length - 1][0]).toUpperCase();
+}
+
+function kxCompacto(valor) {
+    const numero = kxNumero(valor);
+    const absoluto = Math.abs(numero);
+    const signo = numero < 0 ? "-" : "";
+    if (absoluto >= 1000000) {
+        return signo + "$" + (absoluto / 1000000).toFixed(2).replace(/\.?0+$/, "") + "M";
+    }
+    if (absoluto >= 1000) {
+        return signo + "$" + (absoluto / 1000).toFixed(1).replace(/\.0$/, "") + "K";
+    }
+    return signo + "$" + Math.round(absoluto).toLocaleString("es-MX");
+}
+
+function kxEntero(valor) {
+    return "$" + Math.round(kxNumero(valor)).toLocaleString("es-MX");
+}
+
+function kxFecha(valor) {
+    if (!valor) return null;
+    const fecha = new Date(valor);
+    return Number.isNaN(fecha.getTime()) ? null : fecha;
+}
+
+function kxTiempoRelativo(valor) {
+    const fecha = kxFecha(valor);
+    if (!fecha) return "—";
+    const minutos = Math.max(0, Math.floor((Date.now() - fecha.getTime()) / 60000));
+    if (minutos < 1) return "ahora";
+    if (minutos < 60) return minutos + " min";
+    const horas = Math.floor(minutos / 60);
+    if (horas < 24) return horas + " h";
+    const dias = Math.floor(horas / 24);
+    if (dias < 30) return dias + " d";
+    const meses = Math.floor(dias / 30);
+    return meses + (meses === 1 ? " mes" : " meses");
+}
+
+function kxFechaCorta(valor) {
+    const fecha = kxFecha(valor);
+    if (!fecha) return "—";
+    return String(fecha.getDate()).padStart(2, "0") + " " + KX_MESES[fecha.getMonth()];
+}
+
+function kxEstadoPrestamo(prestamo) {
+    const fecha = kxFecha(prestamo.fecha_inicio);
+    const saldo = kxNumero(prestamo.saldo);
+    if (!fecha || saldo <= 0) return { texto: "AL CORRIENTE", clase: "" };
+    const cuota = kxNumero(prestamo.total) / Math.max(1, kxNumero(prestamo.numero_pagos) || 1);
+    const pagosHechos = cuota > 0 ? Math.max(0, Math.floor(kxNumero(prestamo.pagado) / cuota)) : 0;
+    const proximo = obtenerFechaPago(pagosHechos + 1, {
+        fechaInicio: prestamo.fecha_inicio,
+        periodicidad: prestamo.periodicidad
+    });
+    const dias = Math.ceil((proximo.getTime() - Date.now()) / 86400000);
+    if (dias < 0) return { texto: "ATRASADO", clase: "late" };
+    if (dias <= 7) return { texto: "PRÓXIMO PAGO", clase: "soon" };
+    return { texto: "AL CORRIENTE", clase: "" };
+}
+
+function kxMesesRecientes(prestamos) {
+    const ahora = new Date();
+    const meses = [];
+    for (let desplazamiento = 5; desplazamiento >= 0; desplazamiento--) {
+        const fecha = new Date(ahora.getFullYear(), ahora.getMonth() - desplazamiento, 1);
+        meses.push({
+            anio: fecha.getFullYear(),
+            mes: fecha.getMonth(),
+            etiqueta: KX_MESES[fecha.getMonth()],
+            total: 0
+        });
+    }
+    prestamos.forEach((prestamo) => {
+        const fecha = kxFecha(prestamo.fecha_inicio);
+        if (!fecha) return;
+        const destino = meses.find((m) => m.anio === fecha.getFullYear() && m.mes === fecha.getMonth());
+        if (destino) destino.total += kxNumero(prestamo.monto);
+    });
+    return meses;
+}
+
+function renderizarIndicadores(resumen, prestamos, clientes) {
+    const cartera = prestamos.reduce((suma, p) => suma + kxNumero(p.monto), 0);
+    const atrasados = prestamos.filter((p) => kxEstadoPrestamo(p).texto === "ATRASADO");
+    const porRecuperar = atrasados.reduce((suma, p) => suma + kxNumero(p.saldo), 0);
+    const ahora = new Date();
+    const nuevasEsteMes = clientes.filter((cliente) => {
+        const fecha = kxFecha(cliente.creado_en);
+        return fecha && fecha.getFullYear() === ahora.getFullYear() && fecha.getMonth() === ahora.getMonth();
+    }).length;
+
+    kxTexto("kxCarteraActiva", kxCompacto(cartera));
+    kxTexto("kxPersonasActivas", String(kxNumero(resumen && resumen.clientes_activos)));
+    kxTexto("kxPorRecuperar", kxCompacto(porRecuperar));
+
+    const meses = kxMesesRecientes(prestamos);
+    const actual = meses[meses.length - 1] ? meses[meses.length - 1].total : 0;
+    const anterior = meses[meses.length - 2] ? meses[meses.length - 2].total : 0;
+    const variacion = anterior > 0 ? Math.round(((actual - anterior) / anterior) * 100) : 0;
+    kxTexto("kxCarteraDelta", (variacion >= 0 ? "↑ " : "↓ ") + Math.abs(variacion) + "%");
+    kxTexto("kxPersonasDelta", "+" + nuevasEsteMes);
+    kxTexto("kxPorRecuperarDelta", atrasados.length + (atrasados.length === 1 ? " CUENTA" : " CUENTAS"));
+}
+
+function renderizarColocacion(prestamos) {
+    const meses = kxMesesRecientes(prestamos);
+    const maximoDatos = Math.max(0, ...meses.map((m) => m.total));
+    const maximo = Math.max(1, maximoDatos);
+    const total = meses.reduce((suma, m) => suma + m.total, 0);
+
+    kxTexto("kxColocacionTotal", kxCompacto(total));
+    kxTexto("kxEscalaAlta", kxCompacto(maximoDatos));
+    kxTexto("kxEscalaMedia", kxCompacto(maximoDatos * 2 / 3));
+    kxTexto("kxEscalaBaja", kxCompacto(maximoDatos / 3));
+
+    const contenedor = document.getElementById("kxColocacionBars");
+    if (!contenedor) return;
+    contenedor.innerHTML = meses.map((mes, indice) => {
+        const altura = Math.max(2, Math.round((mes.total / maximo) * 100));
+        const actual = indice === meses.length - 1;
+        const insignia = actual && mes.total > 0 ? "<b>" + kxCompacto(mes.total) + "</b>" : "";
+        return '<div class="' + (actual ? "current" : "") + '">' +
+            '<i style="height:' + altura + '%"></i>' +
+            "<span>" + mes.etiqueta + "</span>" + insignia + "</div>";
+    }).join("");
+}
+
+function renderizarDecisiones(resumen, clientes) {
+    const pendientes = kxNumero(resumen && resumen.pendientes);
+    const revision = kxNumero(resumen && resumen.en_revision);
+    kxTexto("kxDecisionesTotal", String(pendientes + revision).padStart(2, "0"));
+
+    const lista = document.getElementById("kxDecisionesLista");
+    if (!lista) return;
+    const candidatos = clientes
+        .filter((cliente) => cliente.estado === "PENDIENTE" || cliente.estado === "EN_REVISION")
+        .slice(0, 3);
+
+    if (!candidatos.length) {
+        lista.innerHTML = '<div class="kx-empty-row">No hay solicitudes pendientes.</div>';
+        return;
+    }
+
+    lista.innerHTML = candidatos.map((cliente) => {
+        const nombre = cliente.nombre ||
+            [cliente.nombres, cliente.apellidos].filter(Boolean).join(" ").trim() ||
+            "Cliente";
+        let detalle;
+        if (!cliente.tiene_comprobante_domicilio) detalle = "FALTA COMPROBANTE DE DOMICILIO";
+        else if (!cliente.cuenta || !cliente.banco) detalle = "VALIDAR CUENTA CLABE";
+        else detalle = cliente.estado === "PENDIENTE" ? "SOLICITUD · DOCUMENTOS RECIBIDOS" : "EN REVISIÓN";
+
+        return '<button type="button" data-url="/cliente?id=' + encodeURIComponent(cliente.id) +
+            '" onclick="window.location.href=this.dataset.url">' +
+            '<span class="kx-avatar">' + kxEscapar(kxIniciales(nombre)) + "</span>" +
+            "<div><strong>" + kxEscapar(nombre) + "</strong>" +
+            "<small>" + kxEscapar(detalle) + "</small></div>" +
+            "<em>" + kxEscapar(kxTiempoRelativo(cliente.creado_en)) + "</em>" +
+            '<span aria-hidden="true">→</span></button>';
+    }).join("");
+}
+
+function renderizarCreditosRecientes(prestamos) {
+    const contenedor = document.getElementById("kxCreditosRecientes");
+    if (!contenedor) return;
+    const recientes = prestamos.slice().sort((a, b) => {
+        const fechaA = kxFecha(a.fecha_inicio);
+        const fechaB = kxFecha(b.fecha_inicio);
+        return (fechaB ? fechaB.getTime() : 0) - (fechaA ? fechaA.getTime() : 0);
+    }).slice(0, 5);
+
+    if (!recientes.length) {
+        contenedor.innerHTML = '<div class="kx-empty-row">No hay créditos activos recientes.</div>';
+        return;
+    }
+
+    contenedor.innerHTML = recientes.map((prestamo, indice) => {
+        const estado = kxEstadoPrestamo(prestamo);
+        const folio = "KMX—" + String(kxNumero(prestamo.id)).padStart(4, "0");
+        return '<button type="button" class="kx-ledger-row" data-url="/cliente?id=' +
+            encodeURIComponent(prestamo.cliente_id) + '" onclick="window.location.href=this.dataset.url">' +
+            '<span class="kx-person"><b>' + kxEscapar(kxIniciales(prestamo.nombre)) + "</b>" +
+            "<strong>" + kxEscapar(prestamo.nombre || "Cliente") + "</strong></span>" +
+            "<span>" + folio + "</span>" +
+            "<strong>" + kxEntero(prestamo.monto) + "</strong>" +
+            "<span>" + kxFechaCorta(prestamo.fecha_inicio) + "</span>" +
+            '<em class="' + estado.clase + '">' + estado.texto + "</em>" +
+            '<span class="kx-row-arrow" aria-hidden="true">→</span>' +
+            '<i style="--row:' + indice + '"></i></button>';
+    }).join("");
+}
+
+function renderizarPanelesMesaControl(resumen, prestamos, clientes) {
+    const listaPrestamos = Array.isArray(prestamos) ? prestamos : [];
+    const listaClientes = Array.isArray(clientes) ? clientes : [];
+    renderizarIndicadores(resumen, listaPrestamos, listaClientes);
+    renderizarColocacion(listaPrestamos);
+    renderizarDecisiones(resumen, listaClientes);
+    renderizarCreditosRecientes(listaPrestamos);
+}
 
 
 // ----------------------------------

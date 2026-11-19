@@ -208,6 +208,84 @@
     </section>
 
 
+    <!-- MESA DE CONTROL (FIGMA) -->
+
+    <section class="kx-dashboard-stats" aria-label="Indicadores de la operación">
+        <div class="kx-dashboard-stat">
+            <div class="kx-dashboard-stat-top"><span>01</span><p>CARTERA ACTIVA</p><i></i></div>
+            <strong id="kxCarteraActiva">$0</strong>
+            <div class="kx-dashboard-stat-foot"><b id="kxCarteraDelta">↑ 0%</b><span>VS. MES ANTERIOR</span></div>
+        </div>
+        <div class="kx-dashboard-stat">
+            <div class="kx-dashboard-stat-top"><span>02</span><p>PERSONAS ACTIVAS</p><i></i></div>
+            <strong id="kxPersonasActivas">0</strong>
+            <div class="kx-dashboard-stat-foot"><b id="kxPersonasDelta">+0</b><span>NUEVAS ESTE MES</span></div>
+        </div>
+        <div class="kx-dashboard-stat is-dark">
+            <div class="kx-dashboard-stat-top"><span>03</span><p>POR RECUPERAR</p><i></i></div>
+            <strong id="kxPorRecuperar">$0</strong>
+            <div class="kx-dashboard-stat-foot"><b id="kxPorRecuperarDelta">0%</b><span>SALDO VENCIDO</span></div>
+        </div>
+    </section>
+
+
+    <section class="kx-dashboard-grid" aria-label="Análisis y decisiones">
+        <article class="kx-performance">
+            <div class="kx-section-title">
+                <div>
+                    <span>ANÁLISIS / 06 MESES</span>
+                    <h2>Ritmo de colocación</h2>
+                </div>
+                <b><span id="kxColocacionTotal">$0</span> <small>EN EL PERIODO</small></b>
+            </div>
+            <div class="kx-chart">
+                <div class="kx-chart-scale" aria-hidden="true">
+                    <span id="kxEscalaAlta">0</span>
+                    <span id="kxEscalaMedia">0</span>
+                    <span id="kxEscalaBaja">0</span>
+                    <span>0</span>
+                </div>
+                <div class="kx-bars" id="kxColocacionBars"></div>
+            </div>
+        </article>
+        <article class="kx-decisions">
+            <div class="kx-section-title">
+                <div>
+                    <span>REQUIERE ATENCIÓN</span>
+                    <h2>Por decidir hoy</h2>
+                </div>
+                <b id="kxDecisionesTotal">00</b>
+            </div>
+            <div class="kx-decision-list" id="kxDecisionesLista"></div>
+            <button type="button" class="kx-all" onclick="mostrarModulo('registrados')">
+                ABRIR BANDEJA COMPLETA <span aria-hidden="true">→</span>
+            </button>
+        </article>
+    </section>
+
+
+    <section class="kx-ledger" aria-label="Créditos recientes">
+        <div class="kx-section-title">
+            <div>
+                <span>LIBRO DE MOVIMIENTOS</span>
+                <h2>Créditos recientes</h2>
+            </div>
+            <button type="button" onclick="mostrarModulo('colocados')">
+                VER CARTERA COMPLETA <span aria-hidden="true">→</span>
+            </button>
+        </div>
+        <div class="kx-ledger-head" aria-hidden="true">
+            <span>PERSONA</span>
+            <span>FOLIO</span>
+            <span>CAPITAL</span>
+            <span>ALTA</span>
+            <span>CONDICIÓN</span>
+            <span></span>
+        </div>
+        <div id="kxCreditosRecientes"></div>
+    </section>
+
+
     <!-- GENERAR LINK -->
 
     <section id="modulo-enlace" class="panel modulo-panel" data-modulo="enlace">
