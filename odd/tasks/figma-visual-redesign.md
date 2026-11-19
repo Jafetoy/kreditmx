@@ -27,8 +27,8 @@ S8. Apply the Figma applicant form screens and fields while preserving the exist
 - T2 — S1, S5 — route: inline (supporting surfaces reuse T1 tokens and cannot proceed independently) — status: complete — commits: `95564c6`, `e309eca`, `5f7830d`
 - T3 — S2, S4, S6 — route: inline verification (functional and DOM-contract checks) — status: complete — evidence: zero removed DOM IDs or form names; all administrator modules activated independently; Flask smoke checks passed; 390px viewport had no horizontal overflow
 - T4 — S1, S5, S6 — route: inline finish and design-system documentation — status: complete — commits: `d086ddd` and this final tooling record
-- T5 — S1-S4, S7 — route: inline (the administrator shell and existing module handlers share one edit surface) — status: complete — verification: eight sidebar actions activate the seven existing modules; the central module grid is absent; live summary data rendered without overflow at 1440px and 390px
-- T6 — S2, S4-S6, S8 — route: inline (the applicant screen, API payload, and additive schema form one behavior) — status: complete — risk: item 1, additive persisted client fields — verification: two registration tests passed; three steps advanced in Chromium; all 15 required fields and three documents were present; no overflow at 1440px or 390px
+- T5 — S1-S4, S7 — route: inline (the administrator shell and existing module handlers share one edit surface) — status: complete — commit: `f4e5aa6` — verification: eight sidebar actions activate the seven existing modules; the central module grid is absent; live summary data rendered without overflow at 1440px and 390px
+- T6 — S2, S4-S6, S8 — route: inline (the applicant screen, API payload, and additive schema form one behavior) — status: complete — commit: `a1e29f4` — risk: item 1, additive persisted client fields — verification: two registration tests passed; three steps advanced in Chromium; all 15 required fields and three documents were present; no overflow at 1440px or 390px
 
 ## Log
 
@@ -40,7 +40,7 @@ L3 — 2026-11-18 — Evidence: the Figma Make source defines the approved visua
 
 L4 — 2026-11-18 — Constraint: pre-existing uncommitted `app.py` and `Procfile` deployment work belongs to the user and is outside this redesign. The redesign will not modify those files.
 
-L5 — 2026-11-18 — Engram mirror pending because the host session is not registered and project-scoped writes are unavailable.
+L5 — 2026-11-18 — Engram mirror pending because the host session is not registered and project-scoped writes are unavailable. RESOLVED 2026-11-18: mirror created in project `kreditmx` under topic `odd/figma-visual-redesign/tasks`.
 
 L6 — 2026-11-18 — Implementation: added an isolated Figma-derived theme and connected it to all five interface templates. Added an administrator navigation rail and priority hero while preserving every existing field, ID, handler, endpoint, and calculation file.
 
@@ -75,3 +75,5 @@ L20 — 2026-11-18 — Figma field comparison: the reference adds separate given
 L21 — 2026-11-18 — Implementation: replaced the central administrator module grid with eight sidebar actions, added the Figma capital summary fed by `/api/fondo`, and rebuilt applicant registration as the three Figma screens. Added only backward-compatible nullable/defaulted client columns and retained every existing DOM ID and form name.
 
 L22 — 2026-11-18 — Verification: registration API tests passed for complete persistence and missing-proof rejection; Python and JavaScript syntax checks passed; route and asset smoke checks passed; Chromium confirmed all sidebar actions, real summary values, both form step transitions, 50px mobile controls, and zero page overflow at 1440px and 390px.
+
+L23 — 2026-11-18 — Closure (continuation of Codex work): committed the pending task-document update (chore(odd): record redesign work unit commits). Re-ran `python -m unittest discover -s tests -v`: 2 passed, exit 0. Re-ran Flask route smoke checks: `/`, `/login`, `/registro-admin`, `/registro`, `/cliente` all 200. `python -m py_compile app.py database.py` exit 0. User-owned files (`app.py`, `database.py`, `Procfile`, `.atl/`) remain uncommitted and untouched. No push, PR, or remote operation performed.
