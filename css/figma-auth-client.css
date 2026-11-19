@@ -3,6 +3,7 @@
 .kx-auth-page {
     min-width: 320px;
     min-height: 100vh;
+    min-height: 100svh;
     background:
         linear-gradient(90deg, var(--kx-ink) 0 39%, transparent 39%),
         var(--kx-paper);
@@ -10,6 +11,7 @@
 
 .kx-auth-page .login-pagina {
     min-height: 100vh;
+    min-height: 100svh;
     padding: 36px;
     display: grid;
     place-items: center;
@@ -105,20 +107,35 @@
     text-underline-offset: 4px;
 }
 
+.kx-auth-page .login-card > p a {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    padding-block: 8px;
+}
+
 /* Client detail */
 
 .kx-client-page {
     min-height: 100vh;
+    min-height: 100dvh;
     background: var(--kx-paper);
 }
 
 .kx-client-page .admin-header {
-    min-height: 72px;
-    padding: 0 clamp(20px, 4vw, 60px);
+    min-height: calc(72px + env(safe-area-inset-top, 0px));
+    padding: env(safe-area-inset-top, 0px)
+        max(clamp(20px, 4vw, 60px), env(safe-area-inset-right, 0px)) 0
+        max(clamp(20px, 4vw, 60px), env(safe-area-inset-left, 0px));
     border-bottom: 1px solid var(--kx-line);
     box-shadow: none;
     color: var(--kx-ink);
     background: var(--kx-paper);
+}
+
+.kx-client-page .btn-salir {
+    min-width: 96px;
+    white-space: nowrap;
 }
 
 .kx-client-page .admin-logo-imagen {

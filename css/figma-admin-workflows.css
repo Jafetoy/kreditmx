@@ -62,7 +62,6 @@
     border-color: transparent !important;
 }
 
-.kx-admin-page .modulo-card:hover,
 .kx-admin-page .modulo-card:focus-visible {
     color: var(--kx-ink);
     background: var(--kx-acid);
@@ -74,10 +73,18 @@
     background: var(--kx-ink);
 }
 
-.kx-admin-page .modulo-card:first-child:hover,
 .kx-admin-page .modulo-card:first-child:focus-visible {
     color: var(--kx-ink);
     background: var(--kx-acid);
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .kx-admin-page .modulo-card:hover,
+    .kx-admin-page .modulo-card:first-child:hover {
+        color: var(--kx-ink);
+        background: var(--kx-acid);
+        transform: none;
+    }
 }
 
 .kx-admin-page .modulo-icono {
@@ -161,16 +168,18 @@
     text-transform: uppercase;
 }
 
-.kx-admin-page .btn-principal:hover,
-.kx-admin-page .btn-calcular:hover,
-.kx-admin-page .btn-generar:hover,
-.kx-admin-page .btn-pdf:hover,
-.kx-admin-page .btn-primario:hover,
-.kx-admin-page .btn-guardar-edicion:hover,
-.kx-client-page .btn-generar:hover {
-    color: var(--kx-ink);
-    background: var(--kx-acid);
-    transform: none;
+@media (hover: hover) and (pointer: fine) {
+    .kx-admin-page .btn-principal:hover,
+    .kx-admin-page .btn-calcular:hover,
+    .kx-admin-page .btn-generar:hover,
+    .kx-admin-page .btn-pdf:hover,
+    .kx-admin-page .btn-primario:hover,
+    .kx-admin-page .btn-guardar-edicion:hover,
+    .kx-client-page .btn-generar:hover {
+        color: var(--kx-ink);
+        background: var(--kx-acid);
+        transform: none;
+    }
 }
 
 .kx-admin-page .btn-secundario,
@@ -226,8 +235,10 @@
     transition: background-color .18s ease;
 }
 
-.kx-admin-page tbody tr:hover {
-    background: rgba(216, 255, 54, .34);
+@media (hover: hover) and (pointer: fine) {
+    .kx-admin-page tbody tr:hover {
+        background: rgba(216, 255, 54, .34);
+    }
 }
 
 .kx-admin-page .resultado-prestamo,

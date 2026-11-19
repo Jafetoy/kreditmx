@@ -3,6 +3,7 @@
 .kx-registration-page {
     min-width: 320px;
     min-height: 100vh;
+    min-height: 100dvh;
     color: var(--kx-ink);
     background: var(--kx-paper);
     overflow-x: hidden;
@@ -11,6 +12,7 @@
 .kx-registration-page .contenedor {
     width: 100%;
     min-height: 100vh;
+    min-height: 100dvh;
     max-width: none;
     margin: 0;
     padding: 0;
@@ -19,6 +21,7 @@
 .kx-registration-page .tarjeta {
     width: 100%;
     min-height: 100vh;
+    min-height: 100dvh;
     margin: 0;
     padding: 0;
     display: grid;
@@ -35,6 +38,7 @@
     position: sticky;
     top: 0;
     min-height: 100vh;
+    min-height: 100svh;
     grid-column: 1;
     grid-row: 1 / span 4;
     padding: clamp(36px, 6vw, 78px);
@@ -171,6 +175,19 @@
     text-transform: none;
 }
 
+.kx-registration-page .autorizacion label {
+    min-height: 44px;
+    align-items: flex-start;
+}
+
+.kx-registration-page .autorizacion input[type="checkbox"] {
+    flex: 0 0 20px;
+    width: 20px;
+    height: 20px;
+    margin-top: 2px;
+    accent-color: var(--kx-ink);
+}
+
 .kx-registration-page .campo input,
 .kx-registration-page .campo select,
 .kx-registration-page .campo textarea {
@@ -216,9 +233,11 @@
     text-transform: uppercase;
 }
 
-.kx-registration-page button[type="submit"]:hover {
-    color: var(--kx-ink);
-    background: var(--kx-acid);
+@media (hover: hover) and (pointer: fine) {
+    .kx-registration-page button[type="submit"]:hover {
+        color: var(--kx-ink);
+        background: var(--kx-acid);
+    }
 }
 
 .kx-registration-page .mensaje-exito {

@@ -3,6 +3,7 @@
 .kx-admin-page {
     min-width: 320px;
     min-height: 100vh;
+    min-height: 100dvh;
     background-color: var(--kx-paper);
     background-image: radial-gradient(rgba(23, 24, 43, .08) .7px, transparent .7px);
     background-size: 8px 8px;
@@ -80,16 +81,26 @@
     transition: opacity .15s ease, transform .15s ease;
 }
 
-.kx-admin-rail nav button:hover,
 .kx-admin-rail nav button:focus-visible {
     color: var(--kx-ink);
     background: var(--kx-acid);
 }
 
-.kx-admin-rail nav button:hover > strong,
 .kx-admin-rail nav button:focus-visible > strong {
     opacity: 1;
     transform: translateX(5px);
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .kx-admin-rail nav button:hover {
+        color: var(--kx-ink);
+        background: var(--kx-acid);
+    }
+
+    .kx-admin-rail nav button:hover > strong {
+        opacity: 1;
+        transform: translateX(5px);
+    }
 }
 
 .kx-admin-page .admin-header {
@@ -145,7 +156,7 @@
 }
 
 .kx-admin-page .btn-salir {
-    min-height: 42px;
+    min-height: 44px;
     padding: 0 18px;
     border: 0;
     color: #fff;
@@ -153,9 +164,11 @@
     transition: background-color .2s ease, color .2s ease;
 }
 
-.kx-admin-page .btn-salir:hover {
-    color: var(--kx-ink);
-    background: var(--kx-acid);
+@media (hover: hover) and (pointer: fine) {
+    .kx-admin-page .btn-salir:hover {
+        color: var(--kx-ink);
+        background: var(--kx-acid);
+    }
 }
 
 .kx-admin-page .admin-container {

@@ -51,3 +51,9 @@ L11 — 2026-11-18 — Delivery decision: user selected the recommended stacked-
 L12 — 2026-11-18 — Review limitation: the local receipt review changed its target to unrelated user work. The user declined GitHub access, so no defect report or remote operation was performed. Final delivery relies on the observed local functional and structural checks.
 
 L13 — 2026-11-18 — Constraint update: pre-existing uncommitted `database.py` credential cleanup is also user-owned and excluded alongside `app.py`, `Procfile`, and `.atl/`.
+
+L14 — 2026-11-18 — User follow-up (verbatim): "Ok, verifica que todo este correctamente responsiva, intuitiva, y todo encuadrado"
+
+L15 — 2026-11-18 — User authorization (verbatim): "si corrije todo los problemas."
+
+L16 — 2026-11-18 — Responsive correction: added visible mobile navigation labels, 44px touch targets, coarse-pointer 16px fields, dynamic viewport units, safe-area handling, capability-gated hover states, non-wrapping client navigation, and a Figma-aligned landing surface. Chromium checks passed 30 page/viewport combinations at 1440, 1024, 768, 390, and 320px with no horizontal overflow or recorded failures.

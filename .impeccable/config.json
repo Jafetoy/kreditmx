@@ -288,6 +288,33 @@
         ],
         "createdAt": "2026-11-19T00:22:27.400Z",
         "reason": "Verified legacy stylesheet reference; final registration theme uses documented Space Grotesk, Instrument Serif, and DM Mono tokens."
+      },
+      {
+        "rule": "low-contrast",
+        "value": "*",
+        "files": [
+          "index.html"
+        ],
+        "createdAt": "2026-11-19T01:31:09.649Z",
+        "reason": "Verified legacy CSS false positive: the final scoped home theme overrides the legacy text colors with WCAG-AA token colors."
+      },
+      {
+        "rule": "design-system-font",
+        "value": "roboto",
+        "files": [
+          "index.html"
+        ],
+        "createdAt": "2026-11-19T01:31:09.717Z",
+        "reason": "Verified legacy stylesheet reference; the final scoped home theme inherits documented Space Grotesk."
+      },
+      {
+        "rule": "dark-glow",
+        "value": "*",
+        "files": [
+          "index.html"
+        ],
+        "createdAt": "2026-11-19T01:31:09.782Z",
+        "reason": "Verified legacy CSS false positive: the final home surface uses the documented neutral ambient shadow, not a chromatic glow."
       }
     ]
   }

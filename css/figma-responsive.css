@@ -20,8 +20,10 @@
     .kx-admin-rail {
         inset: auto 0 0;
         width: auto;
-        height: 68px;
-        padding: 8px 12px;
+        height: calc(76px + env(safe-area-inset-bottom, 0px));
+        padding: 8px max(12px, env(safe-area-inset-right, 0px))
+            calc(8px + env(safe-area-inset-bottom, 0px))
+            max(12px, env(safe-area-inset-left, 0px));
         flex-direction: row;
         align-items: center;
         border-top: 1px solid #38394c;
@@ -60,12 +62,17 @@
 
     .kx-admin-page .admin-header {
         margin-left: 0;
-        padding-inline: 18px;
+        min-height: calc(72px + env(safe-area-inset-top, 0px));
+        padding: env(safe-area-inset-top, 0px)
+            max(18px, env(safe-area-inset-right, 0px)) 0
+            max(18px, env(safe-area-inset-left, 0px));
     }
 
     .kx-admin-page .admin-container {
         margin-left: 0;
-        padding: 34px 18px 100px;
+        padding: 34px max(18px, env(safe-area-inset-right, 0px))
+            calc(110px + env(safe-area-inset-bottom, 0px))
+            max(18px, env(safe-area-inset-left, 0px));
     }
 
     .kx-dashboard-intro {
@@ -91,12 +98,14 @@
         min-height: 360px;
         grid-column: 1;
         grid-row: auto;
-        padding: 90px 34px 42px;
+        padding: calc(90px + env(safe-area-inset-top, 0px))
+            max(34px, env(safe-area-inset-right, 0px)) 42px
+            max(34px, env(safe-area-inset-left, 0px));
     }
 
     .kx-registration-page .registro-logo-imagen {
-        top: 26px;
-        left: 34px;
+        top: calc(26px + env(safe-area-inset-top, 0px));
+        left: max(34px, env(safe-area-inset-left, 0px));
     }
 
     .kx-registration-page .encabezado h1 {
@@ -117,7 +126,7 @@
 
 @media (max-width: 680px) {
     .kx-admin-page .admin-header {
-        min-height: 64px;
+        min-height: calc(64px + env(safe-area-inset-top, 0px));
         grid-template-columns: 1fr auto;
         gap: 12px;
     }
@@ -132,9 +141,9 @@
     }
 
     .kx-admin-page .btn-salir {
-        min-height: 38px;
+        min-height: 44px;
         padding: 0 12px;
-        font-size: 8px;
+        font-size: 10px;
     }
 
     .kx-dashboard-intro h1 {
@@ -181,7 +190,11 @@
     }
 
     .kx-auth-page .login-pagina {
-        padding: 80px 18px 28px;
+        min-height: 100svh;
+        padding: calc(80px + env(safe-area-inset-top, 0px))
+            max(18px, env(safe-area-inset-right, 0px))
+            calc(28px + env(safe-area-inset-bottom, 0px))
+            max(18px, env(safe-area-inset-left, 0px));
         align-items: start;
     }
 
@@ -204,7 +217,8 @@
 
     .kx-registration-page .encabezado {
         min-height: 300px;
-        padding-inline: 24px;
+        padding-left: max(24px, env(safe-area-inset-left, 0px));
+        padding-right: max(24px, env(safe-area-inset-right, 0px));
     }
 
     .kx-registration-page .registro-logo-imagen {
@@ -229,13 +243,15 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-    *,
-    *::before,
-    *::after {
-        scroll-behavior: auto !important;
-        transition-duration: .01ms !important;
-        animation-duration: .01ms !important;
-        animation-iteration-count: 1 !important;
+    html {
+        scroll-behavior: auto;
+    }
+
+    .kx-admin-rail nav button,
+    .kx-admin-page .modulo-card,
+    .kx-admin-page tbody tr,
+    .kx-home-page .inicio-botones a {
+        transition-duration: 0s;
     }
 }
 
@@ -289,25 +305,35 @@
     }
 
     .kx-admin-rail {
-        height: 76px;
+        height: calc(76px + env(safe-area-inset-bottom, 0px));
     }
 }
 
 @media (max-width: 420px) {
     .kx-admin-rail nav button > strong {
-        position: absolute;
-        width: 1px;
-        height: 1px;
+        position: static;
+        width: auto;
+        height: auto;
         padding: 0;
-        margin: -1px;
-        overflow: hidden;
-        clip: rect(0 0 0 0);
-        clip-path: inset(50%);
-        white-space: nowrap;
+        margin: 0;
+        overflow: visible;
+        clip: auto;
+        clip-path: none;
+        white-space: normal;
         border: 0;
+        font-size: 10px;
+        line-height: 1.15;
     }
 
     .kx-admin-rail nav button > span {
-        font-size: 14px;
+        font-size: 12px;
+    }
+}
+
+@media (pointer: coarse) {
+    input,
+    select,
+    textarea {
+        font-size: 16px !important;
     }
 }

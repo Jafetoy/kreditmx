@@ -7,7 +7,7 @@
 
     <meta
         name="viewport"
-        content="width=device-width, initial-scale=1.0"
+        content="width=device-width, initial-scale=1.0, viewport-fit=cover"
     >
 
     <title>Panel administrador</title>
@@ -32,22 +32,22 @@
     <nav>
         <button type="button" onclick="mostrarModulo('prestamos')" data-label="Nuevo crédito" aria-label="Nuevo crédito">
             <span>+</span>
-            <strong>Nuevo crédito</strong>
+            <strong>Crédito</strong>
         </button>
         <button type="button" onclick="mostrarModulo('registrados')" data-label="Registrados" aria-label="Clientes registrados">
-            <span>R</span>
-            <strong>Registrados</strong>
+            <span>CL</span>
+            <strong>Clientes</strong>
         </button>
         <button type="button" onclick="mostrarModulo('colocados')" data-label="Activos" aria-label="Clientes activos">
-            <span>A</span>
+            <span>AC</span>
             <strong>Activos</strong>
         </button>
         <button type="button" onclick="mostrarModulo('pagos'); cargarPrestamosPago();" data-label="Pagos" aria-label="Registrar pagos">
-            <span>P</span>
+            <span>PG</span>
             <strong>Pagos</strong>
         </button>
         <button type="button" onclick="mostrarModulo('fondo'); cargarFondo();" data-label="Fondo" aria-label="Fondo de inversión">
-            <span>F</span>
+            <span>FI</span>
             <strong>Fondo</strong>
         </button>
     </nav>
