@@ -13,9 +13,11 @@ S3. Preserve the Figma scoped palette and responsive behavior: `.kw-page` tokens
 
 S4. Verify `/` renders the landing, both CTA links resolve, desktop 1440px and mobile 390px/320px have no horizontal overflow, no console errors, and no tracked DOM ID or form name is removed.
 
+S5. Do not show any operator identity on the public landing: the header must not render `ARTURO LÓPEZ / ADMINISTRACIÓN` or the `AL` initials badge. The centered platform label remains, explicitly centered because `space-between` with two children would otherwise push it to the right edge.
+
 ## Tasks
 
-- T1 — S1-S4 — route: inline (one static landing surface: `index.html`, one scoped CSS file, one theme import; no independent write unit) — status: complete — risk: none (presentation-only; no endpoint, calculation or persisted data touched) — commit: 9fa3f3b — verification: 4 landing tests OK, full suite 23/23 OK, Flask smoke 200 for `/`, `/login`, `/registro` and both stylesheets, zero overflow and zero clipped text at 1440/390/320px, both CTAs navigated to their expected routes in Chromium
+- T1 — S1-S5 — route: inline (one static landing surface: `index.html`, one scoped CSS file, one theme import; no independent write unit) — status: complete — risk: none (presentation-only; no endpoint, calculation or persisted data touched) — commit: 9fa3f3b — verification: 4 landing tests OK, full suite 23/23 OK, Flask smoke 200 for `/`, `/login`, `/registro` and both stylesheets, zero overflow and zero clipped text at 1440/390/320px, both CTAs navigated to their expected routes in Chromium
 
 ## Log
 
@@ -38,3 +40,7 @@ L8 — 2026-11-21 — Fix found during QA: removing the legacy `css/admin.css` l
 L9 — 2026-11-21 — Work unit recorded as local commit `9fa3f3b` on `figma-visual-redesign` with message `feat(landing): apply Figma corporate welcome screen`. Only the five landing files were staged; all other pre-existing uncommitted user work was left untouched. Risk: none.
 
 L10 — 2026-11-21 — Native receipt-driven assessment over base `9fa3f3b^` with committed-only scope and untracked files excluded: `medium` (`executable_change` in `css/figma-theme.css`), `review_due: false`, reason `under_budget`. No native review consent or verifier is due for this slice; the slice stays pending until a later work unit reaches the budget. An initial assessment without the untracked-file declaration returned `unassessable`/`high`; the corrected declaration produced the tier above.
+
+L11 — 2026-11-21 — User correction (verbatim): "ARTURO LÓPEZ / ADMINISTRACIÓN\nAL (que no aparezca eso en la landing page)". Removed the `.kw-session` block and its CSS from the public landing; added `position: relative` to `.kw-header` and absolute centering to `.kw-header-center` so the remaining label stays centered instead of being pushed right by `space-between`.
+
+L12 — 2026-11-21 — Correction verified RED first (new assertions in `tests/test_landing_welcome.py` failed against the old markup), then GREEN with 23/23 tests. Chromium at 1440/1024/900/390/320px: no operator name, no standalone `AL` token, no `.kw-session` node, centered label at exactly 720/720px and 512/512px where visible, hidden at 900px and below, and zero horizontal overflow. Risk: none.

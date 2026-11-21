@@ -43,6 +43,7 @@ body {
 }
 
 .kw-header {
+    position: relative;
     min-height: 88px;
     display: flex;
     align-items: center;
@@ -61,11 +62,14 @@ body {
     color: var(--brand-lime);
     border: 0;
 }
-.kw-header-center,
-.kw-session {
+.kw-header-center {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
     display: flex;
     align-items: center;
     gap: 12px;
+    white-space: nowrap;
     color: #777980;
     font: 400 8px var(--mono);
     letter-spacing: 0.06em;
@@ -75,16 +79,6 @@ body {
     height: 4px;
     background: var(--brand-lime);
     border-radius: 50%;
-}
-.kw-session b {
-    display: grid;
-    place-items: center;
-    width: 34px;
-    height: 34px;
-    border: 1px solid #d7d7d0;
-    border-radius: 50%;
-    color: var(--ink);
-    font-weight: 500;
 }
 .kw-main {
     flex: 1;
@@ -336,8 +330,8 @@ body {
 }
 .kw-capabilities h2 {
     margin: 16px 0 8px;
-    font-size: 14px;
-    font-weight: 500;
+    font-size: 16px;
+    font-weight: 600;
     letter-spacing: -0.02em;
 }
 .kw-capabilities p {
@@ -394,9 +388,6 @@ body {
     }
     .kw-header .kx-wordmark {
         font-size: 22px;
-    }
-    .kw-session > span {
-        display: none;
     }
     .kw-main {
         padding: 0 22px;

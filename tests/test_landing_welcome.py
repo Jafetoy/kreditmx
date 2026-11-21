@@ -50,6 +50,9 @@ class FigmaWelcomeLandingTest(unittest.TestCase):
         self.assertNotIn("kx-home-page", self.html)
         self.assertNotIn("inicio-logo", self.html)
         self.assertNotIn("css/admin.css", self.html)
+        self.assertNotIn("kw-session", self.html)
+        self.assertNotIn("ARTURO LÓPEZ", self.html)
+        self.assertNotIn(">AL<", self.html)
 
     def test_theme_imports_the_scoped_welcome_stylesheet(self):
         self.assertIn("/css/figma-welcome.css", self.theme)
