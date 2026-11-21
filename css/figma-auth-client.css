@@ -21,6 +21,7 @@
 .kx-auth-page .login-card {
     position: relative;
     width: min(500px, 100%);
+    max-width: 500px;
     margin-left: 18%;
     padding: clamp(34px, 5vw, 58px);
     overflow: visible;
