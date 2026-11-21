@@ -30,9 +30,9 @@
     </a>
 
     <nav aria-label="Módulos del sistema">
-        <button type="button" onclick="mostrarModulo('prestamos')" data-label="Nuevo crédito" aria-label="Nuevo crédito">
+        <button type="button" onclick="mostrarModulo('prestamos')" data-label="Créditos" aria-label="Créditos">
             <svg class="kx-rail-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v16M4 12h16"/></svg>
-            <strong>Nuevo crédito</strong>
+            <strong>Créditos</strong>
         </button>
         <button type="button" onclick="mostrarModulo('solicitudes')" data-label="Solicitudes" aria-label="Solicitudes">
             <svg class="kx-rail-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg>
@@ -118,12 +118,12 @@
     <section class="kx-dashboard-intro" aria-labelledby="kx-dashboard-title">
         <div>
             <p>Mesa de control · Operación Kreditmx</p>
-            <h1 id="kx-dashboard-title">Capital en <em>movimiento.</em></h1>
+            <h1 id="kx-dashboard-title">Créditos en <em>movimiento.</em></h1>
         </div>
         <div class="kx-dashboard-priority">
             <span>Acción prioritaria</span>
             <p>Crea nuevos créditos y mantén cada cliente y préstamo bajo control.</p>
-            <button type="button" onclick="mostrarModulo('prestamos')">
+            <button type="button" onclick="abrirModalBienvenida()">
                 Nuevo crédito <span aria-hidden="true">→</span>
             </button>
         </div>
@@ -133,21 +133,16 @@
     <section class="kx-capital-summary" aria-label="Resumen del fondo">
         <div class="kx-capital-copy">
             <span>Capital disponible para colocar</span>
-            <strong id="fondoDisponibleResumen">$0.00</strong>
+            <strong id="fondoDisponibleResumen">$—</strong>
             <p>
-                <b id="fondoDisponiblePorcentaje">0%</b>
+                <b id="fondoDisponiblePorcentaje">—</b>
                 <span id="fondoResumenDetalle">del fondo está listo para nuevos créditos.</span>
             </p>
         </div>
         <div class="kx-capital-orbit" aria-hidden="true">
             <i></i><i></i><i></i>
-            <b id="fondoDisponibleOrbita">0%</b>
+            <b id="fondoDisponibleOrbita">—</b>
         </div>
-        <button type="button" onclick="mostrarModulo('prestamos')">
-            <span class="kx-capital-action-icon">+</span>
-            <span><small>Acción rápida</small>Nuevo crédito</span>
-            <span aria-hidden="true">→</span>
-        </button>
     </section>
 
 
@@ -294,7 +289,7 @@
         <div class="kx-ledger-head" aria-hidden="true">
             <span>PERSONA</span>
             <span>FOLIO</span>
-            <span>CAPITAL</span>
+            <span>MONTO</span>
             <span>ALTA</span>
             <span>CONDICIÓN</span>
             <span></span>
@@ -858,6 +853,16 @@
             Registrar pago
         </button>
 
+        <button
+            type="button"
+            id="btnLiquidarPrestamoDB"
+            class="btn-secundario"
+            onclick="abrirModalLiquidacion()"
+            disabled
+        >
+            Liquidar crédito
+        </button>
+
         <div id="mensajePagoDB" class="mensaje-pago"></div>
 
         <div class="panel-seccion">
@@ -1156,6 +1161,31 @@
                 <small>
                     Acumulado de los pagos
                 </small>
+
+            </div>
+
+            <div class="stat-card stat-colocados">
+
+                <span>
+                    Ganancia inversionista disponible
+                </span>
+
+                <strong id="fondoInversionistaDisponible">
+                    $0.00
+                </strong>
+
+                <small>
+                    Ganancia acumulada menos retiros
+                </small>
+
+                <button
+                    type="button"
+                    id="btnRetirarGananciaInversionista"
+                    class="btn-calcular"
+                    onclick="retirarGananciaInversionista()"
+                >
+                    Retirar ganancia
+                </button>
 
             </div>
 
@@ -1600,8 +1630,77 @@
 
 </main>
 
+<dialog id="modalBienvenidaCredito" class="kx-welcome-dialog" aria-labelledby="modalBienvenidaCreditoTitulo">
+    <div class="kx-welcome-dialog-content">
+        <div class="kx-welcome-dialog-top">
+            <span>MESA DE OPERACIÓN / KREDITMX</span>
+            <button type="button" class="kx-dialog-close" onclick="cerrarModalBienvenida()" aria-label="Cerrar">&times;</button>
+        </div>
+        <p class="kx-welcome-dialog-kicker">BUEN DÍA, TU MESA ESTÁ LISTA</p>
+        <h2 id="modalBienvenidaCreditoTitulo">El crédito empieza con <em>una decisión.</em></h2>
+        <p>Revisa las condiciones del préstamo y registra una nueva oportunidad para tu cliente.</p>
+        <div class="kx-welcome-dialog-actions">
+            <button type="button" class="btn-principal" onclick="irANuevoCredito()">Continuar a nuevo crédito</button>
+            <button type="button" class="btn-secundario" onclick="cerrarModalBienvenida()">Ahora no</button>
+        </div>
+    </div>
+</dialog>
+
+<dialog id="modalLiquidacionPrestamo" class="kx-settlement-dialog" aria-labelledby="modalLiquidacionTitulo">
+    <div class="kx-settlement-dialog-content">
+        <div class="kx-welcome-dialog-top">
+            <span>CIERRE DE CRÉDITO</span>
+            <button type="button" class="kx-dialog-close" onclick="cerrarModalLiquidacion()" aria-label="Cerrar">&times;</button>
+        </div>
+        <h2 id="modalLiquidacionTitulo">Registrar liquidación</h2>
+        <p>Confirma el saldo pendiente y registra el monto recibido para cerrar este crédito.</p>
+        <p id="liquidacionCliente" class="kx-settlement-client"></p>
+        <div class="kx-settlement-balance">
+            <span>Saldo pendiente</span>
+            <strong id="liquidacionSaldoPendiente">$0.00</strong>
+        </div>
+        <label class="kx-settlement-field" for="liquidacionMonto">
+            <span>Monto recibido</span>
+            <div class="input-moneda">
+                <span>$</span>
+                <input type="number" id="liquidacionMonto" min="0.01" step="0.01" inputmode="decimal" required>
+            </div>
+        </label>
+        <label class="kx-settlement-field" for="liquidacionFecha">
+            <span>Fecha del pago</span>
+            <input type="date" id="liquidacionFecha" required>
+        </label>
+        <p id="mensajeLiquidacion" class="mensaje-pago" role="status" aria-live="polite"></p>
+        <div class="kx-welcome-dialog-actions">
+            <button type="button" id="btnConfirmarLiquidacion" class="btn-principal" onclick="confirmarLiquidacion()">Registrar liquidación</button>
+            <button type="button" class="btn-secundario" onclick="cerrarModalLiquidacion()">Cancelar</button>
+        </div>
+    </div>
+</dialog>
+
+<dialog
+    id="kxActionConfirmDialog"
+    class="kx-welcome-dialog kx-action-confirm"
+    aria-labelledby="kxActionConfirmTitle"
+    aria-describedby="kxActionConfirmMessage"
+>
+    <div class="kx-welcome-dialog-content">
+        <div class="kx-welcome-dialog-top">
+            <span>KREDITMX · CONFIRMACIÓN</span>
+        </div>
+        <h2 id="kxActionConfirmTitle">Confirmar acción</h2>
+        <p id="kxActionConfirmMessage"></p>
+        <div class="kx-welcome-dialog-actions">
+            <button type="button" id="kxActionConfirmCancel" class="btn-secundario">Cancelar</button>
+            <button type="button" id="kxActionConfirmAccept" class="btn-principal">Confirmar</button>
+        </div>
+    </div>
+</dialog>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="/js/admin.js"></script>
+<script src="/js/session-guard.js"></script>
+<script src="/js/ui-notifications.js?v=202611211136"></script>
+<script src="/js/admin.js?v=confirm-guard-1"></script>
 
 </body>
 

@@ -642,6 +642,48 @@
     }
 }
 
+@media (max-width: 420px) {
+    .kx-registration-page .encabezado {
+        min-height: 220px;
+        padding-inline: max(18px, env(safe-area-inset-left, 0px));
+    }
+
+    .kx-registration-page .registro-intro h1 {
+        font-size: 38px;
+    }
+
+    .kx-registration-page .registro-contenido {
+        padding-inline: max(18px, env(safe-area-inset-left, 0px));
+    }
+
+    .kx-registration-page .registro-paso legend {
+        font-size: 34px;
+    }
+
+    .kx-registration-page .documento label {
+        gap: 10px;
+        padding: 10px 12px;
+    }
+
+    .kx-registration-page .registro-acciones {
+        gap: 10px;
+    }
+
+    .kx-registration-page #btnContinuar,
+    .kx-registration-page #btnEnviar {
+        min-width: 0;
+        flex: 1 1 160px;
+    }
+
+    .kx-registration-page .mensaje-exito {
+        margin-top: 8vh;
+    }
+
+    .kx-registration-page .mensaje-exito h2 {
+        font-size: 36px;
+    }
+}
+
 @media (prefers-reduced-motion: reduce) {
     .kx-registration-page * {
         scroll-behavior: auto !important;

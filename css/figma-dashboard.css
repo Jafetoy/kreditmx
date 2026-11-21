@@ -400,17 +400,275 @@
     }
 
     .kx-ledger-row {
-        grid-template-columns: 1fr auto;
-        gap: 8px 12px;
-        padding: 14px 16px;
+        grid-template-columns: minmax(0, 1fr);
+        gap: 7px;
+        padding: 15px 42px 15px 16px;
     }
 
-    .kx-ledger-row > em {
-        grid-column: 1;
+    .kx-ledger-row > [data-label]::before {
+        content: attr(data-label) " · ";
+        color: #777780;
+        font: 500 7px var(--kx-mono);
+        letter-spacing: .06em;
+        text-transform: uppercase;
     }
 
     .kx-row-arrow {
-        grid-column: 2;
-        grid-row: 1 / span 3;
+        position: absolute;
+        top: 50%;
+        right: 14px;
+        transform: translateY(-50%);
+    }
+}
+
+@media (max-width: 420px) {
+    .kx-dashboard-grid,
+    .kx-ledger {
+        margin-top: 26px;
+    }
+
+    .kx-performance,
+    .kx-decisions {
+        padding: 20px 16px;
+    }
+
+    .kx-section-title {
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .kx-section-title h2 {
+        font-size: 20px;
+    }
+
+    .kx-section-title > b {
+        font-size: 18px;
+        text-align: left;
+    }
+
+    .kx-chart {
+        height: 180px;
+        margin-top: 20px;
+    }
+
+    .kx-bars {
+        gap: 6%;
+        margin-left: 14px;
+    }
+
+    .kx-bars b {
+        padding: 4px 5px;
+        font-size: 7px;
+    }
+
+    .kx-decision-list button {
+        grid-template-columns: 32px minmax(0, 1fr) auto auto;
+        gap: 8px;
+        padding: 11px 0;
+    }
+
+    .kx-ledger > .kx-section-title {
+        padding: 18px 0;
+    }
+
+    .kx-person strong {
+        font-size: 11px;
+        overflow-wrap: anywhere;
+    }
+}
+
+.kx-welcome-dialog,
+.kx-settlement-dialog {
+    width: min(620px, calc(100% - 28px));
+    max-width: none;
+    max-height: min(90dvh, 720px);
+    padding: 0;
+    overflow: auto;
+    border: 0;
+    color: var(--kx-paper);
+    background: var(--kx-ink);
+    box-shadow: 12px 12px 0 var(--kx-acid);
+}
+
+.kx-action-confirm {
+    width: min(480px, calc(100% - 28px));
+}
+
+.kx-action-confirm h2 {
+    font-size: clamp(1.8rem, 5vw, 2.5rem);
+}
+
+.kx-action-confirm .kx-welcome-dialog-actions {
+    justify-content: flex-end;
+}
+
+.kx-welcome-dialog::backdrop,
+.kx-settlement-dialog::backdrop {
+    background: var(--kx-ink);
+}
+
+.kx-welcome-dialog-content,
+.kx-settlement-dialog-content {
+    padding: clamp(22px, 5vw, 42px);
+}
+
+.kx-welcome-dialog-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    color: var(--kx-acid);
+    font: 500 9px var(--kx-mono);
+    letter-spacing: .1em;
+}
+
+.kx-dialog-close {
+    display: grid;
+    width: 40px;
+    height: 40px;
+    flex: 0 0 auto;
+    place-items: center;
+    border: 1px solid var(--kx-line);
+    color: var(--kx-paper);
+    background: transparent;
+    cursor: pointer;
+}
+
+.kx-welcome-dialog-kicker {
+    margin: clamp(24px, 6vh, 48px) 0 14px;
+    color: var(--kx-orange);
+    font: 500 9px var(--kx-mono);
+    letter-spacing: .12em;
+}
+
+.kx-welcome-dialog h2 {
+    max-width: 12ch;
+    margin: 0;
+    color: var(--kx-paper);
+    font-size: clamp(2rem, 4vw, 4rem);
+    line-height: .98;
+    letter-spacing: -.055em;
+}
+
+.kx-welcome-dialog h2 em {
+    color: var(--kx-orange);
+    font: 400 1.04em var(--kx-serif);
+}
+
+.kx-welcome-dialog-content > p:not(.kx-welcome-dialog-kicker),
+.kx-settlement-dialog-content > p {
+    max-width: 52ch;
+    margin: 18px 0 0;
+    color: var(--kx-paper);
+    line-height: 1.65;
+}
+
+.kx-welcome-dialog-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 28px;
+}
+
+.kx-welcome-dialog-actions button {
+    min-height: 46px;
+}
+
+.kx-settlement-dialog {
+    width: min(500px, calc(100% - 28px));
+}
+
+.kx-settlement-dialog h2 {
+    margin: 22px 0 0;
+    color: var(--kx-paper);
+    font-size: 2rem;
+    letter-spacing: -.04em;
+}
+
+.kx-settlement-balance {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    margin: 24px 0;
+    padding: 14px 0;
+    border-top: 1px solid var(--kx-line);
+    border-bottom: 1px solid var(--kx-line);
+}
+
+.kx-settlement-client {
+    color: var(--kx-acid) !important;
+    font-weight: 600;
+}
+
+.kx-settlement-balance span,
+.kx-settlement-field > span {
+    color: var(--kx-paper);
+    font: 500 9px var(--kx-mono);
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+
+.kx-settlement-balance strong {
+    color: var(--kx-acid);
+    font-size: 2rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.kx-settlement-field {
+    display: block;
+    margin-top: 18px;
+}
+
+.kx-settlement-field > span {
+    display: block;
+    margin-bottom: 8px;
+}
+
+.kx-settlement-field input {
+    width: 100%;
+    min-height: 46px;
+    padding: 10px 12px;
+    border: 1px solid var(--kx-line);
+    color: var(--kx-ink);
+    background: var(--kx-paper);
+}
+
+.kx-settlement-field .input-moneda {
+    display: flex;
+    align-items: center;
+    border: 1px solid var(--kx-line);
+    color: var(--kx-ink);
+    background: var(--kx-paper);
+}
+
+.kx-settlement-field .input-moneda > span {
+    padding-left: 14px;
+    color: var(--kx-ink);
+}
+
+.kx-settlement-field .input-moneda input {
+    border: 0;
+    background: var(--kx-paper);
+}
+
+.kx-settlement-dialog .mensaje-pago {
+    min-height: 1.4em;
+    margin: 10px 0 0;
+    color: var(--kx-orange);
+}
+
+@media (max-width: 520px) {
+    .kx-welcome-dialog,
+    .kx-settlement-dialog {
+        box-shadow: 6px 6px 0 var(--kx-acid);
+    }
+
+    .kx-welcome-dialog-actions {
+        flex-direction: column;
+    }
+
+    .kx-welcome-dialog-actions button {
+        width: 100%;
     }
 }

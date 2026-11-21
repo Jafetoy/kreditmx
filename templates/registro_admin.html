@@ -157,6 +157,7 @@
 </div>
 
 
+<script src="/js/ui-notifications.js?v=202611211136"></script>
 <script>
 
 // Mostrar / ocultar la contrasena
@@ -192,6 +193,7 @@ document
             if (document.getElementById("contrasena").value.length < 8) {
                 errorParrafo.textContent = "La contraseña debe tener al menos 8 caracteres.";
                 errorParrafo.style.display = "block";
+                window.KreditmxNotifications.toast("La contraseña debe tener al menos 8 caracteres.", "error");
                 return;
             }
 
@@ -213,14 +215,17 @@ document
                 if (!respuesta.ok) {
                     errorParrafo.textContent = datos.error || "No se pudo registrar la cuenta.";
                     errorParrafo.style.display = "block";
+                    window.KreditmxNotifications.toast(datos.error || "No se pudo registrar la cuenta.", "error");
                     return;
                 }
 
+                sessionStorage.setItem("kx-login-message", "Cuenta creada correctamente. Ya puedes iniciar sesión.");
                 window.location.href = "/login";
 
             } catch (error) {
                 errorParrafo.textContent = "Error de conexión. Intenta de nuevo.";
                 errorParrafo.style.display = "block";
+                window.KreditmxNotifications.toast("Error de conexión. Intenta de nuevo.", "error");
             }
 
         }

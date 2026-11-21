@@ -72,7 +72,7 @@
                                 </div>
                                 <div class="campo campo-completo">
                                     <label for="direccion">Domicilio</label>
-                                    <textarea id="direccion" name="direccion" rows="2" autocomplete="street-address" placeholder="Como aparece en tu comprobante" required></textarea>
+                                    <textarea id="direccion" name="direccion" rows="2" autocomplete="street-address" placeholder="Calle, número y colonia" required></textarea>
                                 </div>
                             </div>
                         </fieldset>
@@ -114,7 +114,7 @@
 
                         <fieldset class="registro-paso" data-step="3" hidden>
                             <legend>Última revisión: <em>tu evidencia.</em></legend>
-                            <p class="registro-lead">Sube archivos claros en JPG, PNG, WEBP o PDF. Máximo 5 MB por archivo.</p>
+                            <p class="registro-lead">Sube archivos claros en JPG, PNG o WEBP. Máximo 5 MB por archivo.</p>
 
                             <div class="documentos">
                                 <div class="documento">
@@ -128,8 +128,8 @@
                                     <div id="previewReverso" class="preview"></div>
                                 </div>
                                 <div class="documento">
-                                    <label for="comprobanteDomicilio"><b>03</b><span><strong>Comprobante de domicilio</strong><small>JPG, PNG o PDF</small></span><em>Subir</em></label>
-                                    <input type="file" id="comprobanteDomicilio" name="comprobante_domicilio" accept="image/jpeg,image/png,image/webp,application/pdf" required>
+                                    <label for="comprobanteDomicilio"><b>03</b><span><strong>Selfie</strong><small>Toma la foto con tu cámara</small></span><em>Tomar foto</em></label>
+                                    <input type="file" id="comprobanteDomicilio" name="comprobante_domicilio" accept="image/jpeg,image/png,image/webp" capture="user" required>
                                     <div id="previewComprobante" class="preview"></div>
                                 </div>
                             </div>
@@ -160,6 +160,7 @@
         </section>
     </main>
 
-    <script src="/js/registro.js"></script>
+    <script src="/js/ui-notifications.js?v=202611211136"></script>
+    <script src="/js/registro.js?v=202611211136"></script>
 </body>
 </html>

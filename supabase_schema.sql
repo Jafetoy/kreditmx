@@ -5,6 +5,18 @@
 -- ============================================================
 
 -- ------------------------------------------------------------
+-- USUARIOS (acceso al panel de administrador)
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS usuarios (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    nombre_completo VARCHAR(150) NOT NULL,
+    usuario VARCHAR(50) NOT NULL UNIQUE,
+    correo VARCHAR(150) NOT NULL UNIQUE,
+    contrasena_hash VARCHAR(255) NOT NULL,
+    creado_en TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- ------------------------------------------------------------
 -- ENLACES DE REGISTRO
 -- ------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS enlaces_registro (
@@ -124,6 +136,23 @@ CREATE TABLE IF NOT EXISTS retiros_inversiones (
 );
 
 -- ------------------------------------------------------------
+-- RETIROS DE GANANCIA (inversionista y admin)
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS retiros_ganancias_inversionista (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    creado_por BIGINT REFERENCES usuarios (id) ON DELETE SET NULL,
+    monto NUMERIC(12, 2) NOT NULL,
+    creado_en TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS retiros_ganancias_admin (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    creado_por BIGINT REFERENCES usuarios (id) ON DELETE SET NULL,
+    monto NUMERIC(12, 2) NOT NULL,
+    creado_en TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- ------------------------------------------------------------
 -- CONFIGURACION (porcentajes de reparto)
 -- ------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS configuracion (
@@ -140,18 +169,6 @@ CREATE TABLE IF NOT EXISTS distribucion_pagos (
     inversionista NUMERIC(12, 2) NOT NULL,
     fondo NUMERIC(12, 2) NOT NULL,
     admin NUMERIC(12, 2) NOT NULL
-);
-
--- ------------------------------------------------------------
--- USUARIOS (acceso al panel de administrador)
--- ------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS usuarios (
-    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    nombre_completo VARCHAR(150) NOT NULL,
-    usuario VARCHAR(50) NOT NULL UNIQUE,
-    correo VARCHAR(150) NOT NULL UNIQUE,
-    contrasena_hash VARCHAR(255) NOT NULL,
-    creado_en TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 -- Columnas de aislamiento por usuario (para bases ya creadas)

@@ -1,3 +1,54 @@
+function mostrarConfirmacionSistema(mensaje) {
+    const dialogo = document.getElementById("kxActionConfirmDialog");
+    const texto = document.getElementById("kxActionConfirmMessage");
+    const cancelar = document.getElementById("kxActionConfirmCancel");
+    const aceptar = document.getElementById("kxActionConfirmAccept");
+
+    if (!dialogo || !texto || !cancelar || !aceptar || typeof dialogo.showModal !== "function") {
+        return Promise.resolve(false);
+    }
+
+    texto.textContent = String(mensaje || "¿Deseas continuar?");
+
+    return new Promise((resolve) => {
+        let resuelto = false;
+        const finalizar = (confirmado) => {
+            if (resuelto) return;
+            resuelto = true;
+            cancelar.onclick = null;
+            aceptar.onclick = null;
+            dialogo.oncancel = null;
+            dialogo.onclose = null;
+            if (dialogo.open) dialogo.close();
+            resolve(confirmado);
+        };
+
+        cancelar.onclick = () => finalizar(false);
+        aceptar.onclick = () => finalizar(true);
+        dialogo.oncancel = (evento) => {
+            evento.preventDefault();
+            finalizar(false);
+        };
+        dialogo.onclose = () => finalizar(false);
+        dialogo.showModal();
+        cancelar.focus();
+    });
+}
+
+function confirmarAccion(mensaje) {
+    const confirmacion = window.KreditmxNotifications?.confirm;
+
+    if (typeof confirmacion !== "function") {
+        return mostrarConfirmacionSistema(mensaje);
+    }
+
+    try {
+        return Promise.resolve(confirmacion(mensaje)).catch(() => mostrarConfirmacionSistema(mensaje));
+    } catch (error) {
+        return mostrarConfirmacionSistema(mensaje);
+    }
+}
+
 async function generarLink() {
 
     const boton = document.querySelector(".btn-generar");
@@ -23,6 +74,7 @@ async function generarLink() {
         document.getElementById("linkGenerado").value =
             resultado.url || `${window.location.origin}/registro/${resultado.token}`;
         document.getElementById("linkResultado").classList.remove("oculto");
+        window.KreditmxNotifications?.toast("Enlace de registro generado correctamente.", "success");
     } catch (error) {
         alert(error.message);
     } finally {
@@ -42,14 +94,13 @@ function copiarLink() {
         );
 
 
-    navigator.clipboard.writeText(
-        input.value
-    );
-
-
-    alert(
-        "Enlace copiado correctamente."
-    );
+    navigator.clipboard.writeText(input.value)
+        .then(() => {
+            window.KreditmxNotifications?.toast("Enlace copiado correctamente.", "success");
+        })
+        .catch(() => {
+            window.KreditmxNotifications?.toast("No se pudo copiar el enlace. Selecciónalo y cópialo manualmente.", "error");
+        });
 
 }
 
@@ -76,6 +127,7 @@ function enviarWhatsApp() {
         url,
         "_blank"
     );
+    window.KreditmxNotifications?.toast("Enlace preparado para enviar por WhatsApp.", "success");
 
 }
 
@@ -84,7 +136,9 @@ function cerrarSesion() {
 
     fetch("/api/logout", { method: "POST" })
         .finally(() => {
-            window.location.href = "/login";
+            // replace() evita que el panel quede en el historial: al presionar
+            // "Atrás" despues de salir no se vuelve a mostrar la pagina protegida.
+            window.location.replace("/");
         });
 }
 
@@ -128,6 +182,8 @@ function llenarSelectorClientes(clientes, clientesConPrestamo = new Set()) {
 
 let prestamoPagoSeleccionado = null;
 let pagosExistentes = [];
+let numeroPagoPrevioLiquidacion = "";
+let numeroPagoLiquidacion = "";
 
 async function cargarPrestamosPago() {
 
@@ -170,10 +226,14 @@ async function seleccionarPrestamoPago() {
     const id = selector.value;
     const historial = document.getElementById("historialPagosDB");
     const mensaje = document.getElementById("mensajePagoDB");
+    const btnLiquidar = document.getElementById("btnLiquidarPrestamoDB");
 
     mensaje.textContent = "";
     prestamoPagoSeleccionado = null;
     pagosExistentes = [];
+    if (btnLiquidar) {
+        btnLiquidar.disabled = true;
+    }
 
     if (!id) {
         document.getElementById("pagoNumeroDB").innerHTML = '<option value="">Selecciona el pago</option>';
@@ -195,6 +255,9 @@ async function seleccionarPrestamoPago() {
         const datos = await respuesta.json();
         prestamoPagoSeleccionado = datos;
         pagosExistentes = datos.pagos;
+        if (btnLiquidar) {
+            btnLiquidar.disabled = saldoPendientePagoSeleccionado() <= 0;
+        }
 
         document.getElementById("fechaPagoDB").value = new Date().toISOString().slice(0, 10);
 
@@ -336,7 +399,7 @@ async function registrarPagoDB() {
 
     if (!prestamoId || !numero || !fecha || !monto || monto <= 0) {
         mensaje.textContent = "Selecciona el préstamo, el número de pago, la fecha y un monto válido.";
-        return;
+        return false;
     }
 
     const boton = document.getElementById("btnRegistrarPagoDB");
@@ -366,13 +429,165 @@ async function registrarPagoDB() {
         await seleccionarPrestamoPago();
         await cargarPrestamosPago();
         await cargarDatosMariaDB();
+        return true;
     } catch (error) {
         mensaje.textContent = error.message;
+        return false;
     } finally {
         boton.disabled = false;
         boton.textContent = "Registrar pago";
     }
 }
+
+function abrirModalBienvenida() {
+    const modal = document.getElementById("modalBienvenidaCredito");
+    if (modal && !modal.open) {
+        modal.showModal();
+    }
+}
+
+function cerrarModalBienvenida() {
+    const modal = document.getElementById("modalBienvenidaCredito");
+    if (modal?.open) {
+        modal.close();
+    }
+}
+
+function irANuevoCredito() {
+    cerrarModalBienvenida();
+    mostrarModulo("prestamos");
+    document.getElementById("clientePrestamo")?.focus();
+}
+
+function saldoPendientePagoSeleccionado() {
+    if (!prestamoPagoSeleccionado) {
+        return 0;
+    }
+
+    const pagado = pagosExistentes.reduce(
+        (total, pago) => total + Number(pago.monto || 0),
+        0
+    );
+    return Math.max(Number(prestamoPagoSeleccionado.total) - pagado, 0);
+}
+
+function abrirModalLiquidacion() {
+    const mensaje = document.getElementById("mensajePagoDB");
+    const prestamoId = document.getElementById("pagoPrestamo").value;
+    if (!prestamoId || !prestamoPagoSeleccionado) {
+        mensaje.textContent = "Selecciona un préstamo activo antes de liquidarlo.";
+        return;
+    }
+
+    const saldo = saldoPendientePagoSeleccionado();
+    const centavosSaldo = Math.round(saldo * 100);
+    if (centavosSaldo <= 0) {
+        mensaje.textContent = "Este préstamo no tiene saldo pendiente.";
+        return;
+    }
+
+    const numerosPagados = new Set(
+        pagosExistentes.map((pago) => Number(pago.numero_pago))
+    );
+    const numeroDisponible = Array.from(
+        { length: Number(prestamoPagoSeleccionado.numero_pagos) || 0 },
+        (_, indice) => indice + 1
+    ).find((numero) => !numerosPagados.has(numero));
+    numeroPagoLiquidacion = numeroDisponible ||
+        Math.max(0, ...pagosExistentes.map((pago) => Number(pago.numero_pago) || 0)) + 1;
+
+    const selectorNumero = document.getElementById("pagoNumeroDB");
+    numeroPagoPrevioLiquidacion = selectorNumero.value;
+    const existeNumero = Array.from(selectorNumero.options).some(
+        (option) => Number(option.value) === numeroPagoLiquidacion
+    );
+    if (!existeNumero) {
+        const option = document.createElement("option");
+        option.value = String(numeroPagoLiquidacion);
+        option.textContent = "Liquidación de saldo";
+        option.dataset.liquidacion = "true";
+        selectorNumero.appendChild(option);
+    }
+    selectorNumero.value = String(numeroPagoLiquidacion);
+
+    document.getElementById("liquidacionSaldoPendiente").textContent = formatoDinero(saldo);
+    document.getElementById("liquidacionCliente").textContent = prestamoPagoSeleccionado.cliente || "Cliente";
+    document.getElementById("liquidacionMonto").value = (centavosSaldo / 100).toFixed(2);
+    document.getElementById("liquidacionFecha").value = new Date().toISOString().slice(0, 10);
+    document.getElementById("mensajeLiquidacion").textContent = "";
+    document.getElementById("btnConfirmarLiquidacion").disabled = false;
+    document.getElementById("btnConfirmarLiquidacion").textContent = "Registrar liquidación";
+    document.getElementById("modalLiquidacionPrestamo").showModal();
+}
+
+function cerrarModalLiquidacion() {
+    const modal = document.getElementById("modalLiquidacionPrestamo");
+    if (modal?.open) {
+        modal.close();
+    }
+
+    limpiarSeleccionLiquidacion();
+}
+
+function limpiarSeleccionLiquidacion() {
+    const selectorNumero = document.getElementById("pagoNumeroDB");
+    selectorNumero.querySelector('option[data-liquidacion="true"]')?.remove();
+    if (numeroPagoPrevioLiquidacion && Array.from(selectorNumero.options).some(
+        (option) => option.value === numeroPagoPrevioLiquidacion
+    )) {
+        selectorNumero.value = numeroPagoPrevioLiquidacion;
+    }
+    numeroPagoLiquidacion = "";
+}
+
+async function confirmarLiquidacion() {
+    const saldo = saldoPendientePagoSeleccionado();
+    const saldoCentavos = Math.round(saldo * 100);
+    const monto = Number(document.getElementById("liquidacionMonto").value);
+    const fecha = document.getElementById("liquidacionFecha").value;
+    const montoCentavos = Math.round(monto * 100);
+    const mensaje = document.getElementById("mensajeLiquidacion");
+
+    if (!numeroPagoLiquidacion || !Number.isFinite(montoCentavos) || montoCentavos <= 0) {
+        mensaje.textContent = "Ingresa un monto válido para continuar.";
+        return;
+    }
+    if (!fecha) {
+        mensaje.textContent = "Selecciona la fecha en que recibiste el pago.";
+        return;
+    }
+    if (montoCentavos !== saldoCentavos) {
+        mensaje.textContent = `Para liquidar el crédito, registra el saldo exacto de ${formatoDinero(saldo)}.`;
+        return;
+    }
+
+    const boton = document.getElementById("btnConfirmarLiquidacion");
+    boton.disabled = true;
+    boton.textContent = "Registrando...";
+    document.getElementById("pagoNumeroDB").value = String(numeroPagoLiquidacion);
+    document.getElementById("fechaPagoDB").value = fecha;
+    document.getElementById("montoPagoDB").value = (montoCentavos / 100).toFixed(2);
+
+    try {
+        const registrado = await registrarPagoDB();
+        if (registrado) {
+            cerrarModalLiquidacion();
+        } else {
+            mensaje.textContent = document.getElementById("mensajePagoDB").textContent ||
+                "No se pudo registrar la liquidación.";
+        }
+    } finally {
+        boton.disabled = false;
+        boton.textContent = "Registrar liquidación";
+    }
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+    document.getElementById("modalLiquidacionPrestamo")?.addEventListener(
+        "close",
+        limpiarSeleccionLiquidacion
+    );
+});
 
 // ----------------------------------
 // MÓDULO CLIENTES REGISTRADOS
@@ -432,11 +647,10 @@ const buscador =
 async function cargarDatosMariaDB() {
 
     try {
-        const [resumenRespuesta, prestamosRespuesta, clientesRespuesta, fondoRespuesta] = await Promise.all([
+        const [resumenRespuesta, prestamosRespuesta, clientesRespuesta] = await Promise.all([
             fetch("/api/admin/resumen"),
             fetch("/api/prestamos/activos"),
             fetch("/api/clientes"),
-            fetch("/api/fondo"),
         ]);
 
         if (!resumenRespuesta.ok || !prestamosRespuesta.ok || !clientesRespuesta.ok) {
@@ -446,7 +660,6 @@ async function cargarDatosMariaDB() {
         const resumen = await resumenRespuesta.json();
         const prestamos = await prestamosRespuesta.json();
         const clientes = await clientesRespuesta.json();
-        const fondo = fondoRespuesta.ok ? await fondoRespuesta.json() : null;
 
         document.getElementById("totalRegistrosCount").textContent = resumen.total_clientes;
         document.getElementById("pendientesCount").textContent = resumen.pendientes;
@@ -454,22 +667,6 @@ async function cargarDatosMariaDB() {
         document.getElementById("aprobadosCount").textContent = resumen.aprobados;
         document.getElementById("clientesActivosCount").textContent = resumen.clientes_activos;
         document.getElementById("clientesColocadosTotal").textContent = resumen.clientes_activos;
-
-        if (fondo) {
-            const totalInvertido = Number(fondo.total_invertido) || 0;
-            const disponible = Number(fondo.fondo_disponible) || 0;
-            const porcentajeDisponible = totalInvertido > 0
-                ? Math.max(0, Math.round((disponible / totalInvertido) * 100))
-                : 0;
-            const porcentajeTexto = `${porcentajeDisponible}%`;
-
-            document.getElementById("fondoDisponibleResumen").textContent = formatoDinero(disponible);
-            document.getElementById("fondoDisponiblePorcentaje").textContent = porcentajeTexto;
-            document.getElementById("fondoDisponibleOrbita").textContent = porcentajeTexto;
-            document.getElementById("fondoResumenDetalle").textContent = totalInvertido > 0
-                ? `del fondo está listo para nuevos créditos. ${formatoDinero(fondo.prestado)} está colocado.`
-                : "Agrega capital al fondo para comenzar a colocar créditos.";
-        }
 
         // Clientes que ya tienen un préstamo activo (no pueden obtener otro).
         const clientesConPrestamo = new Set(
@@ -481,6 +678,10 @@ async function cargarDatosMariaDB() {
         	renderizarClientesRegistrados(clientes);
         renderizarSolicitudes(resumen, clientes);
         	renderizarPrestamosCancelar(prestamos);
+
+        // El resumen de capital se carga aparte para que un fallo en el fondo
+        // no impida mostrar clientes y préstamos.
+        cargarCapitalDisponible();
 
         const tabla = document.querySelector("#tablaColocados tbody");
         tabla.innerHTML = prestamos.length
@@ -686,7 +887,7 @@ function renderizarDecisiones(resumen, clientes) {
             [cliente.nombres, cliente.apellidos].filter(Boolean).join(" ").trim() ||
             "Cliente";
         let detalle;
-        if (!cliente.tiene_comprobante_domicilio) detalle = "FALTA COMPROBANTE DE DOMICILIO";
+        if (!cliente.tiene_comprobante_domicilio) detalle = "FALTA SELFIE";
         else if (!cliente.cuenta || !cliente.banco) detalle = "VALIDAR CUENTA CLABE";
         else detalle = cliente.estado === "PENDIENTE" ? "SOLICITUD · DOCUMENTOS RECIBIDOS" : "EN REVISIÓN";
 
@@ -768,12 +969,12 @@ function renderizarCreditosRecientes(prestamos) {
         const folio = "KMX—" + String(kxNumero(prestamo.id)).padStart(4, "0");
         return '<button type="button" class="kx-ledger-row" data-url="/cliente?id=' +
             encodeURIComponent(prestamo.cliente_id) + '" onclick="window.location.href=this.dataset.url">' +
-            '<span class="kx-person"><b>' + kxEscapar(kxIniciales(prestamo.nombre)) + "</b>" +
+            '<span class="kx-person" data-label="Persona"><b>' + kxEscapar(kxIniciales(prestamo.nombre)) + "</b>" +
             "<strong>" + kxEscapar(prestamo.nombre || "Cliente") + "</strong></span>" +
-            "<span>" + folio + "</span>" +
-            "<strong>" + kxEntero(prestamo.monto) + "</strong>" +
-            "<span>" + kxFechaCorta(prestamo.fecha_inicio) + "</span>" +
-            '<em class="' + estado.clase + '">' + estado.texto + "</em>" +
+            '<span data-label="Folio">' + folio + "</span>" +
+            '<strong data-label="Monto">' + kxEntero(prestamo.monto) + "</strong>" +
+            '<span data-label="Alta">' + kxFechaCorta(prestamo.fecha_inicio) + "</span>" +
+            '<em class="' + estado.clase + '" data-label="Condición">' + estado.texto + "</em>" +
             '<span class="kx-row-arrow" aria-hidden="true">→</span>' +
             '<i style="--row:' + indice + '"></i></button>';
     }).join("");
@@ -882,7 +1083,8 @@ async function eliminarCliente(boton) {
     const nombre = fila.cells[1].textContent.trim();
     const id = fila.dataset.id || fila.cells[0].textContent.trim().replace("#", "");
 
-    if (!confirm(`¿Eliminar el registro de ${nombre}?`)) {
+    const confirmado = await confirmarAccion(`¿Eliminar el registro de ${nombre}?`);
+    if (!confirmado) {
         return;
     }
 
@@ -1296,16 +1498,12 @@ async function generarPrestamo() {
         }
 
         prestamoActual.id = resultado.prestamo_id;
-        alert(
-            `Préstamo generado correctamente.\n` +
-            `Se descontaron ${formatoDinero(monto)} del fondo disponible.`
-        );
+        alert("Préstamo generado correctamente.");
 
         // Descargar el PDF con el calendario de pagos
         generarCalendarioPDF(prestamoActual);
 
         await cargarDatosMariaDB();
-        cargarFondo();
     } catch (error) {
         alert(error.message);
     } finally {
@@ -3494,6 +3692,40 @@ function renderizarClientes(clientes, clientesConPrestamo = new Set()) {
 
 const dineroFondo = (valor) => formatoDinero(valor);
 
+function actualizarResumenCapital(fondo) {
+    const totalInvertido = Number(fondo.total_invertido) || 0;
+    const disponible = Number(fondo.fondo_disponible) || 0;
+    const porcentajeDisponible = totalInvertido > 0
+        ? Math.max(0, Math.round((disponible / totalInvertido) * 100))
+        : 0;
+    const porcentajeTexto = `${porcentajeDisponible}%`;
+
+    const monto = document.getElementById("fondoDisponibleResumen");
+    const porcentaje = document.getElementById("fondoDisponiblePorcentaje");
+    const orbita = document.getElementById("fondoDisponibleOrbita");
+    const detalle = document.getElementById("fondoResumenDetalle");
+    if (monto) monto.textContent = formatoDinero(disponible);
+    if (porcentaje) porcentaje.textContent = porcentajeTexto;
+    if (orbita) orbita.textContent = porcentajeTexto;
+    if (detalle) {
+        detalle.textContent = totalInvertido > 0
+            ? "del fondo está listo para nuevos créditos."
+            : "Agrega capital al fondo para comenzar a colocar créditos.";
+    }
+}
+
+async function cargarCapitalDisponible() {
+    try {
+        const respuesta = await fetch("/api/fondo");
+        if (!respuesta.ok) {
+            return;
+        }
+        actualizarResumenCapital(await respuesta.json());
+    } catch (error) {
+        console.warn("No se pudo cargar el capital disponible.", error);
+    }
+}
+
 async function cargarFondo() {
 
     try {
@@ -3505,11 +3737,23 @@ async function cargarFondo() {
 
         const fondo = await respuesta.json();
 
+        actualizarResumenCapital(fondo);
+
         document.getElementById("fondoTotalInvertido").textContent = dineroFondo(fondo.total_invertido);
         document.getElementById("fondoPrestado").textContent = dineroFondo(fondo.prestado);
         document.getElementById("fondoDisponible").textContent = dineroFondo(fondo.fondo_disponible);
         document.getElementById("fondoInversionista").textContent = dineroFondo(fondo.para_inversionista);
         document.getElementById("fondoAdmin").textContent = dineroFondo(fondo.para_admin);
+
+        const inversionistaDisponible = document.getElementById("fondoInversionistaDisponible");
+        if (inversionistaDisponible) {
+            inversionistaDisponible.textContent = dineroFondo(fondo.ganancia_inversionista_disponible || 0);
+        }
+
+        const btnGananciaInversionista = document.getElementById("btnRetirarGananciaInversionista");
+        if (btnGananciaInversionista) {
+            btnGananciaInversionista.disabled = !(fondo.ganancia_inversionista_disponible > 0);
+        }
 
         const adminDisponible = document.getElementById("fondoAdminDisponible");
         if (adminDisponible) {
@@ -3634,6 +3878,9 @@ async function registrarInversion() {
             ? "Inversión modificada correctamente."
             : "Inversión registrada correctamente.";
         mensaje.style.color = "#15803d";
+        window.KreditmxNotifications?.toast(id
+            ? "Inversión modificada correctamente."
+            : "Inversión registrada correctamente.", "success");
         cargarFondo();
 
     } catch (error) {
@@ -3669,7 +3916,8 @@ function cancelarEdicionInversion() {
 
 async function eliminarInversion(boton, id) {
 
-    if (!confirm("¿Eliminar esta inversión del fondo?")) {
+    const confirmado = await confirmarAccion("¿Eliminar esta inversión del fondo?");
+    if (!confirmado) {
         return;
     }
 
@@ -3685,6 +3933,7 @@ async function eliminarInversion(boton, id) {
 
         mensaje.textContent = "Inversión eliminada correctamente.";
         mensaje.style.color = "#15803d";
+        window.KreditmxNotifications?.toast("Inversión eliminada correctamente.", "success");
         cancelarEdicionInversion();
         cargarFondo();
 
@@ -3721,6 +3970,7 @@ async function retirarInversion() {
         document.getElementById("retiroMonto").value = "";
         mensaje.textContent = "Retiro registrado correctamente.";
         mensaje.style.color = "#15803d";
+        window.KreditmxNotifications?.toast("Retiro registrado correctamente.", "success");
         cargarFondo();
 
     } catch (error) {
@@ -3729,9 +3979,51 @@ async function retirarInversion() {
     }
 }
 
+async function retirarGananciaInversionista() {
+
+    const confirmado = await confirmarAccion("¿Retirar toda la ganancia acumulada del inversionista? Quedará registrada como retiro.");
+    if (!confirmado) {
+        return;
+    }
+
+    const mensaje = document.getElementById("mensajeFondo");
+    const boton = document.getElementById("btnRetirarGananciaInversionista");
+
+    if (boton) {
+        boton.disabled = true;
+        boton.textContent = "Retirando...";
+    }
+
+    try {
+        const respuesta = await fetch("/api/inversionista/retiro-ganancia", { method: "POST" });
+        const resultado = await respuesta.json();
+
+        if (!respuesta.ok) {
+            throw new Error(resultado.error || "No se pudo registrar el retiro.");
+        }
+
+        if (mensaje) {
+            mensaje.textContent = `Ganancia del inversionista retirada: ${dineroFondo(resultado.monto_retirado)}`;
+            mensaje.style.color = "#15803d";
+        }
+        window.KreditmxNotifications?.toast(`Ganancia del inversionista retirada: ${dineroFondo(resultado.monto_retirado)}`, "success");
+        cargarFondo();
+    } catch (error) {
+        if (mensaje) {
+            mensaje.textContent = error.message;
+            mensaje.style.color = "#b91c1c";
+        }
+    } finally {
+        if (boton) {
+            boton.textContent = "Retirar ganancia";
+        }
+    }
+}
+
 async function retirarGananciaAdmin() {
 
-    if (!confirm("¿Retirar toda tu ganancia del admin acumulada? Quedará registrada como retiro.")) {
+    const confirmado = await confirmarAccion("¿Retirar toda tu ganancia del admin acumulada? Quedará registrada como retiro.");
+    if (!confirmado) {
         return;
     }
 
@@ -3755,6 +4047,7 @@ async function retirarGananciaAdmin() {
             mensaje.textContent = `Ganancia retirada: ${dineroFondo(resultado.monto_retirado)}`;
             mensaje.style.color = "#15803d";
         }
+        window.KreditmxNotifications?.toast(`Ganancia retirada: ${dineroFondo(resultado.monto_retirado)}`, "success");
         cargarFondo();
     } catch (error) {
         if (mensaje) {
@@ -3821,6 +4114,7 @@ async function guardarPorcentajes() {
 
         mensaje.textContent = "Porcentajes guardados correctamente.";
         mensaje.style.color = "#15803d";
+        window.KreditmxNotifications?.toast("Porcentajes guardados correctamente.", "success");
 
     } catch (error) {
         mensaje.textContent = error.message;
@@ -3892,7 +4186,8 @@ async function cancelarPrestamo() {
         return;
     }
 
-    if (!confirm("¿Cancelar este préstamo? El historial de pagos se conserva.")) {
+    const confirmado = await confirmarAccion("¿Cancelar este préstamo? El historial de pagos se conserva.");
+    if (!confirmado) {
         return;
     }
 
@@ -3916,7 +4211,6 @@ async function cancelarPrestamo() {
         alert("Préstamo cancelado correctamente.");
         await cargarDatosMariaDB();
         await cargarPrestamosPago();
-        cargarFondo();
     } catch (error) {
         alert(error.message);
     } finally {
@@ -4093,7 +4387,6 @@ async function guardarEdicionPrestamo() {
         cancelarEdicionPrestamo();
         await cargarDatosMariaDB();
         await cargarPrestamosPago();
-        cargarFondo();
     } catch (error) {
         alert(error.message);
     } finally {

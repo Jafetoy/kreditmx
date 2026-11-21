@@ -114,6 +114,38 @@ class RegistrationFieldsTest(unittest.TestCase):
         self.assertIs(params[-1], True)
         self.assertTrue(connection.committed)
 
+    def test_registration_notifies_client_that_data_is_processing(self):
+        connection = RecordingConnection()
+
+        with (
+            patch.object(app_module, "conectar", return_value=connection),
+            patch.object(app_module, "enviar_correo_estado") as enviar,
+        ):
+            response = self.client.post(
+                "/api/registro",
+                data=self.valid_payload(),
+                content_type="multipart/form-data",
+            )
+
+        self.assertEqual(response.status_code, 200)
+        enviar.assert_called_once_with(42, 7, "PENDIENTE")
+
+    def test_registration_succeeds_even_when_email_delivery_fails(self):
+        connection = RecordingConnection()
+
+        with (
+            patch.object(app_module, "conectar", return_value=connection),
+            patch.object(app_module, "enviar_correo_estado", side_effect=RuntimeError("smtp down")),
+        ):
+            response = self.client.post(
+                "/api/registro",
+                data=self.valid_payload(),
+                content_type="multipart/form-data",
+            )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.get_json()["cliente_id"], 42)
+
     def test_registration_rejects_a_missing_proof_of_address(self):
         payload = self.valid_payload()
         payload.pop("comprobante_domicilio")

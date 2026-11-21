@@ -251,11 +251,11 @@
             </div>
 
             <div>
-                <h3>Comprobante de domicilio</h3>
+                <h3>Selfie</h3>
                 {% if cliente.comprobante_domicilio_url %}
-                    <a class="btn-documento" href="{{ cliente.comprobante_domicilio_url }}" target="_blank" rel="noopener">Abrir comprobante</a>
+                    <a class="btn-documento" href="{{ cliente.comprobante_domicilio_url }}" target="_blank" rel="noopener">Ver selfie</a>
                 {% else %}
-                    <div class="documento-placeholder"><span>Comprobante no disponible</span></div>
+                    <div class="documento-placeholder"><span>Selfie no disponible</span></div>
                 {% endif %}
             </div>
 
@@ -319,6 +319,9 @@
 
 </main>
 
+
+<script src="/js/session-guard.js"></script>
+<script src="/js/ui-notifications.js?v=202611211136"></script>
 
 <script>
 

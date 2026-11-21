@@ -51,6 +51,45 @@
     object-fit: contain;
 }
 
+.kx-auth-page .login-back-link {
+    display: inline-flex;
+    min-height: 44px;
+    align-items: center;
+    gap: 9px;
+    margin: -12px 0 24px;
+    color: var(--kx-muted);
+    font: 500 9px var(--kx-mono);
+    letter-spacing: .06em;
+    text-decoration: none;
+    text-transform: uppercase;
+    transition: color 180ms ease, gap 180ms ease;
+}
+
+.kx-auth-page .login-back-link svg {
+    width: 17px;
+    height: 17px;
+    fill: none;
+    stroke: currentColor;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 1.7;
+    transition: transform 180ms ease;
+}
+
+.kx-auth-page .login-back-link:hover {
+    gap: 13px;
+    color: var(--kx-ink);
+}
+
+.kx-auth-page .login-back-link:hover svg {
+    transform: translateX(-2px);
+}
+
+.kx-auth-page .login-back-link:focus-visible {
+    outline: 2px solid var(--kx-orange);
+    outline-offset: 3px;
+}
+
 .kx-auth-page .login-card h1 {
     margin: 30px 0 8px;
     color: var(--kx-ink);
@@ -208,5 +247,49 @@
 @media (max-width: 760px) {
     .kx-client-page .documentos-admin {
         grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 680px) {
+    .kx-client-page .admin-header {
+        min-height: calc(64px + env(safe-area-inset-top, 0px));
+        grid-template-columns: 1fr auto;
+        gap: 12px;
+        padding: env(safe-area-inset-top, 0px)
+            max(18px, env(safe-area-inset-right, 0px)) 0
+            max(18px, env(safe-area-inset-left, 0px));
+    }
+
+    .kx-client-page .admin-header > div:first-child > span,
+    .kx-client-page .bienvenida-usuario {
+        display: none;
+    }
+
+    .kx-client-page .admin-logo-imagen {
+        width: 116px;
+    }
+
+    .kx-client-page .btn-salir {
+        min-width: 0;
+        min-height: 44px;
+        padding: 0 12px;
+        font-size: 10px;
+    }
+
+    .kx-client-page .admin-container {
+        padding: 28px max(18px, env(safe-area-inset-right, 0px))
+            calc(40px + env(safe-area-inset-bottom, 0px))
+            max(18px, env(safe-area-inset-left, 0px));
+    }
+
+    .kx-client-page .cliente-titulo h1 {
+        font-size: clamp(34px, 10vw, 46px);
+        overflow-wrap: anywhere;
+    }
+}
+
+@media (max-width: 420px) {
+    .kx-client-page .cliente-titulo h1 {
+        font-size: clamp(30px, 9vw, 38px);
     }
 }

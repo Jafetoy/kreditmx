@@ -109,13 +109,8 @@ function mostrarPreview(input, contenedor) {
         return;
     }
 
-    if (archivo.type === "application/pdf") {
-        contenedor.textContent = `Archivo seleccionado: ${archivo.name}`;
-        return;
-    }
-
     if (!archivo.type.startsWith("image/")) {
-        alert("Selecciona una imagen o PDF válido.");
+        alert("Selecciona una imagen válida.");
         input.value = "";
         return;
     }
@@ -182,6 +177,7 @@ formulario.addEventListener("submit", async function (evento) {
         formulario.classList.add("oculto");
         document.querySelector(".registro-progreso")?.classList.add("oculto");
         mensajeExito.classList.remove("oculto");
+        window.KreditmxNotifications?.toast("Expediente enviado correctamente.", "success");
         window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (error) {
         alert(error.message);
