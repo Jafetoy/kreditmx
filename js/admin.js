@@ -1,3 +1,54 @@
+function mostrarConfirmacionSistema(mensaje) {
+    const dialogo = document.getElementById("kxActionConfirmDialog");
+    const texto = document.getElementById("kxActionConfirmMessage");
+    const cancelar = document.getElementById("kxActionConfirmCancel");
+    const aceptar = document.getElementById("kxActionConfirmAccept");
+
+    if (!dialogo || !texto || !cancelar || !aceptar || typeof dialogo.showModal !== "function") {
+        return Promise.resolve(false);
+    }
+
+    texto.textContent = String(mensaje || "¿Deseas continuar?");
+
+    return new Promise((resolve) => {
+        let resuelto = false;
+        const finalizar = (confirmado) => {
+            if (resuelto) return;
+            resuelto = true;
+            cancelar.onclick = null;
+            aceptar.onclick = null;
+            dialogo.oncancel = null;
+            dialogo.onclose = null;
+            if (dialogo.open) dialogo.close();
+            resolve(confirmado);
+        };
+
+        cancelar.onclick = () => finalizar(false);
+        aceptar.onclick = () => finalizar(true);
+        dialogo.oncancel = (evento) => {
+            evento.preventDefault();
+            finalizar(false);
+        };
+        dialogo.onclose = () => finalizar(false);
+        dialogo.showModal();
+        cancelar.focus();
+    });
+}
+
+function confirmarAccion(mensaje) {
+    const confirmacion = window.KreditmxNotifications?.confirm;
+
+    if (typeof confirmacion !== "function") {
+        return mostrarConfirmacionSistema(mensaje);
+    }
+
+    try {
+        return Promise.resolve(confirmacion(mensaje)).catch(() => mostrarConfirmacionSistema(mensaje));
+    } catch (error) {
+        return mostrarConfirmacionSistema(mensaje);
+    }
+}
+
 async function generarLink() {
 
     const boton = document.querySelector(".btn-generar");
@@ -23,6 +74,7 @@ async function generarLink() {
         document.getElementById("linkGenerado").value =
             resultado.url || `${window.location.origin}/registro/${resultado.token}`;
         document.getElementById("linkResultado").classList.remove("oculto");
+        window.KreditmxNotifications?.toast("Enlace de registro generado correctamente.", "success");
     } catch (error) {
         alert(error.message);
     } finally {
@@ -42,14 +94,13 @@ function copiarLink() {
         );
 
 
-    navigator.clipboard.writeText(
-        input.value
-    );
-
-
-    alert(
-        "Enlace copiado correctamente."
-    );
+    navigator.clipboard.writeText(input.value)
+        .then(() => {
+            window.KreditmxNotifications?.toast("Enlace copiado correctamente.", "success");
+        })
+        .catch(() => {
+            window.KreditmxNotifications?.toast("No se pudo copiar el enlace. Selecciónalo y cópialo manualmente.", "error");
+        });
 
 }
 
@@ -76,6 +127,7 @@ function enviarWhatsApp() {
         url,
         "_blank"
     );
+    window.KreditmxNotifications?.toast("Enlace preparado para enviar por WhatsApp.", "success");
 
 }
 
@@ -84,7 +136,9 @@ function cerrarSesion() {
 
     fetch("/api/logout", { method: "POST" })
         .finally(() => {
-            window.location.href = "/login";
+            // replace() evita que el panel quede en el historial: al presionar
+            // "Atrás" despues de salir no se vuelve a mostrar la pagina protegida.
+            window.location.replace("/");
         });
 }
 
@@ -128,6 +182,8 @@ function llenarSelectorClientes(clientes, clientesConPrestamo = new Set()) {
 
 let prestamoPagoSeleccionado = null;
 let pagosExistentes = [];
+let numeroPagoPrevioLiquidacion = "";
+let numeroPagoLiquidacion = "";
 
 async function cargarPrestamosPago() {
 
@@ -170,10 +226,14 @@ async function seleccionarPrestamoPago() {
     const id = selector.value;
     const historial = document.getElementById("historialPagosDB");
     const mensaje = document.getElementById("mensajePagoDB");
+    const btnLiquidar = document.getElementById("btnLiquidarPrestamoDB");
 
     mensaje.textContent = "";
     prestamoPagoSeleccionado = null;
     pagosExistentes = [];
+    if (btnLiquidar) {
+        btnLiquidar.disabled = true;
+    }
 
     if (!id) {
         document.getElementById("pagoNumeroDB").innerHTML = '<option value="">Selecciona el pago</option>';
@@ -195,6 +255,9 @@ async function seleccionarPrestamoPago() {
         const datos = await respuesta.json();
         prestamoPagoSeleccionado = datos;
         pagosExistentes = datos.pagos;
+        if (btnLiquidar) {
+            btnLiquidar.disabled = saldoPendientePagoSeleccionado() <= 0;
+        }
 
         document.getElementById("fechaPagoDB").value = new Date().toISOString().slice(0, 10);
 
@@ -336,7 +399,7 @@ async function registrarPagoDB() {
 
     if (!prestamoId || !numero || !fecha || !monto || monto <= 0) {
         mensaje.textContent = "Selecciona el préstamo, el número de pago, la fecha y un monto válido.";
-        return;
+        return false;
     }
 
     const boton = document.getElementById("btnRegistrarPagoDB");
@@ -366,13 +429,165 @@ async function registrarPagoDB() {
         await seleccionarPrestamoPago();
         await cargarPrestamosPago();
         await cargarDatosMariaDB();
+        return true;
     } catch (error) {
         mensaje.textContent = error.message;
+        return false;
     } finally {
         boton.disabled = false;
         boton.textContent = "Registrar pago";
     }
 }
+
+function abrirModalBienvenida() {
+    const modal = document.getElementById("modalBienvenidaCredito");
+    if (modal && !modal.open) {
+        modal.showModal();
+    }
+}
+
+function cerrarModalBienvenida() {
+    const modal = document.getElementById("modalBienvenidaCredito");
+    if (modal?.open) {
+        modal.close();
+    }
+}
+
+function irANuevoCredito() {
+    cerrarModalBienvenida();
+    mostrarModulo("prestamos");
+    document.getElementById("clientePrestamo")?.focus();
+}
+
+function saldoPendientePagoSeleccionado() {
+    if (!prestamoPagoSeleccionado) {
+        return 0;
+    }
+
+    const pagado = pagosExistentes.reduce(
+        (total, pago) => total + Number(pago.monto || 0),
+        0
+    );
+    return Math.max(Number(prestamoPagoSeleccionado.total) - pagado, 0);
+}
+
+function abrirModalLiquidacion() {
+    const mensaje = document.getElementById("mensajePagoDB");
+    const prestamoId = document.getElementById("pagoPrestamo").value;
+    if (!prestamoId || !prestamoPagoSeleccionado) {
+        mensaje.textContent = "Selecciona un préstamo activo antes de liquidarlo.";
+        return;
+    }
+
+    const saldo = saldoPendientePagoSeleccionado();
+    const centavosSaldo = Math.round(saldo * 100);
+    if (centavosSaldo <= 0) {
+        mensaje.textContent = "Este préstamo no tiene saldo pendiente.";
+        return;
+    }
+
+    const numerosPagados = new Set(
+        pagosExistentes.map((pago) => Number(pago.numero_pago))
+    );
+    const numeroDisponible = Array.from(
+        { length: Number(prestamoPagoSeleccionado.numero_pagos) || 0 },
+        (_, indice) => indice + 1
+    ).find((numero) => !numerosPagados.has(numero));
+    numeroPagoLiquidacion = numeroDisponible ||
+        Math.max(0, ...pagosExistentes.map((pago) => Number(pago.numero_pago) || 0)) + 1;
+
+    const selectorNumero = document.getElementById("pagoNumeroDB");
+    numeroPagoPrevioLiquidacion = selectorNumero.value;
+    const existeNumero = Array.from(selectorNumero.options).some(
+        (option) => Number(option.value) === numeroPagoLiquidacion
+    );
+    if (!existeNumero) {
+        const option = document.createElement("option");
+        option.value = String(numeroPagoLiquidacion);
+        option.textContent = "Liquidación de saldo";
+        option.dataset.liquidacion = "true";
+        selectorNumero.appendChild(option);
+    }
+    selectorNumero.value = String(numeroPagoLiquidacion);
+
+    document.getElementById("liquidacionSaldoPendiente").textContent = formatoDinero(saldo);
+    document.getElementById("liquidacionCliente").textContent = prestamoPagoSeleccionado.cliente || "Cliente";
+    document.getElementById("liquidacionMonto").value = (centavosSaldo / 100).toFixed(2);
+    document.getElementById("liquidacionFecha").value = new Date().toISOString().slice(0, 10);
+    document.getElementById("mensajeLiquidacion").textContent = "";
+    document.getElementById("btnConfirmarLiquidacion").disabled = false;
+    document.getElementById("btnConfirmarLiquidacion").textContent = "Registrar liquidación";
+    document.getElementById("modalLiquidacionPrestamo").showModal();
+}
+
+function cerrarModalLiquidacion() {
+    const modal = document.getElementById("modalLiquidacionPrestamo");
+    if (modal?.open) {
+        modal.close();
+    }
+
+    limpiarSeleccionLiquidacion();
+}
+
+function limpiarSeleccionLiquidacion() {
+    const selectorNumero = document.getElementById("pagoNumeroDB");
+    selectorNumero.querySelector('option[data-liquidacion="true"]')?.remove();
+    if (numeroPagoPrevioLiquidacion && Array.from(selectorNumero.options).some(
+        (option) => option.value === numeroPagoPrevioLiquidacion
+    )) {
+        selectorNumero.value = numeroPagoPrevioLiquidacion;
+    }
+    numeroPagoLiquidacion = "";
+}
+
+async function confirmarLiquidacion() {
+    const saldo = saldoPendientePagoSeleccionado();
+    const saldoCentavos = Math.round(saldo * 100);
+    const monto = Number(document.getElementById("liquidacionMonto").value);
+    const fecha = document.getElementById("liquidacionFecha").value;
+    const montoCentavos = Math.round(monto * 100);
+    const mensaje = document.getElementById("mensajeLiquidacion");
+
+    if (!numeroPagoLiquidacion || !Number.isFinite(montoCentavos) || montoCentavos <= 0) {
+        mensaje.textContent = "Ingresa un monto válido para continuar.";
+        return;
+    }
+    if (!fecha) {
+        mensaje.textContent = "Selecciona la fecha en que recibiste el pago.";
+        return;
+    }
+    if (montoCentavos !== saldoCentavos) {
+        mensaje.textContent = `Para liquidar el crédito, registra el saldo exacto de ${formatoDinero(saldo)}.`;
+        return;
+    }
+
+    const boton = document.getElementById("btnConfirmarLiquidacion");
+    boton.disabled = true;
+    boton.textContent = "Registrando...";
+    document.getElementById("pagoNumeroDB").value = String(numeroPagoLiquidacion);
+    document.getElementById("fechaPagoDB").value = fecha;
+    document.getElementById("montoPagoDB").value = (montoCentavos / 100).toFixed(2);
+
+    try {
+        const registrado = await registrarPagoDB();
+        if (registrado) {
+            cerrarModalLiquidacion();
+        } else {
+            mensaje.textContent = document.getElementById("mensajePagoDB").textContent ||
+                "No se pudo registrar la liquidación.";
+        }
+    } finally {
+        boton.disabled = false;
+        boton.textContent = "Registrar liquidación";
+    }
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+    document.getElementById("modalLiquidacionPrestamo")?.addEventListener(
+        "close",
+        limpiarSeleccionLiquidacion
+    );
+});
 
 // ----------------------------------
 // MÓDULO CLIENTES REGISTRADOS
@@ -461,7 +676,12 @@ async function cargarDatosMariaDB() {
         	renderizarClientes(clientes, clientesConPrestamo);
         llenarSelectorClientes(clientes, clientesConPrestamo);
         	renderizarClientesRegistrados(clientes);
+        renderizarSolicitudes(resumen, clientes);
         	renderizarPrestamosCancelar(prestamos);
+
+        // El resumen de capital se carga aparte para que un fallo en el fondo
+        // no impida mostrar clientes y préstamos.
+        cargarCapitalDisponible();
 
         const tabla = document.querySelector("#tablaColocados tbody");
         tabla.innerHTML = prestamos.length
@@ -476,6 +696,9 @@ async function cargarDatosMariaDB() {
                 </tr>
             `).join("")
             : `<tr><td colspan="6">No hay préstamos activos.</td></tr>`;
+
+        // Paneles operativos de la mesa de control (presentación con datos reales).
+        renderizarPanelesMesaControl(resumen, prestamos, clientes);
     } catch (error) {
         console.warn("No se pudieron cargar los datos de MariaDB.", error);
     }
@@ -485,6 +708,286 @@ cargarDatosMariaDB();
 // Refrescar los datos cada 15 segundos para ver registros nuevos
 // sin recargar la página.
 setInterval(cargarDatosMariaDB, 15000);
+
+
+// ------------------------------------------
+// MESA DE CONTROL — PANELES OPERATIVOS (FIGMA)
+// Presentación de datos reales ya cargados. No agrega endpoints ni cálculos de negocio.
+// ------------------------------------------
+
+const KX_MESES = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"];
+
+function kxTexto(id, valor) {
+    const nodo = document.getElementById(id);
+    if (nodo) nodo.textContent = valor;
+}
+
+function kxEscapar(valor) {
+    return String(valor ?? "").replace(/[&<>"']/g, (caracter) => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+    })[caracter]);
+}
+
+function kxNumero(valor) {
+    const numero = Number(valor);
+    return Number.isFinite(numero) ? numero : 0;
+}
+
+function kxIniciales(nombre) {
+    const partes = String(nombre || "").trim().split(/\s+/).filter(Boolean);
+    if (!partes.length) return "—";
+    if (partes.length === 1) return partes[0].slice(0, 2).toUpperCase();
+    return (partes[0][0] + partes[partes.length - 1][0]).toUpperCase();
+}
+
+function kxCompacto(valor) {
+    const numero = kxNumero(valor);
+    const absoluto = Math.abs(numero);
+    const signo = numero < 0 ? "-" : "";
+    if (absoluto >= 1000000) {
+        return signo + "$" + (absoluto / 1000000).toFixed(2).replace(/\.?0+$/, "") + "M";
+    }
+    if (absoluto >= 1000) {
+        return signo + "$" + (absoluto / 1000).toFixed(1).replace(/\.0$/, "") + "K";
+    }
+    return signo + "$" + Math.round(absoluto).toLocaleString("es-MX");
+}
+
+function kxEntero(valor) {
+    return "$" + Math.round(kxNumero(valor)).toLocaleString("es-MX");
+}
+
+function kxFecha(valor) {
+    if (!valor) return null;
+    const fecha = new Date(valor);
+    return Number.isNaN(fecha.getTime()) ? null : fecha;
+}
+
+function kxTiempoRelativo(valor) {
+    const fecha = kxFecha(valor);
+    if (!fecha) return "—";
+    const minutos = Math.max(0, Math.floor((Date.now() - fecha.getTime()) / 60000));
+    if (minutos < 1) return "ahora";
+    if (minutos < 60) return minutos + " min";
+    const horas = Math.floor(minutos / 60);
+    if (horas < 24) return horas + " h";
+    const dias = Math.floor(horas / 24);
+    if (dias < 30) return dias + " d";
+    const meses = Math.floor(dias / 30);
+    return meses + (meses === 1 ? " mes" : " meses");
+}
+
+function kxFechaCorta(valor) {
+    const fecha = kxFecha(valor);
+    if (!fecha) return "—";
+    return String(fecha.getDate()).padStart(2, "0") + " " + KX_MESES[fecha.getMonth()];
+}
+
+function kxEstadoPrestamo(prestamo) {
+    const fecha = kxFecha(prestamo.fecha_inicio);
+    const saldo = kxNumero(prestamo.saldo);
+    if (!fecha || saldo <= 0) return { texto: "AL CORRIENTE", clase: "" };
+    const cuota = kxNumero(prestamo.total) / Math.max(1, kxNumero(prestamo.numero_pagos) || 1);
+    const pagosHechos = cuota > 0 ? Math.max(0, Math.floor(kxNumero(prestamo.pagado) / cuota)) : 0;
+    const proximo = obtenerFechaPago(pagosHechos + 1, {
+        fechaInicio: prestamo.fecha_inicio,
+        periodicidad: prestamo.periodicidad
+    });
+    const dias = Math.ceil((proximo.getTime() - Date.now()) / 86400000);
+    if (dias < 0) return { texto: "ATRASADO", clase: "late" };
+    if (dias <= 7) return { texto: "PRÓXIMO PAGO", clase: "soon" };
+    return { texto: "AL CORRIENTE", clase: "" };
+}
+
+function kxMesesRecientes(prestamos) {
+    const ahora = new Date();
+    const meses = [];
+    for (let desplazamiento = 5; desplazamiento >= 0; desplazamiento--) {
+        const fecha = new Date(ahora.getFullYear(), ahora.getMonth() - desplazamiento, 1);
+        meses.push({
+            anio: fecha.getFullYear(),
+            mes: fecha.getMonth(),
+            etiqueta: KX_MESES[fecha.getMonth()],
+            total: 0
+        });
+    }
+    prestamos.forEach((prestamo) => {
+        const fecha = kxFecha(prestamo.fecha_inicio);
+        if (!fecha) return;
+        const destino = meses.find((m) => m.anio === fecha.getFullYear() && m.mes === fecha.getMonth());
+        if (destino) destino.total += kxNumero(prestamo.monto);
+    });
+    return meses;
+}
+
+function renderizarIndicadores(resumen, prestamos, clientes) {
+    const cartera = prestamos.reduce((suma, p) => suma + kxNumero(p.monto), 0);
+    const atrasados = prestamos.filter((p) => kxEstadoPrestamo(p).texto === "ATRASADO");
+    const porRecuperar = atrasados.reduce((suma, p) => suma + kxNumero(p.saldo), 0);
+    const ahora = new Date();
+    const nuevasEsteMes = clientes.filter((cliente) => {
+        const fecha = kxFecha(cliente.creado_en);
+        return fecha && fecha.getFullYear() === ahora.getFullYear() && fecha.getMonth() === ahora.getMonth();
+    }).length;
+
+    kxTexto("kxCarteraActiva", kxCompacto(cartera));
+    kxTexto("kxPersonasActivas", String(kxNumero(resumen && resumen.clientes_activos)));
+    kxTexto("kxPorRecuperar", kxCompacto(porRecuperar));
+
+    const meses = kxMesesRecientes(prestamos);
+    const actual = meses[meses.length - 1] ? meses[meses.length - 1].total : 0;
+    const anterior = meses[meses.length - 2] ? meses[meses.length - 2].total : 0;
+    const variacion = anterior > 0 ? Math.round(((actual - anterior) / anterior) * 100) : 0;
+    kxTexto("kxCarteraDelta", (variacion >= 0 ? "↑ " : "↓ ") + Math.abs(variacion) + "%");
+    kxTexto("kxPersonasDelta", "+" + nuevasEsteMes);
+    kxTexto("kxPorRecuperarDelta", atrasados.length + (atrasados.length === 1 ? " CUENTA" : " CUENTAS"));
+}
+
+function renderizarColocacion(prestamos) {
+    const meses = kxMesesRecientes(prestamos);
+    const maximoDatos = Math.max(0, ...meses.map((m) => m.total));
+    const maximo = Math.max(1, maximoDatos);
+    const total = meses.reduce((suma, m) => suma + m.total, 0);
+
+    kxTexto("kxColocacionTotal", kxCompacto(total));
+    kxTexto("kxEscalaAlta", kxCompacto(maximoDatos));
+    kxTexto("kxEscalaMedia", kxCompacto(maximoDatos * 2 / 3));
+    kxTexto("kxEscalaBaja", kxCompacto(maximoDatos / 3));
+
+    const contenedor = document.getElementById("kxColocacionBars");
+    if (!contenedor) return;
+    contenedor.innerHTML = meses.map((mes, indice) => {
+        const altura = Math.max(2, Math.round((mes.total / maximo) * 100));
+        const actual = indice === meses.length - 1;
+        const insignia = actual && mes.total > 0 ? "<b>" + kxCompacto(mes.total) + "</b>" : "";
+        return '<div class="' + (actual ? "current" : "") + '">' +
+            '<i style="height:' + altura + '%"></i>' +
+            "<span>" + mes.etiqueta + "</span>" + insignia + "</div>";
+    }).join("");
+}
+
+function renderizarDecisiones(resumen, clientes) {
+    const pendientes = kxNumero(resumen && resumen.pendientes);
+    const revision = kxNumero(resumen && resumen.en_revision);
+    kxTexto("kxDecisionesTotal", String(pendientes + revision).padStart(2, "0"));
+
+    const lista = document.getElementById("kxDecisionesLista");
+    if (!lista) return;
+    const candidatos = clientes
+        .filter((cliente) => cliente.estado === "PENDIENTE" || cliente.estado === "EN_REVISION")
+        .slice(0, 3);
+
+    if (!candidatos.length) {
+        lista.innerHTML = '<div class="kx-empty-row">No hay solicitudes pendientes.</div>';
+        return;
+    }
+
+    lista.innerHTML = candidatos.map((cliente) => {
+        const nombre = cliente.nombre ||
+            [cliente.nombres, cliente.apellidos].filter(Boolean).join(" ").trim() ||
+            "Cliente";
+        let detalle;
+        if (!cliente.tiene_comprobante_domicilio) detalle = "FALTA SELFIE";
+        else if (!cliente.cuenta || !cliente.banco) detalle = "VALIDAR CUENTA CLABE";
+        else detalle = cliente.estado === "PENDIENTE" ? "SOLICITUD · DOCUMENTOS RECIBIDOS" : "EN REVISIÓN";
+
+        return '<button type="button" data-url="/cliente?id=' + encodeURIComponent(cliente.id) +
+            '" onclick="window.location.href=this.dataset.url">' +
+            '<span class="kx-avatar">' + kxEscapar(kxIniciales(nombre)) + "</span>" +
+            "<div><strong>" + kxEscapar(nombre) + "</strong>" +
+            "<small>" + kxEscapar(detalle) + "</small></div>" +
+            "<em>" + kxEscapar(kxTiempoRelativo(cliente.creado_en)) + "</em>" +
+            '<span aria-hidden="true">→</span></button>';
+    }).join("");
+}
+
+function renderizarSolicitudes(resumen, clientes) {
+    const pendientes = kxNumero(resumen && resumen.pendientes);
+    const revision = kxNumero(resumen && resumen.en_revision);
+    const total = pendientes + revision;
+
+    kxTexto("kxNotificacionesBadge", String(total));
+    kxTexto("kxSolicitudesRailBadge", String(total));
+    kxTexto("kxSolicitudesTotal", String(total));
+    kxTexto("kxSolicitudesPendientes", String(pendientes));
+    kxTexto("kxSolicitudesRevision", String(revision));
+
+    const lista = document.getElementById("kxSolicitudesLista");
+    if (!lista) return;
+
+    const candidatos = (Array.isArray(clientes) ? clientes : [])
+        .filter((cliente) => cliente.estado === "PENDIENTE" || cliente.estado === "EN_REVISION")
+        .sort((a, b) => {
+            const fechaA = kxFecha(a.creado_en);
+            const fechaB = kxFecha(b.creado_en);
+            return (fechaB ? fechaB.getTime() : 0) - (fechaA ? fechaA.getTime() : 0);
+        });
+
+    if (!candidatos.length) {
+        lista.innerHTML = '<div class="kx-empty-row">No hay solicitudes nuevas por revisar.</div>';
+        return;
+    }
+
+    lista.innerHTML = candidatos.map((cliente) => {
+        const nombre = cliente.nombre ||
+            [cliente.nombres, cliente.apellidos].filter(Boolean).join(" ").trim() ||
+            "Cliente";
+        const esPendiente = cliente.estado === "PENDIENTE";
+        let detalle;
+        if (!cliente.tiene_comprobante_domicilio) detalle = "Falta documento domiciliario";
+        else if (!cliente.cuenta || !cliente.banco) detalle = "Validar cuenta CLABE";
+        else detalle = esPendiente ? "Documentos recibidos" : "En revisión";
+
+        return '<article class="kx-solicitud">' +
+            '<span class="kx-avatar">' + kxEscapar(kxIniciales(nombre)) + "</span>" +
+            "<div><strong>" + kxEscapar(nombre) + "</strong>" +
+            "<small>" + kxEscapar(detalle) + "</small></div>" +
+            '<em class="kx-solicitud-estado ' + (esPendiente ? "pendiente" : "revision") + '">' +
+            (esPendiente ? "Pendiente" : "En revisión") + "</em>" +
+            '<span class="kx-solicitud-fecha">' + kxEscapar(kxTiempoRelativo(cliente.creado_en)) + "</span>" +
+            '<a class="kx-solicitud-ir" href="/cliente?id=' + encodeURIComponent(cliente.id) +
+            '">Ver ficha →</a></article>';
+    }).join("");
+}
+
+function renderizarCreditosRecientes(prestamos) {
+    const contenedor = document.getElementById("kxCreditosRecientes");
+    if (!contenedor) return;
+    const recientes = prestamos.slice().sort((a, b) => {
+        const fechaA = kxFecha(a.fecha_inicio);
+        const fechaB = kxFecha(b.fecha_inicio);
+        return (fechaB ? fechaB.getTime() : 0) - (fechaA ? fechaA.getTime() : 0);
+    }).slice(0, 5);
+
+    if (!recientes.length) {
+        contenedor.innerHTML = '<div class="kx-empty-row">No hay créditos activos recientes.</div>';
+        return;
+    }
+
+    contenedor.innerHTML = recientes.map((prestamo, indice) => {
+        const estado = kxEstadoPrestamo(prestamo);
+        const folio = "KMX—" + String(kxNumero(prestamo.id)).padStart(4, "0");
+        return '<button type="button" class="kx-ledger-row" data-url="/cliente?id=' +
+            encodeURIComponent(prestamo.cliente_id) + '" onclick="window.location.href=this.dataset.url">' +
+            '<span class="kx-person" data-label="Persona"><b>' + kxEscapar(kxIniciales(prestamo.nombre)) + "</b>" +
+            "<strong>" + kxEscapar(prestamo.nombre || "Cliente") + "</strong></span>" +
+            '<span data-label="Folio">' + folio + "</span>" +
+            '<strong data-label="Monto">' + kxEntero(prestamo.monto) + "</strong>" +
+            '<span data-label="Alta">' + kxFechaCorta(prestamo.fecha_inicio) + "</span>" +
+            '<em class="' + estado.clase + '" data-label="Condición">' + estado.texto + "</em>" +
+            '<span class="kx-row-arrow" aria-hidden="true">→</span>' +
+            '<i style="--row:' + indice + '"></i></button>';
+    }).join("");
+}
+
+function renderizarPanelesMesaControl(resumen, prestamos, clientes) {
+    const listaPrestamos = Array.isArray(prestamos) ? prestamos : [];
+    const listaClientes = Array.isArray(clientes) ? clientes : [];
+    renderizarIndicadores(resumen, listaPrestamos, listaClientes);
+    renderizarColocacion(listaPrestamos);
+    renderizarDecisiones(resumen, listaClientes);
+    renderizarCreditosRecientes(listaPrestamos);
+}
 
 
 // ----------------------------------
@@ -580,7 +1083,8 @@ async function eliminarCliente(boton) {
     const nombre = fila.cells[1].textContent.trim();
     const id = fila.dataset.id || fila.cells[0].textContent.trim().replace("#", "");
 
-    if (!confirm(`¿Eliminar el registro de ${nombre}?`)) {
+    const confirmado = await confirmarAccion(`¿Eliminar el registro de ${nombre}?`);
+    if (!confirmado) {
         return;
     }
 
@@ -994,16 +1498,12 @@ async function generarPrestamo() {
         }
 
         prestamoActual.id = resultado.prestamo_id;
-        alert(
-            `Préstamo generado correctamente.\n` +
-            `Se descontaron ${formatoDinero(monto)} del fondo disponible.`
-        );
+        alert("Préstamo generado correctamente.");
 
         // Descargar el PDF con el calendario de pagos
         generarCalendarioPDF(prestamoActual);
 
         await cargarDatosMariaDB();
-        cargarFondo();
     } catch (error) {
         alert(error.message);
     } finally {
@@ -3192,6 +3692,40 @@ function renderizarClientes(clientes, clientesConPrestamo = new Set()) {
 
 const dineroFondo = (valor) => formatoDinero(valor);
 
+function actualizarResumenCapital(fondo) {
+    const totalInvertido = Number(fondo.total_invertido) || 0;
+    const disponible = Number(fondo.fondo_disponible) || 0;
+    const porcentajeDisponible = totalInvertido > 0
+        ? Math.max(0, Math.round((disponible / totalInvertido) * 100))
+        : 0;
+    const porcentajeTexto = `${porcentajeDisponible}%`;
+
+    const monto = document.getElementById("fondoDisponibleResumen");
+    const porcentaje = document.getElementById("fondoDisponiblePorcentaje");
+    const orbita = document.getElementById("fondoDisponibleOrbita");
+    const detalle = document.getElementById("fondoResumenDetalle");
+    if (monto) monto.textContent = formatoDinero(disponible);
+    if (porcentaje) porcentaje.textContent = porcentajeTexto;
+    if (orbita) orbita.textContent = porcentajeTexto;
+    if (detalle) {
+        detalle.textContent = totalInvertido > 0
+            ? "del fondo está listo para nuevos créditos."
+            : "Agrega capital al fondo para comenzar a colocar créditos.";
+    }
+}
+
+async function cargarCapitalDisponible() {
+    try {
+        const respuesta = await fetch("/api/fondo");
+        if (!respuesta.ok) {
+            return;
+        }
+        actualizarResumenCapital(await respuesta.json());
+    } catch (error) {
+        console.warn("No se pudo cargar el capital disponible.", error);
+    }
+}
+
 async function cargarFondo() {
 
     try {
@@ -3203,11 +3737,23 @@ async function cargarFondo() {
 
         const fondo = await respuesta.json();
 
+        actualizarResumenCapital(fondo);
+
         document.getElementById("fondoTotalInvertido").textContent = dineroFondo(fondo.total_invertido);
         document.getElementById("fondoPrestado").textContent = dineroFondo(fondo.prestado);
         document.getElementById("fondoDisponible").textContent = dineroFondo(fondo.fondo_disponible);
         document.getElementById("fondoInversionista").textContent = dineroFondo(fondo.para_inversionista);
         document.getElementById("fondoAdmin").textContent = dineroFondo(fondo.para_admin);
+
+        const inversionistaDisponible = document.getElementById("fondoInversionistaDisponible");
+        if (inversionistaDisponible) {
+            inversionistaDisponible.textContent = dineroFondo(fondo.ganancia_inversionista_disponible || 0);
+        }
+
+        const btnGananciaInversionista = document.getElementById("btnRetirarGananciaInversionista");
+        if (btnGananciaInversionista) {
+            btnGananciaInversionista.disabled = !(fondo.ganancia_inversionista_disponible > 0);
+        }
 
         const adminDisponible = document.getElementById("fondoAdminDisponible");
         if (adminDisponible) {
@@ -3332,6 +3878,9 @@ async function registrarInversion() {
             ? "Inversión modificada correctamente."
             : "Inversión registrada correctamente.";
         mensaje.style.color = "#15803d";
+        window.KreditmxNotifications?.toast(id
+            ? "Inversión modificada correctamente."
+            : "Inversión registrada correctamente.", "success");
         cargarFondo();
 
     } catch (error) {
@@ -3367,7 +3916,8 @@ function cancelarEdicionInversion() {
 
 async function eliminarInversion(boton, id) {
 
-    if (!confirm("¿Eliminar esta inversión del fondo?")) {
+    const confirmado = await confirmarAccion("¿Eliminar esta inversión del fondo?");
+    if (!confirmado) {
         return;
     }
 
@@ -3383,6 +3933,7 @@ async function eliminarInversion(boton, id) {
 
         mensaje.textContent = "Inversión eliminada correctamente.";
         mensaje.style.color = "#15803d";
+        window.KreditmxNotifications?.toast("Inversión eliminada correctamente.", "success");
         cancelarEdicionInversion();
         cargarFondo();
 
@@ -3419,6 +3970,7 @@ async function retirarInversion() {
         document.getElementById("retiroMonto").value = "";
         mensaje.textContent = "Retiro registrado correctamente.";
         mensaje.style.color = "#15803d";
+        window.KreditmxNotifications?.toast("Retiro registrado correctamente.", "success");
         cargarFondo();
 
     } catch (error) {
@@ -3427,9 +3979,51 @@ async function retirarInversion() {
     }
 }
 
+async function retirarGananciaInversionista() {
+
+    const confirmado = await confirmarAccion("¿Retirar toda la ganancia acumulada del inversionista? Quedará registrada como retiro.");
+    if (!confirmado) {
+        return;
+    }
+
+    const mensaje = document.getElementById("mensajeFondo");
+    const boton = document.getElementById("btnRetirarGananciaInversionista");
+
+    if (boton) {
+        boton.disabled = true;
+        boton.textContent = "Retirando...";
+    }
+
+    try {
+        const respuesta = await fetch("/api/inversionista/retiro-ganancia", { method: "POST" });
+        const resultado = await respuesta.json();
+
+        if (!respuesta.ok) {
+            throw new Error(resultado.error || "No se pudo registrar el retiro.");
+        }
+
+        if (mensaje) {
+            mensaje.textContent = `Ganancia del inversionista retirada: ${dineroFondo(resultado.monto_retirado)}`;
+            mensaje.style.color = "#15803d";
+        }
+        window.KreditmxNotifications?.toast(`Ganancia del inversionista retirada: ${dineroFondo(resultado.monto_retirado)}`, "success");
+        cargarFondo();
+    } catch (error) {
+        if (mensaje) {
+            mensaje.textContent = error.message;
+            mensaje.style.color = "#b91c1c";
+        }
+    } finally {
+        if (boton) {
+            boton.textContent = "Retirar ganancia";
+        }
+    }
+}
+
 async function retirarGananciaAdmin() {
 
-    if (!confirm("¿Retirar toda tu ganancia del admin acumulada? Quedará registrada como retiro.")) {
+    const confirmado = await confirmarAccion("¿Retirar toda tu ganancia del admin acumulada? Quedará registrada como retiro.");
+    if (!confirmado) {
         return;
     }
 
@@ -3453,6 +4047,7 @@ async function retirarGananciaAdmin() {
             mensaje.textContent = `Ganancia retirada: ${dineroFondo(resultado.monto_retirado)}`;
             mensaje.style.color = "#15803d";
         }
+        window.KreditmxNotifications?.toast(`Ganancia retirada: ${dineroFondo(resultado.monto_retirado)}`, "success");
         cargarFondo();
     } catch (error) {
         if (mensaje) {
@@ -3519,6 +4114,7 @@ async function guardarPorcentajes() {
 
         mensaje.textContent = "Porcentajes guardados correctamente.";
         mensaje.style.color = "#15803d";
+        window.KreditmxNotifications?.toast("Porcentajes guardados correctamente.", "success");
 
     } catch (error) {
         mensaje.textContent = error.message;
@@ -3590,7 +4186,8 @@ async function cancelarPrestamo() {
         return;
     }
 
-    if (!confirm("¿Cancelar este préstamo? El historial de pagos se conserva.")) {
+    const confirmado = await confirmarAccion("¿Cancelar este préstamo? El historial de pagos se conserva.");
+    if (!confirmado) {
         return;
     }
 
@@ -3614,7 +4211,6 @@ async function cancelarPrestamo() {
         alert("Préstamo cancelado correctamente.");
         await cargarDatosMariaDB();
         await cargarPrestamosPago();
-        cargarFondo();
     } catch (error) {
         alert(error.message);
     } finally {
@@ -3791,7 +4387,6 @@ async function guardarEdicionPrestamo() {
         cancelarEdicionPrestamo();
         await cargarDatosMariaDB();
         await cargarPrestamosPago();
-        cargarFondo();
     } catch (error) {
         alert(error.message);
     } finally {

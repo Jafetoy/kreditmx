@@ -1,0 +1,387 @@
+.kx-admin-page .panel,
+.kx-client-page .panel {
+    margin: 0 0 38px;
+    padding: 30px;
+    border: 1px solid var(--kx-line);
+    border-radius: 0;
+    box-shadow: none;
+    background: rgba(250, 249, 244, .96);
+}
+
+.kx-admin-page .modulos-panel {
+    border-top: 3px solid var(--kx-ink);
+}
+
+.kx-admin-page .modulos-encabezado,
+.kx-admin-page .panel-header {
+    margin-bottom: 24px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--kx-line);
+}
+
+.kx-admin-page .eyebrow,
+.kx-admin-page .titulo-seccion,
+.kx-admin-page .panel-header p {
+    color: var(--kx-muted);
+    font: 500 11px var(--kx-mono);
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+
+.kx-admin-page h2,
+.kx-client-page h2 {
+    margin: 6px 0;
+    color: var(--kx-ink);
+    font-size: clamp(22px, 2.1vw, 31px);
+    line-height: 1.05;
+    letter-spacing: -.03em;
+    font-family: var(--kx-sans);
+    font-weight: 600;
+}
+
+.kx-admin-page .modulos-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1px;
+    border: 1px solid var(--kx-line);
+    background: var(--kx-line);
+}
+
+.kx-admin-page .modulo-card {
+    min-height: 148px;
+    margin: 0;
+    padding: 20px;
+    align-content: start;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    color: var(--kx-ink);
+    background: var(--kx-surface);
+    text-align: left;
+    transition: color .2s ease, background-color .2s ease;
+    border-color: transparent !important;
+}
+
+.kx-admin-page .modulo-card:focus-visible {
+    color: var(--kx-ink);
+    background: var(--kx-acid);
+    transform: none;
+}
+
+.kx-admin-page .modulo-card:first-child {
+    color: #fff;
+    background: var(--kx-ink);
+}
+
+.kx-admin-page .modulo-card:first-child:focus-visible {
+    color: var(--kx-ink);
+    background: var(--kx-acid);
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .kx-admin-page .modulo-card:hover,
+    .kx-admin-page .modulo-card:first-child:hover {
+        color: var(--kx-ink);
+        background: var(--kx-acid);
+        transform: none;
+    }
+}
+
+.kx-admin-page .modulo-icono {
+    width: 34px;
+    height: 34px;
+    margin-bottom: 18px;
+    display: grid;
+    place-items: center;
+    border: 1px solid currentColor;
+    border-radius: 50%;
+    font: 500 12px var(--kx-mono);
+    color: currentColor !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+.kx-admin-page .modulo-card strong {
+    display: block;
+    margin-bottom: 7px;
+    font-size: 14px;
+    letter-spacing: -.01em;
+}
+
+.kx-admin-page .modulo-card > span:last-child {
+    color: inherit;
+    opacity: .68;
+    font-size: 11px;
+    line-height: 1.55;
+}
+
+.kx-admin-page .modulo-panel {
+    scroll-margin-top: 92px;
+}
+
+.kx-admin-page input,
+.kx-admin-page select,
+.kx-admin-page textarea,
+.kx-client-page input,
+.kx-client-page select {
+    min-height: 46px;
+    border: 0;
+    border-bottom: 1px solid #8f8f91;
+    border-radius: 0;
+    color: var(--kx-ink);
+    background: transparent;
+}
+
+.kx-admin-page input:focus,
+.kx-admin-page select:focus,
+.kx-admin-page textarea:focus,
+.kx-client-page input:focus,
+.kx-client-page select:focus {
+    border-bottom-color: var(--kx-orange);
+    box-shadow: inset 0 -1px 0 var(--kx-orange);
+}
+
+.kx-admin-page label,
+.kx-client-page label {
+    color: var(--kx-ink);
+    font: 500 9px var(--kx-mono);
+    letter-spacing: .06em;
+    text-transform: uppercase;
+}
+
+.kx-admin-page .btn-principal,
+.kx-admin-page .btn-calcular,
+.kx-admin-page .btn-generar,
+.kx-admin-page .btn-pdf,
+.kx-admin-page .btn-primario,
+.kx-admin-page .btn-guardar-edicion,
+.kx-client-page .btn-generar {
+    min-height: 48px;
+    padding: 0 18px;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    color: #fff;
+    background: var(--kx-ink);
+    font: 500 10px var(--kx-mono);
+    letter-spacing: .04em;
+    text-transform: uppercase;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .kx-admin-page .btn-principal:hover,
+    .kx-admin-page .btn-calcular:hover,
+    .kx-admin-page .btn-generar:hover,
+    .kx-admin-page .btn-pdf:hover,
+    .kx-admin-page .btn-primario:hover,
+    .kx-admin-page .btn-guardar-edicion:hover,
+    .kx-client-page .btn-generar:hover {
+        color: var(--kx-ink);
+        background: var(--kx-acid);
+        transform: none;
+    }
+}
+
+.kx-admin-page .btn-secundario,
+.kx-admin-page .btn-cancelar-prestamo,
+.kx-client-page .btn-salir {
+    min-height: 46px;
+    padding: 0 18px;
+    border: 1px solid var(--kx-ink);
+    border-radius: 0;
+    color: var(--kx-ink);
+    background: transparent;
+    font: 500 9px var(--kx-mono);
+    text-transform: uppercase;
+}
+
+.kx-admin-page .tabla-wrapper,
+.kx-admin-page .tabla-contenedor,
+.kx-client-page .documentos-admin {
+    border: 1px solid var(--kx-line);
+    background: var(--kx-surface);
+    padding: 18px;
+    box-shadow: none;
+}
+
+.kx-client-page .documento-placeholder {
+    padding: 16px;
+    box-shadow: none;
+}
+
+.kx-admin-page table {
+    border-collapse: collapse;
+    font-variant-numeric: tabular-nums;
+}
+
+.kx-admin-page th {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--kx-line);
+    color: var(--kx-muted);
+    background: var(--kx-paper);
+    font: 500 8px var(--kx-mono);
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+
+.kx-admin-page td {
+    padding: 14px;
+    border-bottom: 1px solid var(--kx-line);
+    color: var(--kx-ink);
+    font-size: 12px;
+}
+
+.kx-admin-page tbody tr {
+    transition: background-color .18s ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .kx-admin-page tbody tr:hover {
+        background: rgba(216, 255, 54, .34);
+    }
+}
+
+.kx-admin-page .resultado-prestamo,
+.kx-admin-page .resumen-pago,
+.kx-admin-page .link-resultado,
+.kx-admin-page .dato-pago,
+.kx-admin-page .resumen-item,
+.kx-client-page .dato {
+    border: 1px solid var(--kx-line);
+    border-radius: 0;
+    box-shadow: none;
+    background: #fff;
+}
+
+.kx-admin-page .resultado-prestamo {
+    padding: 20px;
+}
+
+.kx-admin-page .mensaje-pago,
+.kx-client-page .mensaje-pago {
+    font: 500 10px/1.5 var(--kx-mono);
+}
+
+.kx-admin-page .kx-solicitudes-resumen {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1px;
+    margin: 0 0 20px;
+    border: 1px solid var(--kx-line);
+    background: var(--kx-line);
+}
+
+.kx-admin-page .kx-solicitudes-resumen > div {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 18px;
+    background: rgba(255, 255, 255, .6);
+}
+
+.kx-admin-page .kx-solicitudes-resumen span {
+    color: var(--kx-muted);
+    font: 500 9px var(--kx-mono);
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+
+.kx-admin-page .kx-solicitudes-resumen strong {
+    font: 600 24px var(--kx-sans);
+    letter-spacing: -.03em;
+}
+
+.kx-admin-page .kx-solicitudes-lista {
+    display: grid;
+    gap: 1px;
+    border: 1px solid var(--kx-line);
+    background: var(--kx-line);
+}
+
+.kx-admin-page .kx-solicitud {
+    display: grid;
+    grid-template-columns: 34px minmax(0, 1fr) auto auto auto;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 18px;
+    background: var(--kx-surface);
+}
+
+.kx-admin-page .kx-solicitud > div {
+    min-width: 0;
+}
+
+.kx-admin-page .kx-solicitud strong {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font: 600 13px var(--kx-sans);
+}
+
+.kx-admin-page .kx-solicitud small {
+    display: block;
+    margin-top: 4px;
+    color: var(--kx-muted);
+    font: 400 9px var(--kx-mono);
+    letter-spacing: .04em;
+    text-transform: uppercase;
+}
+
+.kx-admin-page .kx-solicitud-estado {
+    padding: 6px 8px;
+    border: 1px solid var(--kx-line);
+    font: normal 500 9px var(--kx-mono);
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.kx-admin-page .kx-solicitud-estado.pendiente {
+    color: var(--kx-orange-text);
+    border-color: var(--kx-orange);
+}
+
+.kx-admin-page .kx-solicitud-estado.revision {
+    color: var(--kx-ink);
+    border-color: var(--kx-ink);
+}
+
+.kx-admin-page .kx-solicitud-fecha {
+    color: var(--kx-muted);
+    font: 400 9px var(--kx-mono);
+    white-space: nowrap;
+}
+
+.kx-admin-page .kx-solicitud-ir {
+    color: var(--kx-ink);
+    font: 500 9px var(--kx-mono);
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .kx-admin-page .kx-solicitud-ir:hover {
+        color: var(--kx-orange-text);
+    }
+}
+
+@media (max-width: 680px) {
+    .kx-admin-page .kx-solicitud {
+        grid-template-columns: 34px minmax(0, 1fr);
+        gap: 8px 12px;
+    }
+
+    .kx-admin-page .kx-solicitud > .kx-avatar {
+        grid-row: 1 / 4;
+    }
+
+    .kx-admin-page .kx-solicitud-estado,
+    .kx-admin-page .kx-solicitud-fecha,
+    .kx-admin-page .kx-solicitud-ir {
+        grid-column: 2;
+    }
+}

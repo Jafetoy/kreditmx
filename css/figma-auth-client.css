@@ -1,0 +1,295 @@
+/* Authentication */
+
+.kx-auth-page {
+    min-width: 320px;
+    min-height: 100vh;
+    min-height: 100svh;
+    background:
+        linear-gradient(90deg, var(--kx-ink) 0 39%, transparent 39%),
+        var(--kx-paper);
+}
+
+.kx-auth-page .login-pagina {
+    min-height: 100vh;
+    min-height: 100svh;
+    padding: 36px;
+    display: grid;
+    place-items: center;
+    background: transparent;
+}
+
+.kx-auth-page .login-card {
+    position: relative;
+    width: min(500px, 100%);
+    max-width: 500px;
+    margin-left: 18%;
+    padding: clamp(34px, 5vw, 58px);
+    overflow: visible;
+    border: 1px solid var(--kx-line);
+    border-radius: 0;
+    box-shadow: var(--kx-shadow);
+    background: var(--kx-surface);
+}
+
+.kx-auth-page .login-card::before {
+    content: "K";
+    position: absolute;
+    top: 0;
+    left: -96px;
+    width: 96px;
+    height: 96px;
+    display: grid;
+    place-items: center;
+    color: var(--kx-ink);
+    background: var(--kx-acid);
+    font: 500 52px var(--kx-serif);
+}
+
+.kx-auth-page .login-logo-imagen {
+    width: 158px;
+    max-height: 54px;
+    object-fit: contain;
+}
+
+.kx-auth-page .login-back-link {
+    display: inline-flex;
+    min-height: 44px;
+    align-items: center;
+    gap: 9px;
+    margin: -12px 0 24px;
+    color: var(--kx-muted);
+    font: 500 9px var(--kx-mono);
+    letter-spacing: .06em;
+    text-decoration: none;
+    text-transform: uppercase;
+    transition: color 180ms ease, gap 180ms ease;
+}
+
+.kx-auth-page .login-back-link svg {
+    width: 17px;
+    height: 17px;
+    fill: none;
+    stroke: currentColor;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 1.7;
+    transition: transform 180ms ease;
+}
+
+.kx-auth-page .login-back-link:hover {
+    gap: 13px;
+    color: var(--kx-ink);
+}
+
+.kx-auth-page .login-back-link:hover svg {
+    transform: translateX(-2px);
+}
+
+.kx-auth-page .login-back-link:focus-visible {
+    outline: 2px solid var(--kx-orange);
+    outline-offset: 3px;
+}
+
+.kx-auth-page .login-card h1 {
+    margin: 30px 0 8px;
+    color: var(--kx-ink);
+    font-size: clamp(38px, 5vw, 58px);
+    line-height: .95;
+    letter-spacing: -.04em;
+    overflow-wrap: normal;
+    word-break: normal;
+    hyphens: none;
+}
+
+.kx-auth-page .login-card > p {
+    color: var(--kx-muted);
+    font-size: 13px;
+}
+
+.kx-auth-page .campo-admin {
+    margin-top: 24px;
+}
+
+.kx-auth-page .campo-admin label {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--kx-ink);
+    font: 500 9px var(--kx-mono);
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+
+.kx-auth-page .campo-admin input {
+    width: 100%;
+    min-height: 48px;
+    padding: 0;
+    border: 0;
+    border-bottom: 1px solid #8f8f91;
+    border-radius: 0;
+    background: transparent;
+}
+
+.kx-auth-page .btn-admin {
+    width: 100%;
+    min-height: 54px;
+    margin-top: 30px;
+    border: 0;
+    border-radius: 0;
+    color: var(--kx-ink);
+    background: var(--kx-acid);
+    font: 600 10px var(--kx-mono);
+    letter-spacing: .06em;
+    text-transform: uppercase;
+}
+
+.kx-auth-page a {
+    color: var(--kx-ink);
+    text-underline-offset: 4px;
+}
+
+.kx-auth-page .login-card > p a {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    padding-block: 8px;
+}
+
+/* Client detail */
+
+.kx-client-page {
+    min-height: 100vh;
+    min-height: 100dvh;
+    background: var(--kx-paper);
+}
+
+.kx-client-page .admin-header {
+    min-height: calc(72px + env(safe-area-inset-top, 0px));
+    padding: env(safe-area-inset-top, 0px)
+        max(clamp(20px, 4vw, 60px), env(safe-area-inset-right, 0px)) 0
+        max(clamp(20px, 4vw, 60px), env(safe-area-inset-left, 0px));
+    border-bottom: 1px solid var(--kx-line);
+    box-shadow: none;
+    color: var(--kx-ink);
+    background: var(--kx-paper);
+}
+
+.kx-client-page .btn-salir {
+    min-width: 96px;
+    white-space: nowrap;
+}
+
+.kx-client-page .admin-logo-imagen {
+    width: 132px;
+}
+
+.kx-client-page .admin-container {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 48px clamp(18px, 4vw, 60px);
+}
+
+.kx-client-page .cliente-titulo {
+    margin-bottom: 34px;
+    padding-bottom: 28px;
+    border-bottom: 3px solid var(--kx-ink);
+}
+
+.kx-client-page .cliente-titulo h1 {
+    font-size: clamp(38px, 5vw, 66px);
+    line-height: .95;
+    letter-spacing: -.04em;
+}
+
+.kx-client-page .avatar {
+    border: 1px solid var(--kx-ink);
+    color: var(--kx-ink);
+    background: var(--kx-acid);
+}
+
+.kx-client-page .datos-grid {
+    gap: 1px;
+    border: 1px solid var(--kx-line);
+    background: var(--kx-line);
+}
+
+.kx-client-page .dato {
+    margin: 0;
+}
+
+.kx-client-page .documentos-admin {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.kx-client-page .btn-documento {
+    min-height: 150px;
+    display: grid;
+    place-items: center;
+    padding: 18px;
+    border: 1px solid var(--kx-line);
+    color: var(--kx-ink);
+    background: var(--kx-acid);
+    font: 500 10px var(--kx-mono);
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    text-underline-offset: 4px;
+}
+
+.kx-client-page .consentimiento-cliente {
+    margin: 18px 0 0;
+    color: var(--kx-muted);
+    font-size: 13px;
+}
+
+.kx-client-page .consentimiento-cliente strong {
+    color: var(--kx-ink);
+}
+
+@media (max-width: 760px) {
+    .kx-client-page .documentos-admin {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 680px) {
+    .kx-client-page .admin-header {
+        min-height: calc(64px + env(safe-area-inset-top, 0px));
+        grid-template-columns: 1fr auto;
+        gap: 12px;
+        padding: env(safe-area-inset-top, 0px)
+            max(18px, env(safe-area-inset-right, 0px)) 0
+            max(18px, env(safe-area-inset-left, 0px));
+    }
+
+    .kx-client-page .admin-header > div:first-child > span,
+    .kx-client-page .bienvenida-usuario {
+        display: none;
+    }
+
+    .kx-client-page .admin-logo-imagen {
+        width: 116px;
+    }
+
+    .kx-client-page .btn-salir {
+        min-width: 0;
+        min-height: 44px;
+        padding: 0 12px;
+        font-size: 10px;
+    }
+
+    .kx-client-page .admin-container {
+        padding: 28px max(18px, env(safe-area-inset-right, 0px))
+            calc(40px + env(safe-area-inset-bottom, 0px))
+            max(18px, env(safe-area-inset-left, 0px));
+    }
+
+    .kx-client-page .cliente-titulo h1 {
+        font-size: clamp(34px, 10vw, 46px);
+        overflow-wrap: anywhere;
+    }
+}
+
+@media (max-width: 420px) {
+    .kx-client-page .cliente-titulo h1 {
+        font-size: clamp(30px, 9vw, 38px);
+    }
+}

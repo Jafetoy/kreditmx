@@ -1,0 +1,98 @@
+.kx-home-page {
+    min-width: 320px;
+    min-height: 100vh;
+    min-height: 100svh;
+    display: grid;
+    place-items: center;
+    padding: 32px;
+    color: var(--kx-ink);
+    background: linear-gradient(90deg, var(--kx-ink) 0 32%, var(--kx-paper) 32%);
+}
+
+.kx-home-page .inicio {
+    width: min(720px, calc(100% - 48px));
+    min-height: min(620px, calc(100svh - 64px));
+    margin: 0;
+    padding: clamp(40px, 8vw, 78px);
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 18px;
+    border: 1px solid var(--kx-line);
+    border-radius: 0;
+    color: var(--kx-ink);
+    background: var(--kx-surface);
+    box-shadow: var(--kx-shadow);
+    text-align: left;
+}
+
+.kx-home-page .inicio-logo {
+    width: min(390px, 100%);
+    margin: 0 0 6px;
+}
+
+.kx-home-page .inicio p {
+    max-width: 38ch;
+    margin: 0 0 24px;
+    color: var(--kx-muted);
+    font-size: 16px;
+    line-height: 1.6;
+}
+
+.kx-home-page .inicio-botones {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1px;
+    border: 1px solid var(--kx-ink);
+    background: var(--kx-ink);
+}
+
+.kx-home-page .inicio-botones a {
+    min-width: 0;
+    min-height: 52px;
+    padding: 14px 18px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0;
+    color: var(--kx-ink);
+    background: var(--kx-acid);
+    font: 500 11px/1.4 var(--kx-mono);
+    letter-spacing: .04em;
+    text-align: center;
+    text-decoration: none;
+    transition: color .18s ease, background-color .18s ease;
+}
+
+.kx-home-page .inicio-botones a:last-child {
+    color: var(--kx-paper);
+    background: var(--kx-ink);
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .kx-home-page .inicio-botones a:hover {
+        color: var(--kx-paper);
+        background: var(--kx-orange-text);
+    }
+}
+
+@media (max-width: 680px) {
+    .kx-home-page {
+        padding: 12px;
+        background: var(--kx-ink);
+    }
+
+    .kx-home-page .inicio {
+        width: 100%;
+        min-height: calc(100svh - 24px);
+        margin: 0;
+        padding: calc(34px + env(safe-area-inset-top, 0px)) 20px
+            calc(34px + env(safe-area-inset-bottom, 0px));
+        box-shadow: none;
+    }
+
+    .kx-home-page .inicio-botones {
+        grid-template-columns: 1fr;
+    }
+}

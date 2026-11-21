@@ -12,23 +12,23 @@ load_dotenv()
 DB_URL = os.getenv("SUPABASE_DB_URL") or os.getenv("DATABASE_URL")
 
 DB_CONFIG = {
-	"host": os.getenv("SUPABASE_HOST"),
-	"port": int(os.getenv("SUPABASE_PORT", "5432")),
-	"user": os.getenv("SUPABASE_USER", "postgres"),
-	"password": os.getenv("SUPABASE_PASSWORD", "bGClM0bfdN2PZtkW"),
-	"dbname": os.getenv("SUPABASE_DB", "postgres"),
+    "host": os.getenv("SUPABASE_HOST"),
+    "port": int(os.getenv("SUPABASE_PORT", "5432")),
+    "user": os.getenv("SUPABASE_USER", "postgres"),
+    "password": os.getenv("SUPABASE_PASSWORD"),
+    "dbname": os.getenv("SUPABASE_DB", "postgres"),
 }
 
 
 def conectar(incluir_base=True):
-	if DB_URL:
-		return psycopg2.connect(DB_URL)
+    if DB_URL:
+        return psycopg2.connect(DB_URL)
 
-	return psycopg2.connect(**DB_CONFIG)
+    return psycopg2.connect(**DB_CONFIG)
 
 
 def inicializar_base():
-	"""Con Supabase el esquema se aplica ejecutando supabase_schema.sql
-	en el SQL Editor del dashboard. Solo se verifica la conexión."""
-	conexion = conectar()
-	conexion.close()
+    """Con Supabase el esquema se aplica ejecutando supabase_schema.sql
+    en el SQL Editor del dashboard. Solo se verifica la conexión."""
+    conexion = conectar()
+    conexion.close()

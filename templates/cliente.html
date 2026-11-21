@@ -7,7 +7,7 @@
 
     <meta
         name="viewport"
-        content="width=device-width, initial-scale=1.0"
+        content="width=device-width, initial-scale=1.0, viewport-fit=cover"
     >
 
     <title>Información del cliente</title>
@@ -17,9 +17,11 @@
         href="/css/admin.css"
     >
 
+    <link rel="stylesheet" href="/css/figma-theme.css">
+
 </head>
 
-<body>
+<body class="kx-client-page">
 
 
 <header class="admin-header">
@@ -100,6 +102,26 @@
 
             </div>
 
+            <div class="dato">
+                <span>CURP</span>
+                <strong>{{ cliente.curp or "No registrada" }}</strong>
+            </div>
+
+            <div class="dato">
+                <span>Fecha de nacimiento</span>
+                <strong>{{ cliente.fecha_nacimiento or "No registrada" }}</strong>
+            </div>
+
+            <div class="dato">
+                <span>Ocupación</span>
+                <strong>{{ cliente.ocupacion or "No registrada" }}</strong>
+            </div>
+
+            <div class="dato">
+                <span>Ingreso mensual</span>
+                <strong>{% if cliente.ingreso_mensual is not none %}${{ "%.2f"|format(cliente.ingreso_mensual) }}{% else %}No registrado{% endif %}</strong>
+            </div>
+
 
             <div class="dato">
 
@@ -172,7 +194,7 @@
             <div class="dato">
 
                 <span>
-                    Número de cuenta
+                    CLABE interbancaria
                 </span>
 
                 <strong>
@@ -208,7 +230,7 @@
                 {% if cliente.foto_frente_url %}
                     <img class="documento-imagen" src="{{ cliente.foto_frente_url }}" alt="Frente de identificación">
                 {% else %}
-                    <div class="documento-placeholder">📄<span>Imagen del frente</span></div>
+                    <div class="documento-placeholder"><span>Imagen del frente no disponible</span></div>
                 {% endif %}
 
             </div>
@@ -223,13 +245,27 @@
                 {% if cliente.foto_reverso_url %}
                     <img class="documento-imagen" src="{{ cliente.foto_reverso_url }}" alt="Reverso de identificación">
                 {% else %}
-                    <div class="documento-placeholder">📄<span>Imagen del reverso</span></div>
+                    <div class="documento-placeholder"><span>Imagen del reverso no disponible</span></div>
                 {% endif %}
 
             </div>
 
+            <div>
+                <h3>Selfie</h3>
+                {% if cliente.comprobante_domicilio_url %}
+                    <a class="btn-documento" href="{{ cliente.comprobante_domicilio_url }}" target="_blank" rel="noopener">Ver selfie</a>
+                {% else %}
+                    <div class="documento-placeholder"><span>Selfie no disponible</span></div>
+                {% endif %}
+            </div>
+
 
         </div>
+
+        <p class="consentimiento-cliente">
+            Consulta de historial crediticio:
+            <strong>{{ "Autorizada" if cliente.autoriza_historial else "Sin autorización registrada" }}</strong>
+        </p>
 
     </section>
 
@@ -283,6 +319,9 @@
 
 </main>
 
+
+<script src="/js/session-guard.js"></script>
+<script src="/js/ui-notifications.js?v=202611211136"></script>
 
 <script>
 

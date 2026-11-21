@@ -1,221 +1,167 @@
 const formulario = document.getElementById("formRegistro");
-
 const telefono = document.getElementById("telefono");
 const cuenta = document.getElementById("cuenta");
+const curp = document.getElementById("curp");
+const nombres = document.getElementById("nombre");
+const apellidos = document.getElementById("apellidos");
+const nombreCompleto = document.getElementById("nombreCompleto");
 
 const fotoFrente = document.getElementById("fotoFrente");
 const fotoReverso = document.getElementById("fotoReverso");
-
+const comprobanteDomicilio = document.getElementById("comprobanteDomicilio");
 const previewFrente = document.getElementById("previewFrente");
 const previewReverso = document.getElementById("previewReverso");
+const previewComprobante = document.getElementById("previewComprobante");
 
 const mensajeCuenta = document.getElementById("mensajeCuenta");
-
+const btnAnterior = document.getElementById("btnAnterior");
+const btnContinuar = document.getElementById("btnContinuar");
 const btnEnviar = document.getElementById("btnEnviar");
-
 const mensajeExito = document.getElementById("mensajeExito");
-
-
-// =====================================================
-// OBTENER TOKEN DEL LINK
-// =====================================================
+const pasos = Array.from(document.querySelectorAll(".registro-paso"));
+const indicadores = Array.from(document.querySelectorAll("[data-progress]"));
 
 const parametros = new URLSearchParams(window.location.search);
 const tokenOculto = document.querySelector('input[name="token"]');
 const partesRuta = window.location.pathname.split("/").filter(Boolean);
-const tokenRuta = partesRuta[0] === "registro" && partesRuta[1]
-    ? partesRuta[1]
-    : "";
+const tokenRuta = partesRuta[0] === "registro" && partesRuta[1] ? partesRuta[1] : "";
 const token = tokenOculto?.value || parametros.get("token") || tokenRuta;
 
-console.log("Token del registro:", token);
+let pasoActual = 1;
+const TAMANO_MAXIMO = 5 * 1024 * 1024;
 
+function mostrarPaso(numero) {
+    pasoActual = numero;
 
-// =====================================================
-// SOLO NÚMEROS - TELÉFONO
-// =====================================================
+    pasos.forEach((paso) => {
+        paso.hidden = Number(paso.dataset.step) !== numero;
+    });
+
+    indicadores.forEach((indicador) => {
+        const paso = Number(indicador.dataset.progress);
+        indicador.classList.toggle("activo", paso === numero);
+        indicador.classList.toggle("completo", paso < numero);
+    });
+
+    btnAnterior.hidden = numero === 1;
+    btnContinuar.hidden = numero === pasos.length;
+    btnEnviar.hidden = numero !== pasos.length;
+    document.querySelector(".registro-form-wrap")?.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function validarPaso(numero) {
+    const paso = pasos.find((elemento) => Number(elemento.dataset.step) === numero);
+    const campos = Array.from(paso.querySelectorAll("input, select, textarea"));
+
+    for (const campo of campos) {
+        if (!campo.checkValidity()) {
+            campo.reportValidity();
+            campo.focus();
+            return false;
+        }
+    }
+
+    if (numero === 1 && curp.value.length !== 18) {
+        curp.setCustomValidity("La CURP debe contener exactamente 18 caracteres.");
+        curp.reportValidity();
+        curp.setCustomValidity("");
+        return false;
+    }
+
+    if (numero === 2 && cuenta.value.length !== 18) {
+        cuenta.setCustomValidity("La CLABE debe contener exactamente 18 dígitos.");
+        cuenta.reportValidity();
+        cuenta.setCustomValidity("");
+        return false;
+    }
+
+    return true;
+}
 
 telefono.addEventListener("input", function () {
-
-    this.value = this.value.replace(/\D/g, "");
-
-    if (this.value.length > 10) {
-        this.value = this.value.substring(0, 10);
-    }
-
+    this.value = this.value.replace(/\D/g, "").slice(0, 10);
 });
-
-
-// =====================================================
-// SOLO NÚMEROS - CUENTA
-// =====================================================
 
 cuenta.addEventListener("input", function () {
-
-    this.value = this.value.replace(/\D/g, "");
-
-    if (this.value.length > 16) {
-        this.value = this.value.substring(0, 16);
-    }
-
-
-    if (this.value.length === 16) {
-
-        mensajeCuenta.textContent =
-            "Número de cuenta válido.";
-
-        mensajeCuenta.style.color = "#16a34a";
-
-    } else {
-
-        mensajeCuenta.textContent =
-            "Ingresa únicamente 16 números.";
-
-        mensajeCuenta.style.color = "";
-
-    }
-
+    this.value = this.value.replace(/\D/g, "").slice(0, 18);
+    const valida = this.value.length === 18;
+    mensajeCuenta.textContent = valida
+        ? "CLABE válida."
+        : "Ingresa únicamente 18 números.";
+    mensajeCuenta.style.color = valida ? "#187448" : "";
 });
 
-
-// =====================================================
-// PREVIEW DE FOTOGRAFÍAS
-// =====================================================
+curp.addEventListener("input", function () {
+    this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 18);
+});
 
 function mostrarPreview(input, contenedor) {
-
     const archivo = input.files[0];
+    contenedor.replaceChildren();
 
     if (!archivo) {
+        return;
+    }
 
-        contenedor.innerHTML = "";
-
+    if (archivo.size > TAMANO_MAXIMO) {
+        alert("Cada archivo debe pesar como máximo 5 MB.");
+        input.value = "";
         return;
     }
 
     if (!archivo.type.startsWith("image/")) {
-
         alert("Selecciona una imagen válida.");
-
         input.value = "";
-
-        contenedor.innerHTML = "";
-
         return;
     }
 
-
     const lector = new FileReader();
-
-
     lector.onload = function (evento) {
-
-        contenedor.innerHTML = `
-            <img
-                src="${evento.target.result}"
-                alt="Vista previa"
-            >
-        `;
-
+        const imagen = document.createElement("img");
+        imagen.src = evento.target.result;
+        imagen.alt = `Vista previa de ${archivo.name}`;
+        contenedor.appendChild(imagen);
     };
-
-
     lector.readAsDataURL(archivo);
 }
 
+fotoFrente.addEventListener("change", () => mostrarPreview(fotoFrente, previewFrente));
+fotoReverso.addEventListener("change", () => mostrarPreview(fotoReverso, previewReverso));
+comprobanteDomicilio.addEventListener("change", () => mostrarPreview(comprobanteDomicilio, previewComprobante));
 
-
-fotoFrente.addEventListener("change", function () {
-
-    mostrarPreview(
-        fotoFrente,
-        previewFrente
-    );
-
+btnContinuar.addEventListener("click", () => {
+    if (validarPaso(pasoActual)) {
+        mostrarPaso(Math.min(pasoActual + 1, pasos.length));
+    }
 });
 
-
-fotoReverso.addEventListener("change", function () {
-
-    mostrarPreview(
-        fotoReverso,
-        previewReverso
-    );
-
+btnAnterior.addEventListener("click", () => {
+    mostrarPaso(Math.max(pasoActual - 1, 1));
 });
-
-
-// =====================================================
-// ENVIAR FORMULARIO
-// =====================================================
 
 formulario.addEventListener("submit", async function (evento) {
-
     evento.preventDefault();
 
-
-    // VALIDAR TOKEN
+    if (!validarPaso(pasoActual)) {
+        return;
+    }
 
     if (!token) {
-
-        alert(
-            "Este enlace de registro no es válido."
-        );
-
+        alert("Este enlace de registro no es válido.");
         return;
     }
-
-
-    // VALIDAR TELÉFONO
 
     if (telefono.value.length !== 10) {
-
-        alert(
-            "El número de teléfono debe contener 10 dígitos."
-        );
-
-        telefono.focus();
-
+        mostrarPaso(1);
+        telefono.setCustomValidity("El teléfono debe contener exactamente 10 dígitos.");
+        telefono.reportValidity();
+        telefono.setCustomValidity("");
         return;
     }
 
-
-    // VALIDAR CUENTA
-
-    if (cuenta.value.length !== 16) {
-
-        alert(
-            "El número de cuenta debe contener exactamente 16 dígitos."
-        );
-
-        cuenta.focus();
-
-        return;
-    }
-
-
-    // VALIDAR FOTOGRAFÍAS
-
-    if (
-        fotoFrente.files.length === 0 ||
-        fotoReverso.files.length === 0
-    ) {
-
-        alert(
-            "Debes subir el frente y reverso de tu identificación."
-        );
-
-        return;
-    }
-
-
-    // BOTÓN
-
+    nombreCompleto.value = `${nombres.value.trim()} ${apellidos.value.trim()}`.trim();
     btnEnviar.disabled = true;
-
-    btnEnviar.textContent =
-        "Enviando registro...";
-
+    btnEnviar.textContent = "Enviando expediente...";
 
     try {
         const respuesta = await fetch("/api/registro", {
@@ -225,15 +171,19 @@ formulario.addEventListener("submit", async function (evento) {
         const resultado = await respuesta.json();
 
         if (!respuesta.ok) {
-            throw new Error(resultado.error || "No se pudo enviar el registro.");
+            throw new Error(resultado.error || "No se pudo enviar el expediente.");
         }
 
         formulario.classList.add("oculto");
+        document.querySelector(".registro-progreso")?.classList.add("oculto");
         mensajeExito.classList.remove("oculto");
+        window.KreditmxNotifications?.toast("Expediente enviado correctamente.", "success");
         window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (error) {
         alert(error.message);
         btnEnviar.disabled = false;
-        btnEnviar.textContent = "Enviar registro";
+        btnEnviar.innerHTML = 'Enviar expediente <span aria-hidden="true">→</span>';
     }
 });
+
+mostrarPaso(1);

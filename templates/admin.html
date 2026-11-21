@@ -7,7 +7,7 @@
 
     <meta
         name="viewport"
-        content="width=device-width, initial-scale=1.0"
+        content="width=device-width, initial-scale=1.0, viewport-fit=cover"
     >
 
     <title>Panel administrador</title>
@@ -17,9 +17,58 @@
         href="/css/admin.css"
     >
 
+    <link rel="stylesheet" href="/css/figma-theme.css">
+
 </head>
 
-<body>
+<body class="kx-admin-page">
+
+<aside class="kx-admin-rail" aria-label="Accesos principales">
+    <a class="kx-rail-brand" href="/admin" aria-label="Kreditmx, inicio">
+        <span>K</span>
+        <strong>kreditmx</strong>
+    </a>
+
+    <nav aria-label="Módulos del sistema">
+        <button type="button" onclick="mostrarModulo('prestamos')" data-label="Créditos" aria-label="Créditos">
+            <svg class="kx-rail-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v16M4 12h16"/></svg>
+            <strong>Créditos</strong>
+        </button>
+        <button type="button" onclick="mostrarModulo('solicitudes')" data-label="Solicitudes" aria-label="Solicitudes">
+            <svg class="kx-rail-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg>
+            <strong>Solicitudes</strong>
+            <span class="kx-rail-badge" id="kxSolicitudesRailBadge">0</span>
+        </button>
+        <button type="button" onclick="mostrarModulo('enlace')" data-label="Enlace de registro" aria-label="Enlace de registro">
+            <svg class="kx-rail-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.1.1l2-2a5 5 0 0 0-7.1-7.1l-1.1 1.1M14 11a5 5 0 0 0-7.1-.1l-2 2A5 5 0 0 0 12 20l1.1-1.1"/></svg>
+            <strong>Enlace</strong>
+        </button>
+        <button type="button" onclick="mostrarModulo('clientes')" data-label="Modificar clientes" aria-label="Modificar clientes">
+            <svg class="kx-rail-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8M17 8h5M19.5 5.5v5"/></svg>
+            <strong>Editar clientes</strong>
+        </button>
+        <button type="button" onclick="mostrarModulo('clientes')" data-label="Eliminar clientes" aria-label="Eliminar clientes">
+            <svg class="kx-rail-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M6 6l1 15h10l1-15M10 10v7M14 10v7"/></svg>
+            <strong>Eliminar clientes</strong>
+        </button>
+        <button type="button" onclick="mostrarModulo('pagos'); cargarPrestamosPago();" data-label="Registrar pagos" aria-label="Registrar pagos">
+            <svg class="kx-rail-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h14a2 2 0 0 1 2 2v13H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z"/><path d="M16 11h6v5h-6a2.5 2.5 0 0 1 0-5Z"/></svg>
+            <strong>Registrar pagos</strong>
+        </button>
+        <button type="button" onclick="mostrarModulo('registrados')" data-label="Clientes registrados" aria-label="Clientes registrados">
+            <svg class="kx-rail-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8M17 11a4 4 0 0 0 0-8M22 21v-2a4 4 0 0 0-3-3.87"/></svg>
+            <strong>Registrados</strong>
+        </button>
+        <button type="button" onclick="mostrarModulo('colocados')" data-label="Clientes activos" aria-label="Clientes activos">
+            <svg class="kx-rail-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>
+            <strong>Activos</strong>
+        </button>
+        <button type="button" onclick="mostrarModulo('fondo'); cargarFondo();" data-label="Fondo de inversión" aria-label="Fondo de inversión">
+            <svg class="kx-rail-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m3 9 9-6 9 6M5 10v8M10 10v8M14 10v8M19 10v8M3 21h18"/></svg>
+            <strong>Fondo</strong>
+        </button>
+    </nav>
+</aside>
 
 
 <header class="admin-header">
@@ -38,6 +87,18 @@
 
     </div>
 
+    <button
+        type="button"
+        class="kx-notificaciones"
+        id="kxNotificacionesBoton"
+        onclick="mostrarModulo('solicitudes')"
+        aria-label="Notificaciones: ver solicitudes"
+        title="Ver solicitudes"
+    >
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg>
+        <b id="kxNotificacionesBadge">0</b>
+    </button>
+
     <div class="bienvenida-usuario" id="bienvenidaUsuario">
         <span id="saludoUsuario">Bienvenido</span>
     </div>
@@ -53,6 +114,36 @@
 
 
 <main class="admin-container">
+
+    <section class="kx-dashboard-intro" aria-labelledby="kx-dashboard-title">
+        <div>
+            <p>Mesa de control · Operación Kreditmx</p>
+            <h1 id="kx-dashboard-title">Créditos en <em>movimiento.</em></h1>
+        </div>
+        <div class="kx-dashboard-priority">
+            <span>Acción prioritaria</span>
+            <p>Crea nuevos créditos y mantén cada cliente y préstamo bajo control.</p>
+            <button type="button" onclick="abrirModalBienvenida()">
+                Nuevo crédito <span aria-hidden="true">→</span>
+            </button>
+        </div>
+    </section>
+
+
+    <section class="kx-capital-summary" aria-label="Resumen del fondo">
+        <div class="kx-capital-copy">
+            <span>Capital disponible para colocar</span>
+            <strong id="fondoDisponibleResumen">$—</strong>
+            <p>
+                <b id="fondoDisponiblePorcentaje">—</b>
+                <span id="fondoResumenDetalle">del fondo está listo para nuevos créditos.</span>
+            </p>
+        </div>
+        <div class="kx-capital-orbit" aria-hidden="true">
+            <i></i><i></i><i></i>
+            <b id="fondoDisponibleOrbita">—</b>
+        </div>
+    </section>
 
 
     <!-- ESTADÍSTICAS -->
@@ -129,70 +220,81 @@
     </section>
 
 
-    <!-- MODULOS -->
+    <!-- MESA DE CONTROL (FIGMA) -->
 
-    <section class="modulos-panel">
+    <section class="kx-dashboard-stats" aria-label="Indicadores de la operación">
+        <div class="kx-dashboard-stat">
+            <div class="kx-dashboard-stat-top"><span>01</span><p>CARTERA ACTIVA</p><i></i></div>
+            <strong id="kxCarteraActiva">$0</strong>
+            <div class="kx-dashboard-stat-foot"><b id="kxCarteraDelta">↑ 0%</b><span>VS. MES ANTERIOR</span></div>
+        </div>
+        <div class="kx-dashboard-stat">
+            <div class="kx-dashboard-stat-top"><span>02</span><p>PERSONAS ACTIVAS</p><i></i></div>
+            <strong id="kxPersonasActivas">0</strong>
+            <div class="kx-dashboard-stat-foot"><b id="kxPersonasDelta">+0</b><span>NUEVAS ESTE MES</span></div>
+        </div>
+        <div class="kx-dashboard-stat is-dark">
+            <div class="kx-dashboard-stat-top"><span>03</span><p>POR RECUPERAR</p><i></i></div>
+            <strong id="kxPorRecuperar">$0</strong>
+            <div class="kx-dashboard-stat-foot"><b id="kxPorRecuperarDelta">0%</b><span>SALDO VENCIDO</span></div>
+        </div>
+    </section>
 
-        <div class="modulos-encabezado">
-            <div>
-                <p class="eyebrow">Administración</p>
-                <h2>Módulos del sistema</h2>
-                <p>Selecciona una herramienta para trabajar sin salir del panel.</p>
+
+    <section class="kx-dashboard-grid" aria-label="Análisis y decisiones">
+        <article class="kx-performance">
+            <div class="kx-section-title">
+                <div>
+                    <span>ANÁLISIS / 06 MESES</span>
+                    <h2>Ritmo de colocación</h2>
+                </div>
+                <b><span id="kxColocacionTotal">$0</span> <small>EN EL PERIODO</small></b>
             </div>
+            <div class="kx-chart">
+                <div class="kx-chart-scale" aria-hidden="true">
+                    <span id="kxEscalaAlta">0</span>
+                    <span id="kxEscalaMedia">0</span>
+                    <span id="kxEscalaBaja">0</span>
+                    <span>0</span>
+                </div>
+                <div class="kx-bars" id="kxColocacionBars"></div>
+            </div>
+        </article>
+        <article class="kx-decisions">
+            <div class="kx-section-title">
+                <div>
+                    <span>REQUIERE ATENCIÓN</span>
+                    <h2>Por decidir hoy</h2>
+                </div>
+                <b id="kxDecisionesTotal">00</b>
+            </div>
+            <div class="kx-decision-list" id="kxDecisionesLista"></div>
+            <button type="button" class="kx-all" onclick="mostrarModulo('registrados')">
+                ABRIR BANDEJA COMPLETA <span aria-hidden="true">→</span>
+            </button>
+        </article>
+    </section>
+
+
+    <section class="kx-ledger" aria-label="Créditos recientes">
+        <div class="kx-section-title">
+            <div>
+                <span>LIBRO DE MOVIMIENTOS</span>
+                <h2>Créditos recientes</h2>
+            </div>
+            <button type="button" onclick="mostrarModulo('colocados')">
+                VER CARTERA COMPLETA <span aria-hidden="true">→</span>
+            </button>
         </div>
-
-        <div class="modulos-grid">
-
-            <button class="modulo-card" data-modulo="prestamos" type="button" onclick="mostrarModulo('prestamos')">
-                <span class="modulo-icono">$</span>
-                <strong>Nuevo préstamo</strong>
-                <span>Calcula pagos y genera recibos.</span>
-            </button>
-
-            <button class="modulo-card" data-modulo="enlace" type="button" onclick="mostrarModulo('enlace')">
-                <span class="modulo-icono">&#128279;</span>
-                <strong>Enlace de registro</strong>
-                <span>Genera enlaces para nuevos clientes.</span>
-            </button>
-
-            <button class="modulo-card" data-modulo="clientes" type="button" onclick="mostrarModulo('clientes')">
-                <span class="modulo-icono">&#9998;</span>
-                <strong>Modificar clientes</strong>
-                <span>Edita la información registrada.</span>
-            </button>
-
-            <button class="modulo-card" data-modulo="eliminar" type="button" onclick="mostrarModulo('clientes')">
-                <span class="modulo-icono">&#10005;</span>
-                <strong>Eliminar clientes</strong>
-                <span>Administra y elimina registros.</span>
-            </button>
-
-            <button class="modulo-card" data-modulo="pagos" type="button" onclick="mostrarModulo('pagos'); cargarPrestamosPago();">
-                <span class="modulo-icono">&#128181;</span>
-                <strong>Registrar pagos</strong>
-                <span>Registra abonos de los préstamos activos.</span>
-            </button>
-
-            <button class="modulo-card modulo-card-destacado" data-modulo="registrados" type="button" onclick="mostrarModulo('registrados')">
-                <span class="modulo-icono">&#128101;</span>
-                <strong>Clientes registrados</strong>
-                <span>Lista de clientes que se registran desde el formulario.</span>
-            </button>
-
-            <button class="modulo-card modulo-card-destacado" data-modulo="colocados" type="button" onclick="mostrarModulo('colocados')">
-                <span class="modulo-icono">&#9670;</span>
-                <strong>Clientes activos</strong>
-                <span>Consulta quién tiene un préstamo activo.</span>
-            </button>
-
-            <button class="modulo-card modulo-card-destacado" data-modulo="fondo" type="button" onclick="mostrarModulo('fondo'); cargarFondo();">
-                <span class="modulo-icono">&#9878;</span>
-                <strong>Fondo de inversión</strong>
-                <span>Inversiones, fondo disponible y reparto de pagos.</span>
-            </button>
-
+        <div class="kx-ledger-head" aria-hidden="true">
+            <span>PERSONA</span>
+            <span>FOLIO</span>
+            <span>MONTO</span>
+            <span>ALTA</span>
+            <span>CONDICIÓN</span>
+            <span></span>
         </div>
-
+        <div id="kxCreditosRecientes"></div>
     </section>
 
 
@@ -751,6 +853,16 @@
             Registrar pago
         </button>
 
+        <button
+            type="button"
+            id="btnLiquidarPrestamoDB"
+            class="btn-secundario"
+            onclick="abrirModalLiquidacion()"
+            disabled
+        >
+            Liquidar crédito
+        </button>
+
         <div id="mensajePagoDB" class="mensaje-pago"></div>
 
         <div class="panel-seccion">
@@ -835,6 +947,44 @@
                 📄 Generar estado de cuenta PDF
             </button>
 
+        </div>
+
+    </section>
+
+    <!-- SOLICITUDES -->
+
+    <section id="modulo-solicitudes" class="panel modulo-panel" data-modulo="solicitudes">
+
+        <div class="panel-header">
+
+            <div>
+                <h2>Solicitudes</h2>
+                <p>Nuevos clientes que acaban de llegar. Revisa y da seguimiento desde aquí.</p>
+            </div>
+
+            <div class="contador-modulo">
+                <strong id="kxSolicitudesTotal">0</strong>
+                <span>solicitudes</span>
+            </div>
+
+        </div>
+
+        <div class="kx-solicitudes-resumen">
+
+            <div>
+                <span>Pendientes</span>
+                <strong id="kxSolicitudesPendientes">0</strong>
+            </div>
+
+            <div>
+                <span>En revisión</span>
+                <strong id="kxSolicitudesRevision">0</strong>
+            </div>
+
+        </div>
+
+        <div id="kxSolicitudesLista" class="kx-solicitudes-lista" aria-live="polite">
+            <div class="kx-empty-row">Cargando solicitudes...</div>
         </div>
 
     </section>
@@ -1011,6 +1161,31 @@
                 <small>
                     Acumulado de los pagos
                 </small>
+
+            </div>
+
+            <div class="stat-card stat-colocados">
+
+                <span>
+                    Ganancia inversionista disponible
+                </span>
+
+                <strong id="fondoInversionistaDisponible">
+                    $0.00
+                </strong>
+
+                <small>
+                    Ganancia acumulada menos retiros
+                </small>
+
+                <button
+                    type="button"
+                    id="btnRetirarGananciaInversionista"
+                    class="btn-calcular"
+                    onclick="retirarGananciaInversionista()"
+                >
+                    Retirar ganancia
+                </button>
 
             </div>
 
@@ -1455,8 +1630,77 @@
 
 </main>
 
+<dialog id="modalBienvenidaCredito" class="kx-welcome-dialog" aria-labelledby="modalBienvenidaCreditoTitulo">
+    <div class="kx-welcome-dialog-content">
+        <div class="kx-welcome-dialog-top">
+            <span>MESA DE OPERACIÓN / KREDITMX</span>
+            <button type="button" class="kx-dialog-close" onclick="cerrarModalBienvenida()" aria-label="Cerrar">&times;</button>
+        </div>
+        <p class="kx-welcome-dialog-kicker">BUEN DÍA, TU MESA ESTÁ LISTA</p>
+        <h2 id="modalBienvenidaCreditoTitulo">El crédito empieza con <em>una decisión.</em></h2>
+        <p>Revisa las condiciones del préstamo y registra una nueva oportunidad para tu cliente.</p>
+        <div class="kx-welcome-dialog-actions">
+            <button type="button" class="btn-principal" onclick="irANuevoCredito()">Continuar a nuevo crédito</button>
+            <button type="button" class="btn-secundario" onclick="cerrarModalBienvenida()">Ahora no</button>
+        </div>
+    </div>
+</dialog>
+
+<dialog id="modalLiquidacionPrestamo" class="kx-settlement-dialog" aria-labelledby="modalLiquidacionTitulo">
+    <div class="kx-settlement-dialog-content">
+        <div class="kx-welcome-dialog-top">
+            <span>CIERRE DE CRÉDITO</span>
+            <button type="button" class="kx-dialog-close" onclick="cerrarModalLiquidacion()" aria-label="Cerrar">&times;</button>
+        </div>
+        <h2 id="modalLiquidacionTitulo">Registrar liquidación</h2>
+        <p>Confirma el saldo pendiente y registra el monto recibido para cerrar este crédito.</p>
+        <p id="liquidacionCliente" class="kx-settlement-client"></p>
+        <div class="kx-settlement-balance">
+            <span>Saldo pendiente</span>
+            <strong id="liquidacionSaldoPendiente">$0.00</strong>
+        </div>
+        <label class="kx-settlement-field" for="liquidacionMonto">
+            <span>Monto recibido</span>
+            <div class="input-moneda">
+                <span>$</span>
+                <input type="number" id="liquidacionMonto" min="0.01" step="0.01" inputmode="decimal" required>
+            </div>
+        </label>
+        <label class="kx-settlement-field" for="liquidacionFecha">
+            <span>Fecha del pago</span>
+            <input type="date" id="liquidacionFecha" required>
+        </label>
+        <p id="mensajeLiquidacion" class="mensaje-pago" role="status" aria-live="polite"></p>
+        <div class="kx-welcome-dialog-actions">
+            <button type="button" id="btnConfirmarLiquidacion" class="btn-principal" onclick="confirmarLiquidacion()">Registrar liquidación</button>
+            <button type="button" class="btn-secundario" onclick="cerrarModalLiquidacion()">Cancelar</button>
+        </div>
+    </div>
+</dialog>
+
+<dialog
+    id="kxActionConfirmDialog"
+    class="kx-welcome-dialog kx-action-confirm"
+    aria-labelledby="kxActionConfirmTitle"
+    aria-describedby="kxActionConfirmMessage"
+>
+    <div class="kx-welcome-dialog-content">
+        <div class="kx-welcome-dialog-top">
+            <span>KREDITMX · CONFIRMACIÓN</span>
+        </div>
+        <h2 id="kxActionConfirmTitle">Confirmar acción</h2>
+        <p id="kxActionConfirmMessage"></p>
+        <div class="kx-welcome-dialog-actions">
+            <button type="button" id="kxActionConfirmCancel" class="btn-secundario">Cancelar</button>
+            <button type="button" id="kxActionConfirmAccept" class="btn-principal">Confirmar</button>
+        </div>
+    </div>
+</dialog>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="/js/admin.js"></script>
+<script src="/js/session-guard.js"></script>
+<script src="/js/ui-notifications.js?v=202611211136"></script>
+<script src="/js/admin.js?v=confirm-guard-1"></script>
 
 </body>
 

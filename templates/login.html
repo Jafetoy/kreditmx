@@ -7,7 +7,7 @@
 
     <meta
         name="viewport"
-        content="width=device-width, initial-scale=1.0"
+        content="width=device-width, initial-scale=1.0, viewport-fit=cover"
     >
 
     <title>Administrador</title>
@@ -17,13 +17,22 @@
         href="/css/admin.css"
     >
 
+    <link rel="stylesheet" href="/css/figma-theme.css">
+
 </head>
 
-<body>
+<body class="kx-auth-page">
 
 <div class="login-pagina">
 
     <div class="login-card">
+
+        <a class="login-back-link" href="/" aria-label="Volver a la página de inicio">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M19 12H5M12 19l-7-7 7-7" />
+            </svg>
+            <span>Volver al inicio</span>
+        </a>
 
         <img
             class="login-logo-imagen"
@@ -69,16 +78,17 @@
                     id="password"
                     placeholder="Contraseña"
                     required
-                    style="padding-right: 38px;"
+                    style="padding-right: 52px;"
                 >
 
                 <button
                     type="button"
                     id="togglePassword"
                     style="
-                        position: absolute; right: 8px; top: 50%;
+                        position: absolute; right: 0; top: 50%;
                         transform: translateY(-50%); background: none;
-                        border: none; cursor: pointer; padding: 4px;
+                        width: 44px; height: 44px;
+                        border: none; cursor: pointer; padding: 0;
                         color: #555; line-height: 0;
                     "
                     title="Mostrar contraseña"
@@ -121,7 +131,14 @@
 </div>
 
 
+<script src="/js/ui-notifications.js?v=202611211136"></script>
 <script>
+
+const mensajeRegistro = sessionStorage.getItem("kx-login-message");
+if (mensajeRegistro) {
+    window.KreditmxNotifications.toast(mensajeRegistro, "success");
+    sessionStorage.removeItem("kx-login-message");
+}
 
 // Mostrar / ocultar la contrasena
 const campoPassword = document.getElementById("password");
@@ -169,6 +186,7 @@ document
                 if (!respuesta.ok) {
                     errorParrafo.textContent = datos.error || "No se pudo iniciar sesión.";
                     errorParrafo.style.display = "block";
+                    window.KreditmxNotifications.toast(datos.error || "No se pudo iniciar sesión.", "error");
                     return;
                 }
 
@@ -177,6 +195,7 @@ document
             } catch (error) {
                 errorParrafo.textContent = "Error de conexión. Intenta de nuevo.";
                 errorParrafo.style.display = "block";
+                window.KreditmxNotifications.toast("Error de conexión. Intenta de nuevo.", "error");
             }
 
         }
@@ -186,4 +205,4 @@ document
 
 </body>
 
-</html> 
+</html>
