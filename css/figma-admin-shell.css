@@ -103,6 +103,83 @@
     }
 }
 
+.kx-admin-rail nav button .kx-rail-badge {
+    position: absolute;
+    top: 6px;
+    right: 8px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 4px;
+    display: grid;
+    place-items: center;
+    border-radius: 999px;
+    color: var(--kx-ink);
+    background: var(--kx-acid);
+    font: 500 9px var(--kx-mono);
+}
+
+.kx-admin-page .admin-header:has(.kx-notificaciones) {
+    grid-template-columns: minmax(190px, 1fr) auto auto auto;
+}
+
+.kx-notificaciones {
+    position: relative;
+    width: 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--kx-line);
+    border-radius: 0;
+    color: var(--kx-ink);
+    background: transparent;
+    cursor: pointer;
+    transition: background-color .2s ease, color .2s ease;
+}
+
+.kx-notificaciones svg {
+    width: 20px;
+    height: 20px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.kx-notificaciones b {
+    position: absolute;
+    top: -7px;
+    right: -7px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 4px;
+    display: grid;
+    place-items: center;
+    border-radius: 999px;
+    color: var(--kx-ink);
+    background: var(--kx-acid);
+    font: 500 9px var(--kx-mono);
+}
+
+.kx-notificaciones:focus-visible {
+    outline: 2px solid var(--kx-ink);
+    outline-offset: 2px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .kx-notificaciones:hover {
+        color: var(--kx-ink);
+        background: var(--kx-acid);
+    }
+}
+
+@media (max-width: 680px) {
+    .kx-admin-page .admin-header:has(.kx-notificaciones) {
+        grid-template-columns: minmax(0, 1fr) auto auto;
+        gap: 10px;
+    }
+}
+
 .kx-admin-page .admin-header {
     position: sticky;
     top: 0;
@@ -245,7 +322,7 @@
 .kx-capital-summary {
     min-height: 270px;
     display: grid;
-    grid-template-columns: minmax(0, 1.45fr) minmax(170px, .55fr) minmax(190px, .6fr);
+    grid-template-columns: minmax(0, 1.45fr) minmax(170px, .55fr);
     border: 1px solid var(--kx-ink);
     color: #fff;
     background: var(--kx-ink);

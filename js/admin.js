@@ -479,6 +479,7 @@ async function cargarDatosMariaDB() {
         	renderizarClientes(clientes, clientesConPrestamo);
         llenarSelectorClientes(clientes, clientesConPrestamo);
         	renderizarClientesRegistrados(clientes);
+        renderizarSolicitudes(resumen, clientes);
         	renderizarPrestamosCancelar(prestamos);
 
         const tabla = document.querySelector("#tablaColocados tbody");
@@ -696,6 +697,55 @@ function renderizarDecisiones(resumen, clientes) {
             "<small>" + kxEscapar(detalle) + "</small></div>" +
             "<em>" + kxEscapar(kxTiempoRelativo(cliente.creado_en)) + "</em>" +
             '<span aria-hidden="true">→</span></button>';
+    }).join("");
+}
+
+function renderizarSolicitudes(resumen, clientes) {
+    const pendientes = kxNumero(resumen && resumen.pendientes);
+    const revision = kxNumero(resumen && resumen.en_revision);
+    const total = pendientes + revision;
+
+    kxTexto("kxNotificacionesBadge", String(total));
+    kxTexto("kxSolicitudesRailBadge", String(total));
+    kxTexto("kxSolicitudesTotal", String(total));
+    kxTexto("kxSolicitudesPendientes", String(pendientes));
+    kxTexto("kxSolicitudesRevision", String(revision));
+
+    const lista = document.getElementById("kxSolicitudesLista");
+    if (!lista) return;
+
+    const candidatos = (Array.isArray(clientes) ? clientes : [])
+        .filter((cliente) => cliente.estado === "PENDIENTE" || cliente.estado === "EN_REVISION")
+        .sort((a, b) => {
+            const fechaA = kxFecha(a.creado_en);
+            const fechaB = kxFecha(b.creado_en);
+            return (fechaB ? fechaB.getTime() : 0) - (fechaA ? fechaA.getTime() : 0);
+        });
+
+    if (!candidatos.length) {
+        lista.innerHTML = '<div class="kx-empty-row">No hay solicitudes nuevas por revisar.</div>';
+        return;
+    }
+
+    lista.innerHTML = candidatos.map((cliente) => {
+        const nombre = cliente.nombre ||
+            [cliente.nombres, cliente.apellidos].filter(Boolean).join(" ").trim() ||
+            "Cliente";
+        const esPendiente = cliente.estado === "PENDIENTE";
+        let detalle;
+        if (!cliente.tiene_comprobante_domicilio) detalle = "Falta documento domiciliario";
+        else if (!cliente.cuenta || !cliente.banco) detalle = "Validar cuenta CLABE";
+        else detalle = esPendiente ? "Documentos recibidos" : "En revisión";
+
+        return '<article class="kx-solicitud">' +
+            '<span class="kx-avatar">' + kxEscapar(kxIniciales(nombre)) + "</span>" +
+            "<div><strong>" + kxEscapar(nombre) + "</strong>" +
+            "<small>" + kxEscapar(detalle) + "</small></div>" +
+            '<em class="kx-solicitud-estado ' + (esPendiente ? "pendiente" : "revision") + '">' +
+            (esPendiente ? "Pendiente" : "En revisión") + "</em>" +
+            '<span class="kx-solicitud-fecha">' + kxEscapar(kxTiempoRelativo(cliente.creado_en)) + "</span>" +
+            '<a class="kx-solicitud-ir" href="/cliente?id=' + encodeURIComponent(cliente.id) +
+            '">Ver ficha →</a></article>';
     }).join("");
 }
 

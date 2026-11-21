@@ -261,3 +261,127 @@
 .kx-client-page .mensaje-pago {
     font: 500 10px/1.5 var(--kx-mono);
 }
+
+.kx-admin-page .kx-solicitudes-resumen {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1px;
+    margin: 0 0 20px;
+    border: 1px solid var(--kx-line);
+    background: var(--kx-line);
+}
+
+.kx-admin-page .kx-solicitudes-resumen > div {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 18px;
+    background: rgba(255, 255, 255, .6);
+}
+
+.kx-admin-page .kx-solicitudes-resumen span {
+    color: var(--kx-muted);
+    font: 500 9px var(--kx-mono);
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+
+.kx-admin-page .kx-solicitudes-resumen strong {
+    font: 600 24px var(--kx-sans);
+    letter-spacing: -.03em;
+}
+
+.kx-admin-page .kx-solicitudes-lista {
+    display: grid;
+    gap: 1px;
+    border: 1px solid var(--kx-line);
+    background: var(--kx-line);
+}
+
+.kx-admin-page .kx-solicitud {
+    display: grid;
+    grid-template-columns: 34px minmax(0, 1fr) auto auto auto;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 18px;
+    background: var(--kx-surface);
+}
+
+.kx-admin-page .kx-solicitud > div {
+    min-width: 0;
+}
+
+.kx-admin-page .kx-solicitud strong {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font: 600 13px var(--kx-sans);
+}
+
+.kx-admin-page .kx-solicitud small {
+    display: block;
+    margin-top: 4px;
+    color: var(--kx-muted);
+    font: 400 9px var(--kx-mono);
+    letter-spacing: .04em;
+    text-transform: uppercase;
+}
+
+.kx-admin-page .kx-solicitud-estado {
+    padding: 6px 8px;
+    border: 1px solid var(--kx-line);
+    font: normal 500 9px var(--kx-mono);
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.kx-admin-page .kx-solicitud-estado.pendiente {
+    color: var(--kx-orange-text);
+    border-color: var(--kx-orange);
+}
+
+.kx-admin-page .kx-solicitud-estado.revision {
+    color: var(--kx-ink);
+    border-color: var(--kx-ink);
+}
+
+.kx-admin-page .kx-solicitud-fecha {
+    color: var(--kx-muted);
+    font: 400 9px var(--kx-mono);
+    white-space: nowrap;
+}
+
+.kx-admin-page .kx-solicitud-ir {
+    color: var(--kx-ink);
+    font: 500 9px var(--kx-mono);
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .kx-admin-page .kx-solicitud-ir:hover {
+        color: var(--kx-orange-text);
+    }
+}
+
+@media (max-width: 680px) {
+    .kx-admin-page .kx-solicitud {
+        grid-template-columns: 34px minmax(0, 1fr);
+        gap: 8px 12px;
+    }
+
+    .kx-admin-page .kx-solicitud > .kx-avatar {
+        grid-row: 1 / 4;
+    }
+
+    .kx-admin-page .kx-solicitud-estado,
+    .kx-admin-page .kx-solicitud-fecha,
+    .kx-admin-page .kx-solicitud-ir {
+        grid-column: 2;
+    }
+}

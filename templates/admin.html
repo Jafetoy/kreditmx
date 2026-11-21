@@ -34,6 +34,11 @@
             <svg class="kx-rail-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v16M4 12h16"/></svg>
             <strong>Nuevo crédito</strong>
         </button>
+        <button type="button" onclick="mostrarModulo('solicitudes')" data-label="Solicitudes" aria-label="Solicitudes">
+            <svg class="kx-rail-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg>
+            <strong>Solicitudes</strong>
+            <span class="kx-rail-badge" id="kxSolicitudesRailBadge">0</span>
+        </button>
         <button type="button" onclick="mostrarModulo('enlace')" data-label="Enlace de registro" aria-label="Enlace de registro">
             <svg class="kx-rail-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.1.1l2-2a5 5 0 0 0-7.1-7.1l-1.1 1.1M14 11a5 5 0 0 0-7.1-.1l-2 2A5 5 0 0 0 12 20l1.1-1.1"/></svg>
             <strong>Enlace</strong>
@@ -81,6 +86,18 @@
         </span>
 
     </div>
+
+    <button
+        type="button"
+        class="kx-notificaciones"
+        id="kxNotificacionesBoton"
+        onclick="mostrarModulo('solicitudes')"
+        aria-label="Notificaciones: ver solicitudes"
+        title="Ver solicitudes"
+    >
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg>
+        <b id="kxNotificacionesBadge">0</b>
+    </button>
 
     <div class="bienvenida-usuario" id="bienvenidaUsuario">
         <span id="saludoUsuario">Bienvenido</span>
@@ -925,6 +942,44 @@
                 📄 Generar estado de cuenta PDF
             </button>
 
+        </div>
+
+    </section>
+
+    <!-- SOLICITUDES -->
+
+    <section id="modulo-solicitudes" class="panel modulo-panel" data-modulo="solicitudes">
+
+        <div class="panel-header">
+
+            <div>
+                <h2>Solicitudes</h2>
+                <p>Nuevos clientes que acaban de llegar. Revisa y da seguimiento desde aquí.</p>
+            </div>
+
+            <div class="contador-modulo">
+                <strong id="kxSolicitudesTotal">0</strong>
+                <span>solicitudes</span>
+            </div>
+
+        </div>
+
+        <div class="kx-solicitudes-resumen">
+
+            <div>
+                <span>Pendientes</span>
+                <strong id="kxSolicitudesPendientes">0</strong>
+            </div>
+
+            <div>
+                <span>En revisión</span>
+                <strong id="kxSolicitudesRevision">0</strong>
+            </div>
+
+        </div>
+
+        <div id="kxSolicitudesLista" class="kx-solicitudes-lista" aria-live="polite">
+            <div class="kx-empty-row">Cargando solicitudes...</div>
         </div>
 
     </section>
