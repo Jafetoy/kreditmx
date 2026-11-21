@@ -1,7 +1,7 @@
 # Figma corporate welcome landing
 
 Objective: Replace the minimal public landing at `/` with the Figma Make `Welcome` screen, preserving every Flask route, endpoint, form, DOM contract and business rule.
-Branch: `figma-visual-redesign`. Delivery strategy: `single-pr` (local commits only; no push, PR or deploy). Test runner: Flask route smoke checks, structural checks, Chromium desktop/mobile checks. Forecast: approximately 450 authored changed lines.
+Branch: `figma-visual-redesign`. Delivery strategy: local work-unit commits only; no push, PR or deploy. Test runner: Flask route smoke checks, structural checks, Chromium desktop/mobile checks. Forecast: approximately 450 authored changed lines; actual 722, because the scoped Figma stylesheet is reproduced verbatim rather than minified.
 
 ## Specs
 
@@ -15,7 +15,7 @@ S4. Verify `/` renders the landing, both CTA links resolve, desktop 1440px and m
 
 ## Tasks
 
-- T1 — S1-S4 — route: inline (one static landing surface: `index.html`, one scoped CSS file, one theme import; no independent write unit) — status: complete — risk: none (presentation-only; no endpoint, calculation or persisted data touched) — commit: pending — verification: 4 landing tests OK, full suite 23/23 OK, Flask smoke 200 for `/`, `/login`, `/registro` and both stylesheets, zero overflow and zero clipped text at 1440/390/320px, both CTAs navigated to their expected routes in Chromium
+- T1 — S1-S4 — route: inline (one static landing surface: `index.html`, one scoped CSS file, one theme import; no independent write unit) — status: complete — risk: none (presentation-only; no endpoint, calculation or persisted data touched) — commit: 9fa3f3b — verification: 4 landing tests OK, full suite 23/23 OK, Flask smoke 200 for `/`, `/login`, `/registro` and both stylesheets, zero overflow and zero clipped text at 1440/390/320px, both CTAs navigated to their expected routes in Chromium
 
 ## Log
 
@@ -34,3 +34,7 @@ L6 — 2026-11-21 — RED observed first: `tests/test_landing_welcome.py` failed
 L7 — 2026-11-21 — Chromium QA at 1440px, 390px and 320px: zero horizontal overflow, zero clipped text among all headings/body/ticket/capability/footer nodes, no `.kw-copy`/`.kw-visual` overlap. Computed values matched the supplied Figma source: page background `rgb(247, 249, 243)`, headline font Space Grotesk, serif emphasis Instrument Serif, emphasis color `rgb(66, 109, 22)`, primary CTA `rgb(169, 233, 37)`. Clicking the two CTAs navigated to `/login` and `/registro` respectively. Full accessibility snapshot contained the complete landing structure.
 
 L8 — 2026-11-21 — Fix found during QA: removing the legacy `css/admin.css` link exposed the browser default 8px body margin, so `body { margin: 0; min-width: 320px; }` from the supplied Figma base rules was added to `css/figma-welcome.css` and pinned by a test assertion; header and footer then measured x=0 with full viewport width. The only browser console error is the pre-existing `favicon.ico` 404, also present on the login page before this change.
+
+L9 — 2026-11-21 — Work unit recorded as local commit `9fa3f3b` on `figma-visual-redesign` with message `feat(landing): apply Figma corporate welcome screen`. Only the five landing files were staged; all other pre-existing uncommitted user work was left untouched. Risk: none.
+
+L10 — 2026-11-21 — Native receipt-driven assessment over base `9fa3f3b^` with committed-only scope and untracked files excluded: `medium` (`executable_change` in `css/figma-theme.css`), `review_due: false`, reason `under_budget`. No native review consent or verifier is due for this slice; the slice stays pending until a later work unit reaches the budget. An initial assessment without the untracked-file declaration returned `unassessable`/`high`; the corrected declaration produced the tier above.
